@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Asset,
   BottomSheet,
@@ -6,6 +7,7 @@ import {
   Text,
   Button,
   Spacing,
+  TextField,
 } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "@/stores/useFriendStore";
@@ -27,7 +29,27 @@ export function FriendFormBottomSheet({
   onOpenProfilePicker,
 }: Props) {
   const updateFriend = useFriendStore((state) => state.updateFriend);
+  const [expanded, setExpanded] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
   if (!friend) return null;
+
+  const isCreateMode = friend.name.trim() === "";
+  const isNameInvalid = showValidationError && friend.name.trim() === "";
+  const isTypeInvalid = showValidationError && friend.type == null;
+  const isAmountInvalid = showValidationError && friend.amount <= 0;
+
+  const handleSave = () => {
+    const isValid =
+      friend.name.trim() !== "" && friend.type != null && friend.amount > 0;
+    if (!isValid) {
+      setShowValidationError(true);
+      return;
+    }
+    onClose();
+  };
+
+  const formattedDate =
+    friend.date.trim() === "" ? "" : friend.date.replaceAll("-", ".");
 
   const relationOptions = ["친구", "가족", "지인", "직장", "동료"];
 
@@ -39,11 +61,11 @@ export function FriendFormBottomSheet({
         }}
       >
         <Text typography="t4" fontWeight="bold">
-          {friend.name} 정보 수정
+          {isCreateMode ? "추가하기" : `${friend.name} 정보 수정`}
         </Text>
       </div>
 
-      <Spacing size={32} />
+      <Spacing size={15} />
       <div
         style={{
           display: "flex",
@@ -54,8 +76,8 @@ export function FriendFormBottomSheet({
         <div
           onClick={onOpenProfilePicker}
           style={{
-            width: 80,
-            height: 80,
+            width: 100,
+            height: 100,
             borderRadius: "50%",
             backgroundColor: "#D6E6FB",
             display: "flex",
@@ -72,7 +94,7 @@ export function FriendFormBottomSheet({
               >[0]["name"]
             }
             frameShape={Asset.frameShape.CleanW24}
-            style={{ width: 56, height: 56 }}
+            style={{ width: 72, height: 72 }}
           />
           <div
             style={{
@@ -81,7 +103,11 @@ export function FriendFormBottomSheet({
               right: 0,
               backgroundColor: "#ffffff",
               borderRadius: "50%",
-              padding: "4px",
+              width: "28px",
+              height: "28px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
               boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
             }}
           >
@@ -89,43 +115,28 @@ export function FriendFormBottomSheet({
               name="icon-plus-mono"
               frameShape={Asset.frameShape.CleanW16}
               color={adaptive.grey500}
+              style={{ width: 30, height: 30 }}
             />
           </div>
         </div>
       </div>
-      <Spacing size={32} />
+      <Spacing size={2} />
 
       <List>
-        <ListRow
-          contents={
-            <div style={{ flex: 1 }}>
-              <Text
-                typography="t7"
-                color={adaptive.grey600}
-                style={{ marginBottom: "6px" }}
-              >
-                이름
-              </Text>
-              <input
-                type="text"
-                value={friend.name}
-                onChange={(e) =>
-                  updateFriend(friend.id, { name: e.target.value })
-                }
-                placeholder="이름을 입력하세요"
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  fontSize: "14px",
-                  border: `1px solid ${adaptive.grey300}`,
-                  borderRadius: "6px",
-                  outline: "none",
-                  fontFamily: "inherit",
-                }}
-              />
-            </div>
-          }
-        />
+        <div style={{ flex: 1, width: "100%" }}>
+          <TextField
+            variant="line"
+            label="이름"
+            labelOption="sustain"
+            value={friend.name}
+            onChange={(e) => updateFriend(friend.id, { name: e.target.value })}
+            placeholder="이름"
+            hasError={isNameInvalid}
+            help={isNameInvalid ? "이름을 입력해주세요" : undefined}
+            paddingTop={4}
+            paddingBottom={4}
+          />
+        </div>
         <ListRow
           contents={<ListRow.Texts type="1RowTypeB" top="어떤 상황인가요?" />}
           right={
@@ -133,87 +144,154 @@ export function FriendFormBottomSheet({
               <Button
                 variant={friend.type === "축의금" ? "fill" : "weak"}
                 size="small"
-                onClick={() => updateFriend(friend.id, { type: "축의금" })}
+                onClick={() => {
+                  if (showValidationError) setShowValidationError(false);
+                  updateFriend(friend.id, { type: "축의금" });
+                }}
               >
                 축의금
               </Button>
               <Button
                 variant={friend.type === "조의금" ? "fill" : "weak"}
                 size="small"
-                onClick={() => updateFriend(friend.id, { type: "조의금" })}
+                onClick={() => {
+                  if (showValidationError) setShowValidationError(false);
+                  updateFriend(friend.id, { type: "조의금" });
+                }}
               >
                 조의금
               </Button>
             </div>
           }
         />
+        {isTypeInvalid ? (
+          <div style={{ padding: "6px 20px 0" }}>
+            <Text
+              typography="t7"
+              color={adaptive.red500}
+              style={{ fontSize: "12px" }}
+            >
+              어떤 상황인지 선택해주세요
+            </Text>
+          </div>
+        ) : null}
         <ListRow
           contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
           right={
-            <Text color={adaptive.grey600}>
-              {friend.amount.toLocaleString()}원
-            </Text>
+            friend.amount > 0 ? (
+              <Text color={adaptive.grey600}>
+                {friend.amount.toLocaleString()}원
+              </Text>
+            ) : (
+              <Text color={adaptive.grey500}>입력하기</Text>
+            )
           }
           onClick={onOpenAmountInput}
           arrowType="right"
         />
+        {isAmountInvalid ? (
+          <div style={{ padding: "6px 20px 0" }}>
+            <Text
+              typography="t7"
+              color={adaptive.red500}
+              style={{ fontSize: "12px" }}
+            >
+              금액을 입력해주세요
+            </Text>
+          </div>
+        ) : null}
         <ListRow
           contents={
-            <div style={{ flex: 1, paddingRight: "16px" }}>
-              <Text
-                typography="t7"
-                color={adaptive.grey600}
-                style={{ marginBottom: "4px" }}
-              >
-                관계
-              </Text>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                {relationOptions.map((rel) => (
-                  <Button
-                    key={rel}
-                    variant={friend.relation === rel ? "fill" : "weak"}
-                    size="small"
-                    onClick={() => updateFriend(friend.id, { relation: rel })}
-                  >
-                    {rel}
-                  </Button>
-                ))}
+            <Text
+              typography="t7"
+              color={adaptive.grey600}
+              style={{ fontSize: "13px" }}
+            >
+              추가 정보 (선택)
+            </Text>
+          }
+          verticalPadding="small"
+          arrowType={expanded ? "down" : "right"}
+          onClick={() => setExpanded(!expanded)}
+        />
+        <div
+          style={{
+            maxHeight: expanded ? "1000px" : "0",
+            overflow: "hidden",
+            transition: "max-height 0.3s ease-in-out",
+          }}
+        >
+          <ListRow
+            verticalPadding="small"
+            horizontalPadding="small"
+            contents={
+              <div style={{ flex: 1 }}>
+                <Text
+                  typography="t7"
+                  color={adaptive.grey600}
+                  style={{ marginBottom: "4px" }}
+                >
+                  관계
+                </Text>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {relationOptions.map((rel) => (
+                    <Button
+                      key={rel}
+                      variant={friend.relation === rel ? "fill" : "weak"}
+                      size="small"
+                      onClick={() => updateFriend(friend.id, { relation: rel })}
+                    >
+                      {rel}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
-          }
-        />
-        <ListRow
-          contents={
-            <div style={{ flex: 1 }}>
-              <Text
-                typography="t7"
-                color={adaptive.grey600}
-                style={{ marginBottom: "6px" }}
-              >
-                날짜
-              </Text>
-              <input
-                type="date"
-                value={friend.date}
-                onChange={(e) =>
-                  updateFriend(friend.id, { date: e.target.value })
-                }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  fontSize: "14px",
-                  border: `1px solid ${adaptive.grey300}`,
-                  borderRadius: "6px",
-                  outline: "none",
-                  fontFamily: "inherit",
-                }}
-              />
-            </div>
-          }
-        />
+            }
+          />
+          <ListRow
+            verticalPadding="small"
+            horizontalPadding="small"
+            contents={
+              <div style={{ flex: 1 }}>
+                <Text
+                  typography="t7"
+                  color={adaptive.grey600}
+                  style={{ marginBottom: "4px" }}
+                >
+                  날짜
+                </Text>
+                <div style={{ position: "relative" }}>
+                  <TextField.Button
+                    variant="line"
+                    label=""
+                    value={formattedDate}
+                    placeholder="선택"
+                    paddingTop={4}
+                    paddingBottom={4}
+                  />
+                  <input
+                    type="date"
+                    value={friend.date}
+                    onChange={(e) =>
+                      updateFriend(friend.id, { date: e.target.value })
+                    }
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      opacity: 0,
+                      cursor: "pointer",
+                    }}
+                  />
+                </div>
+              </div>
+            }
+          />
+        </div>
       </List>
-      <div style={{ padding: "20px" }}>
-        <Button onClick={onClose} style={{ width: "100%" }} variant="fill">
+      <div style={{ padding: "10px" }}>
+        <Button onClick={handleSave} style={{ width: "100%" }} variant="fill">
           저장
         </Button>
       </div>

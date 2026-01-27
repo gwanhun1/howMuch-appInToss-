@@ -5,6 +5,7 @@ import { useFriendStore } from "@/stores/useFriendStore";
 import { FriendFormBottomSheet } from "@/components/friend/FriendFormBottomSheet";
 import { ProfileImageBottomSheet } from "@/components/friend/ProfileImageBottomSheet";
 import { AmountInputPage } from "@/pages/AmountInputPage";
+import type { Friend } from "@/types/friend";
 
 export function MainPage() {
   const {
@@ -13,6 +14,7 @@ export function MainPage() {
     currentPage,
     isFriendFormOpen,
     isProfileImageSheetOpen,
+    addFriend,
     updateFriend,
     openFriendForm,
     closeFriendForm,
@@ -43,7 +45,6 @@ export function MainPage() {
     <div
       style={{
         backgroundColor: adaptive.grey50,
-        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
       }}
@@ -75,8 +76,51 @@ export function MainPage() {
             columnGap: "12px",
             rowGap: "16px",
             padding: "0 20px",
+            marginBottom: "20px",
           }}
         >
+          <div
+            onClick={() => {
+              const id = Date.now().toString();
+              const newFriend: Friend = {
+                id,
+                name: "",
+                profileIcon: "icon-person-1-color",
+                type: null,
+                amount: 0,
+                relation: "",
+                date: "",
+              };
+
+              addFriend(newFriend);
+              openFriendForm(id);
+            }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "20px 8px",
+              backgroundColor: "#ffffff",
+              borderRadius: "16px",
+              cursor: "pointer",
+              border: `1px solid ${adaptive.grey200}`,
+            }}
+          >
+            <Asset.Icon
+              name="icon-plus-circle-mono"
+              frameShape={Asset.frameShape.CleanW24}
+              color={adaptive.grey600}
+              style={{ width: 40, height: 40 }}
+            />
+            <Text
+              typography="t7"
+              fontWeight="regular"
+              style={{ marginTop: "8px", color: adaptive.grey700 }}
+            >
+              추가
+            </Text>
+          </div>
+
           {friends.map((friend) => (
             <div
               key={friend.id}
@@ -91,6 +135,7 @@ export function MainPage() {
                 backgroundColor: "#ffffff",
                 borderRadius: "16px",
                 cursor: "pointer",
+                border: `1px solid ${adaptive.grey200}`,
               }}
             >
               <Asset.Icon

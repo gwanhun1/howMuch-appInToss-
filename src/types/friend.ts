@@ -4,7 +4,7 @@ export interface Friend {
   id: string;
   name: string;
   profileIcon: string;
-  type: FriendType;
+  type: FriendType | null;
   amount: number;
   relation: string;
   date: string;
