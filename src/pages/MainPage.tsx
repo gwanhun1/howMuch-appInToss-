@@ -26,6 +26,7 @@ export function MainPage() {
   } = useFriendStore();
 
   const selectedFriend = friends.find((f) => f.id === selectedFriendId) || null;
+  const shouldShowNextAdBadge = friends.length > 0 && friends.length % 5 === 4;
 
   if (currentPage === "amountInput" && selectedFriend) {
     return (
@@ -80,6 +81,7 @@ export function MainPage() {
           }}
         >
           <div
+            className="add-card-pulse"
             onClick={() => {
               const id = Date.now().toString();
               const newFriend: Friend = {
@@ -156,6 +158,46 @@ export function MainPage() {
               </Text>
             </div>
           ))}
+
+          {shouldShowNextAdBadge ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "20px 8px",
+                backgroundColor: "transparent",
+                borderRadius: "16px",
+                border: `2px dashed ${adaptive.grey400}`,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  typography="t7"
+                  fontWeight="semibold"
+                  color={adaptive.grey700}
+                  style={{ textAlign: "center" }}
+                >
+                  광고 타임
+                </Text>
+                <Text
+                  typography="t3"
+                  fontWeight="bold"
+                  color={adaptive.grey700}
+                >
+                  😅
+                </Text>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 

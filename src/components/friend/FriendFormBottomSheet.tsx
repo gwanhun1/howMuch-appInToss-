@@ -29,8 +29,18 @@ export function FriendFormBottomSheet({
   onOpenProfilePicker,
 }: Props) {
   const updateFriend = useFriendStore((state) => state.updateFriend);
+  const removeFriend = useFriendStore((state) => state.removeFriend);
+  const setSelectedFriendId = useFriendStore(
+    (state) => state.setSelectedFriendId,
+  );
   const [expanded, setExpanded] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const handleClose = () => {
+    setExpanded(false);
+    setShowValidationError(false);
+    onClose();
+  };
+
   if (!friend) return null;
 
   const isCreateMode = friend.name.trim() === "";
@@ -45,7 +55,13 @@ export function FriendFormBottomSheet({
       setShowValidationError(true);
       return;
     }
-    onClose();
+    handleClose();
+  };
+
+  const handleDelete = () => {
+    removeFriend(friend.id);
+    setSelectedFriendId(null);
+    handleClose();
   };
 
   const formattedDate =
@@ -54,7 +70,7 @@ export function FriendFormBottomSheet({
   const relationOptions = ["친구", "가족", "지인", "직장", "동료"];
 
   return (
-    <BottomSheet open={open} onClose={onClose} maxHeight={"90vh"}>
+    <BottomSheet open={open} onClose={handleClose} maxHeight={"90vh"}>
       <div
         style={{
           padding: "16px 20px",
@@ -290,8 +306,11 @@ export function FriendFormBottomSheet({
           />
         </div>
       </List>
-      <div style={{ padding: "10px" }}>
-        <Button onClick={handleSave} style={{ width: "100%" }} variant="fill">
+      <div style={{ padding: "10px", display: "flex", gap: "8px" }}>
+        <Button onClick={handleDelete} style={{ flex: 1 }} variant="weak">
+          삭제
+        </Button>
+        <Button onClick={handleSave} style={{ flex: 1 }} variant="fill">
           저장
         </Button>
       </div>

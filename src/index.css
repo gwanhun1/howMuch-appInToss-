@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #f2f4f6;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,7 +25,8 @@ a:hover {
 body {
   margin: 0;
   padding: 0;
-  background-color: #f2f4f6; /* 토스 기본 배경색 (adaptive.grey50) */
+  background-color: #f9fafb; /* 토스 기본 배경색 (adaptive.grey50) */
+  min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   touch-action: manipulation;
@@ -34,8 +35,66 @@ body {
     sans-serif;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 #root {
   min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.add-card-pulse {
+  position: relative;
+  overflow: hidden;
+}
+
+.add-card-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: linear-gradient(
+    120deg,
+    rgba(49, 130, 246, 0) 35%,
+    rgba(49, 130, 246, 0.35) 50%,
+    rgba(49, 130, 246, 0) 65%
+  );
+  transform: translateX(-120%);
+  animation: add-card-twinkle 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes add-card-twinkle {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  65% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .add-card-pulse {
+    animation: none;
+  }
+
+  .add-card-pulse::after {
+    animation: none;
+  }
 }
 
 h1 {
@@ -65,7 +124,7 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-color: #f2f4f6;
   }
   a:hover {
     color: #747bff;
