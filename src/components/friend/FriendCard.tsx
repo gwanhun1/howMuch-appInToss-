@@ -34,6 +34,7 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        justifyContent: "center",
         padding: "20px 8px",
         backgroundColor: "#ffffff",
         borderRadius: "20px",
@@ -42,6 +43,7 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
         position: "relative",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
         overflow: "hidden",
+        minHeight: "148px",
       }}
     >
       {/* 구분 배지 */}

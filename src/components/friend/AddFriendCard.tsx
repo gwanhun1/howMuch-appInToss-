@@ -19,6 +19,7 @@ export function AddFriendCard({ onClick }: AddFriendCardProps) {
         borderRadius: "16px",
         cursor: "pointer",
         border: `1px solid ${adaptive.grey200}`,
+        minHeight: "148px",
       }}
     >
       <Asset.Icon

@@ -7,10 +7,9 @@ interface Props {
   value: number;
   onSave: (val: number) => void;
   onBack: () => void;
-  onHome: () => void;
 }
 
-export function AmountInputPage({ value, onSave, onBack, onHome }: Props) {
+export function AmountInputPage({ value, onSave, onBack }: Props) {
   // 초기값이 0이면 빈 문자열로 설정하여 placeholder가 보이게 함
   const [amount, setAmount] = useState(value === 0 ? "" : value.toString());
 
@@ -42,7 +41,7 @@ export function AmountInputPage({ value, onSave, onBack, onHome }: Props) {
         flexDirection: "column",
       }}
     >
-      <AppHeader title="" onBack={onBack} onClose={onHome} />
+      <AppHeader title="보낸 돈 입력" onBack={onBack} />
       <Spacing size={32} />
       <Top
         title={

@@ -5,16 +5,22 @@ import { AdCard } from "./AdCard";
 
 interface FriendListProps {
   friends: Friend[];
+  lastAdMilestoneShown: number;
   onAddFriend: () => void;
   onFriendClick: (friendId: string) => void;
 }
 
 export function FriendList({
   friends,
+  lastAdMilestoneShown,
   onAddFriend,
   onFriendClick,
 }: FriendListProps) {
-  const shouldShowNextAdBadge = friends.length > 0 && friends.length % 5 === 4;
+  const nextMilestone = friends.length + 1;
+  const shouldShowNextAdBadge =
+    nextMilestone > 0 &&
+    nextMilestone % 5 === 0 &&
+    nextMilestone > lastAdMilestoneShown;
 
   return (
     <div

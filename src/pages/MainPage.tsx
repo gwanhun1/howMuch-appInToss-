@@ -21,6 +21,7 @@ export function MainPage() {
     closeAmountInput,
     resetToMain,
     startAddingFriend,
+    lastAdMilestoneShown,
   } = useFriendStore();
 
   // 서비스 첫 진입 시 항상 메인 페이지가 뜨도록 보장
@@ -48,7 +49,6 @@ export function MainPage() {
         <AmountInputPage
           value={editingFriend.amount}
           onBack={closeAmountInput}
-          onHome={resetToMain}
           onSave={(val) => {
             setEditingFriend({ ...editingFriend, amount: val });
             closeAmountInput();
@@ -56,7 +56,7 @@ export function MainPage() {
         />
       ) : (
         <>
-          <AppHeader onMore={() => {}} onClose={() => {}} />
+          <AppHeader />
 
           <div
             style={{
@@ -78,6 +78,7 @@ export function MainPage() {
 
             <FriendList
               friends={friends}
+              lastAdMilestoneShown={lastAdMilestoneShown}
               onAddFriend={startAddingFriend}
               onFriendClick={openFriendForm}
             />
