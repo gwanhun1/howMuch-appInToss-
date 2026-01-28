@@ -56,7 +56,7 @@ export function MainPage() {
         />
       ) : (
         <>
-          <AppHeader />
+          {/* <AppHeader /> */}
 
           <div
             style={{
