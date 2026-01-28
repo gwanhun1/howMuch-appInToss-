@@ -13,6 +13,9 @@ import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "@/stores/useFriendStore";
 import type { Friend } from "@/types/friend";
 import { ProfileImageBottomSheet } from "@/components/friend/ProfileImageBottomSheet";
+import { FormAvatar } from "@/components/friend/form/FormAvatar";
+import { FormTypeSelector } from "@/components/friend/form/FormTypeSelector";
+import { FormAdditionalInfo } from "@/components/friend/form/FormAdditionalInfo";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
@@ -95,8 +98,6 @@ export function FriendFormBottomSheet({
     handleClose();
   };
 
-  const relationOptions = ["친구", "가족", "지인", "직장", "동료"];
-
   return (
     <>
       <BottomSheet
@@ -115,7 +116,7 @@ export function FriendFormBottomSheet({
           style={{
             display: "flex",
             flexDirection: "column",
-            maxHeight: "90vh", // 시트 전체의 최대 높이만 제한
+            maxHeight: "90vh",
           }}
         >
           {/* 스크롤 가능한 본문 영역 */}
@@ -126,60 +127,11 @@ export function FriendFormBottomSheet({
             }}
           >
             <Spacing size={10} />
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <div
-                onClick={() => setIsProfilePickerOpen(true)}
-                style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: "50%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  position: "relative",
-                  cursor: "pointer",
-                  filter:
-                    currentFriend.type === "조의금" ? "grayscale(1)" : "none",
-                }}
-              >
-                <Asset.Icon
-                  name={
-                    (currentFriend.profileIcon?.startsWith("icon-")
-                      ? currentFriend.profileIcon
-                      : "icon-face-cap") as IconName
-                  }
-                  frameShape={Asset.frameShape.CleanW100}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    backgroundColor: "#ffffff",
-                    borderRadius: "50%",
-                    width: "28px",
-                    height: "28px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <Asset.Icon
-                    name="icon-plus-mono"
-                    frameShape={Asset.frameShape.CleanW16}
-                    color={adaptive.grey500}
-                    style={{ width: 30, height: 30 }}
-                  />
-                </div>
-              </div>
-            </div>
+            <FormAvatar
+              iconName={currentFriend.profileIcon}
+              type={currentFriend.type}
+              onClick={() => setIsProfilePickerOpen(true)}
+            />
             <Spacing size={2} />
 
             <List>
@@ -195,39 +147,15 @@ export function FriendFormBottomSheet({
                 hasError={isNameInvalid}
                 help={isNameInvalid ? "이름을 입력해주세요" : undefined}
               />
-              <ListRow
-                contents={
-                  <ListRow.Texts type="1RowTypeB" top="어떤 상황인가요?" />
-                }
-                right={
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <Button
-                      variant={
-                        currentFriend.type === "축의금" ? "fill" : "weak"
-                      }
-                      size="small"
-                      onClick={() => {
-                        if (showValidationError) setShowValidationError(false);
-                        setEditingFriend({ ...currentFriend, type: "축의금" });
-                      }}
-                    >
-                      축의금
-                    </Button>
-                    <Button
-                      variant={
-                        currentFriend.type === "조의금" ? "fill" : "weak"
-                      }
-                      size="small"
-                      onClick={() => {
-                        if (showValidationError) setShowValidationError(false);
-                        setEditingFriend({ ...currentFriend, type: "조의금" });
-                      }}
-                    >
-                      조의금
-                    </Button>
-                  </div>
-                }
+
+              <FormTypeSelector
+                value={currentFriend.type}
+                onChange={(type) => {
+                  if (showValidationError) setShowValidationError(false);
+                  setEditingFriend({ ...currentFriend, type });
+                }}
               />
+
               {isTypeInvalid && (
                 <div style={{ padding: "6px 20px 0" }}>
                   <Text typography="t7" color={adaptive.red500}>
@@ -235,6 +163,7 @@ export function FriendFormBottomSheet({
                   </Text>
                 </div>
               )}
+
               <div className="add-card-pulse">
                 <ListRow
                   contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
@@ -253,6 +182,7 @@ export function FriendFormBottomSheet({
                   arrowType="right"
                 />
               </div>
+
               {isAmountInvalid && (
                 <div style={{ padding: "6px 20px 0" }}>
                   <Text typography="t7" color={adaptive.red500}>
@@ -260,6 +190,7 @@ export function FriendFormBottomSheet({
                   </Text>
                 </div>
               )}
+
               <ListRow
                 contents={
                   <Text typography="t7" color={adaptive.grey600}>
@@ -277,65 +208,24 @@ export function FriendFormBottomSheet({
                   }
                 }}
               />
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateRows: expanded ? "1fr" : "0fr",
-                  transition: "grid-template-rows 0.3s ease-out",
-                  overflow: "hidden",
-                }}
-              >
-                <div style={{ minHeight: 0 }}>
-                  <div
-                    style={{
-                      padding: "0 20px",
-                      opacity: expanded ? 1 : 0,
-                      transition: "opacity 0.2s ease-in-out",
-                    }}
-                  >
-                    <Spacing size={12} />
-                    <Text typography="t7" color={adaptive.grey600}>
-                      관계
-                    </Text>
-                    <Spacing size={8} />
-                    <div
-                      style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}
-                    >
-                      {relationOptions.map((rel) => (
-                        <Button
-                          key={rel}
-                          variant={
-                            currentFriend.relation === rel ? "fill" : "weak"
-                          }
-                          size="small"
-                          onClick={() =>
-                            setEditingFriend({
-                              ...currentFriend,
-                              relation: rel,
-                            })
-                          }
-                        >
-                          {rel}
-                        </Button>
-                      ))}
-                    </div>
-                    <Spacing size={16} />
-                    <TextField
-                      variant="line"
-                      label="날짜"
-                      type="date"
-                      value={currentFriend.date}
-                      onChange={(e) =>
-                        setEditingFriend({
-                          ...currentFriend,
-                          date: e.target.value,
-                        })
-                      }
-                    />
-                    <Spacing size={20} />
-                  </div>
-                </div>
-              </div>
+
+              <FormAdditionalInfo
+                expanded={expanded}
+                relation={currentFriend.relation}
+                date={currentFriend.date}
+                onRelationChange={(rel) =>
+                  setEditingFriend({
+                    ...currentFriend,
+                    relation: rel,
+                  })
+                }
+                onDateChange={(val) =>
+                  setEditingFriend({
+                    ...currentFriend,
+                    date: val,
+                  })
+                }
+              />
             </List>
           </div>
 

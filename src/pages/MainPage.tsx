@@ -1,12 +1,11 @@
 import { useEffect } from "react";
-import { Asset, Spacing, Text } from "@toss/tds-mobile";
+import { Spacing, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { AppHeader } from "@/components/common/AppHeader";
 import { useFriendStore } from "@/stores/useFriendStore";
 import { FriendFormBottomSheet } from "@/components/friend/FriendFormBottomSheet";
 import { AmountInputPage } from "@/pages/AmountInputPage";
-
-type IconName = Parameters<typeof Asset.Icon>[0]["name"];
+import { FriendList } from "@/components/friend/FriendList";
 
 export function MainPage() {
   const {
@@ -21,6 +20,7 @@ export function MainPage() {
     openAmountInput,
     closeAmountInput,
     resetToMain,
+    startAddingFriend,
   } = useFriendStore();
 
   // 서비스 첫 진입 시 항상 메인 페이지가 뜨도록 보장
@@ -32,7 +32,6 @@ export function MainPage() {
   }, []);
 
   const selectedFriend = friends.find((f) => f.id === selectedFriendId) || null;
-  const shouldShowNextAdBadge = friends.length > 0 && friends.length % 5 === 4;
 
   return (
     <div
@@ -77,178 +76,11 @@ export function MainPage() {
             </Text>
             <Spacing size={24} />
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                columnGap: "12px",
-                rowGap: "16px",
-                padding: "0 20px",
-                marginBottom: "20px",
-              }}
-            >
-              <div
-                className="add-card-pulse"
-                onClick={() => {
-                  useFriendStore.getState().startAddingFriend();
-                }}
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  backgroundColor: "#ffffff",
-                  borderRadius: "16px",
-                  cursor: "pointer",
-                  border: `1px solid ${adaptive.grey200}`,
-                }}
-              >
-                <Asset.Icon
-                  name="icon-plus-circle-mono"
-                  frameShape={Asset.frameShape.CleanW24}
-                  color={adaptive.grey600}
-                  style={{ width: 40, height: 40 }}
-                />
-                <Text
-                  typography="t7"
-                  fontWeight="regular"
-                  style={{ color: adaptive.grey700 }}
-                >
-                  추가
-                </Text>
-              </div>
-
-              {friends.map((friend) => (
-                <div
-                  key={friend.id}
-                  onClick={() => {
-                    openFriendForm(friend.id);
-                  }}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    padding: "20px 8px",
-                    backgroundColor: "#ffffff",
-                    borderRadius: "20px",
-                    cursor: "pointer",
-                    border: `1px solid ${
-                      friend.type === "축의금"
-                        ? "rgba(0, 100, 255, 0.15)"
-                        : friend.type === "조의금"
-                          ? adaptive.grey200
-                          : adaptive.grey200
-                    }`,
-                    position: "relative",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* 구분 배지 */}
-                  {friend.type && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "10px",
-                        right: "10px",
-                        padding: "4px 8px",
-                        borderRadius: "8px",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                        backgroundColor:
-                          friend.type === "축의금"
-                            ? "rgba(0, 100, 255, 0.08)"
-                            : "rgba(107, 107, 107, 0.08)",
-                        color:
-                          friend.type === "축의금"
-                            ? adaptive.blue600
-                            : adaptive.grey600,
-                      }}
-                    >
-                      {friend.type === "축의금" ? "축" : "조"}
-                    </div>
-                  )}
-
-                  <div
-                    style={{
-                      filter:
-                        friend.type === "조의금" ? "grayscale(0.9)" : "none",
-                      transition: "transform 0.2s",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Asset.Icon
-                      name={
-                        (friend.profileIcon?.startsWith("icon-")
-                          ? friend.profileIcon
-                          : "icon-face-cap") as IconName
-                      }
-                      frameShape={Asset.frameShape.CleanW60}
-                    />
-                  </div>
-                  <Spacing size={12} />
-                  <Text
-                    typography="t7"
-                    fontWeight="semibold"
-                    color={adaptive.grey800}
-                  >
-                    {friend.name}
-                  </Text>
-                  {friend.amount > 0 && (
-                    <Text
-                      typography="t7"
-                      color={
-                        friend.type === "축의금"
-                          ? adaptive.blue600
-                          : adaptive.grey500
-                      }
-                      style={{ marginTop: "2px" }}
-                    >
-                      {friend.amount.toLocaleString()}원
-                    </Text>
-                  )}
-                </div>
-              ))}
-
-              {shouldShowNextAdBadge ? (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "20px 8px",
-                    backgroundColor: "transparent",
-                    borderRadius: "16px",
-                    border: `2px dashed ${adaptive.grey400}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text
-                      typography="t7"
-                      fontWeight="semibold"
-                      color={adaptive.grey700}
-                      style={{ textAlign: "center" }}
-                    >
-                      광고 타임
-                    </Text>
-                    <Asset.Icon
-                      name="icon-box-cat-grey-blue-eye"
-                      frameShape={Asset.frameShape.CleanW16}
-                    />
-                  </div>
-                </div>
-              ) : null}
-            </div>
+            <FriendList
+              friends={friends}
+              onAddFriend={startAddingFriend}
+              onFriendClick={openFriendForm}
+            />
           </div>
         </>
       )}
