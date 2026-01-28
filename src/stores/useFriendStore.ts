@@ -13,8 +13,9 @@ interface FriendStore {
   addFriend: (friend: Friend) => void;
   removeFriend: (id: string) => void;
   updateFriend: (id: string, updates: Partial<Friend>) => void;
-  setEditingFriend: (friend: Friend | null) => void; // used for draft persistence
+  setEditingFriend: (friend: Friend | null) => void;
   setSelectedFriendId: (id: string | null) => void;
+  startAddingFriend: () => void; // 신규 추가 시작 (임시 데이터만 생성)
   openFriendForm: (id: string) => void;
   closeFriendForm: () => void;
   openProfileImageSheet: () => void;
@@ -65,6 +66,21 @@ export const useFriendStore = create<FriendStore>()(
         })),
       setEditingFriend: (friend) => set({ editingFriend: friend }),
       setSelectedFriendId: (id) => set({ selectedFriendId: id }),
+      startAddingFriend: () =>
+        set({
+          selectedFriendId: "new", // "new"는 신규 생성을 의미하는 특수 ID
+          editingFriend: {
+            id: Date.now().toString(),
+            name: "",
+            profileIcon: "icon-face-cap",
+            type: null,
+            amount: 0,
+            relation: "",
+            date: "",
+          },
+          isFriendFormOpen: true,
+          currentPage: "main",
+        }),
       openFriendForm: (id) =>
         set((state) => {
           const friend = state.friends.find((f) => f.id === id) || null;
@@ -76,27 +92,10 @@ export const useFriendStore = create<FriendStore>()(
           };
         }),
       closeFriendForm: () =>
-        set((state) => {
-          // 이름이 없는 친구 데이터 클린업 (유령 데이터 방지)
-          // 단, 금액 입력 화면으로 이동 중인 경우는 제외
-          const selectedFriend = state.friends.find(
-            (f) => f.id === state.selectedFriendId,
-          );
-          if (
-            state.currentPage === "main" &&
-            selectedFriend &&
-            selectedFriend.name.trim() === ""
-          ) {
-            return {
-              friends: state.friends.filter(
-                (f) => f.id !== state.selectedFriendId,
-              ),
-              isFriendFormOpen: false,
-              selectedFriendId: null,
-              editingFriend: null,
-            };
-          }
-          return { isFriendFormOpen: false, editingFriend: null };
+        set({
+          isFriendFormOpen: false,
+          editingFriend: null,
+          selectedFriendId: null,
         }),
       openProfileImageSheet: () => set({ isProfileImageSheetOpen: true }),
       closeProfileImageSheet: () => set({ isProfileImageSheetOpen: false }),

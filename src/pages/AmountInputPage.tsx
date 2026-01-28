@@ -11,15 +11,23 @@ interface Props {
 }
 
 export function AmountInputPage({ value, onSave, onBack, onHome }: Props) {
-  const [amount, setAmount] = useState(value.toString());
+  // 초기값이 0이면 빈 문자열로 설정하여 placeholder가 보이게 함
+  const [amount, setAmount] = useState(value === 0 ? "" : value.toString());
 
   const handleChangeAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/[^0-9]/g, "");
+    let val = e.target.value.replace(/[^0-9]/g, "");
+
+    // 0으로 시작하는 숫자 처리 (예: 05 -> 5)
+    if (val.length > 1 && val.startsWith("0")) {
+      val = val.replace(/^0+/, "");
+    }
+
     setAmount(val);
   };
 
   const handleSave = () => {
-    const num = Number(amount);
+    // 빈 문자열은 0으로 처리
+    const num = amount === "" ? 0 : Number(amount);
     if (!isNaN(num)) {
       onSave(num);
     }
@@ -35,27 +43,25 @@ export function AmountInputPage({ value, onSave, onBack, onHome }: Props) {
       }}
     >
       <AppHeader title="" onBack={onBack} onClose={onHome} />
-      <div style={{ flex: 1, padding: "0 24px" }}>
-        <Spacing size={32} />
-        <Top
-          title={
-            <Top.TitleParagraph color={adaptive.grey900}>
-              보낸 돈을 입력해주세요
-            </Top.TitleParagraph>
-          }
-        />
-        <Spacing size={24} />
-        <TextField.Clearable
-          variant="line"
-          label="금액"
-          value={amount}
-          onChange={handleChangeAmount}
-          inputMode="numeric"
-          placeholder="0"
-          suffix="원"
-          autoFocus
-        />
-      </div>
+      <Spacing size={32} />
+      <Top
+        title={
+          <Top.TitleParagraph color={adaptive.grey900}>
+            보낸 돈을 입력해주세요
+          </Top.TitleParagraph>
+        }
+      />
+      <Spacing size={24} />
+      <TextField.Clearable
+        variant="line"
+        label="금액"
+        value={amount}
+        onChange={handleChangeAmount}
+        inputMode="numeric"
+        placeholder="0"
+        suffix="원"
+        autoFocus
+      />
       <FixedBottomCTA onClick={handleSave}>확인</FixedBottomCTA>
     </div>
   );

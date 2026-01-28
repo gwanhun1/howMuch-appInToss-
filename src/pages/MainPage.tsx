@@ -5,8 +5,8 @@ import { AppHeader } from "@/components/common/AppHeader";
 import { useFriendStore } from "@/stores/useFriendStore";
 import { FriendFormBottomSheet } from "@/components/friend/FriendFormBottomSheet";
 import { AmountInputPage } from "@/pages/AmountInputPage";
-import type { Friend } from "@/types/friend";
-import { emojiCodeToString, isEmojiCode } from "@/utils/emoji";
+
+type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
 export function MainPage() {
   const {
@@ -16,7 +16,6 @@ export function MainPage() {
     setEditingFriend,
     currentPage,
     isFriendFormOpen,
-    addFriend,
     openFriendForm,
     closeFriendForm,
     openAmountInput,
@@ -91,19 +90,7 @@ export function MainPage() {
               <div
                 className="add-card-pulse"
                 onClick={() => {
-                  const id = Date.now().toString();
-                  const newFriend: Friend = {
-                    id,
-                    name: "",
-                    profileIcon: "icon-person-1-color",
-                    type: null,
-                    amount: 0,
-                    relation: "",
-                    date: "",
-                  };
-
-                  addFriend(newFriend);
-                  openFriendForm(id);
+                  useFriendStore.getState().startAddingFriend();
                 }}
                 style={{
                   display: "flex",
@@ -185,25 +172,21 @@ export function MainPage() {
                   <div
                     style={{
                       filter:
-                        friend.type === "조의금" ? "grayscale(1)" : "none",
+                        friend.type === "조의금" ? "grayscale(0.9)" : "none",
                       transition: "transform 0.2s",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
                     }}
                   >
-                    {isEmojiCode(friend.profileIcon) ? (
-                      <div style={{ fontSize: 60, lineHeight: 1 }}>
-                        {emojiCodeToString(friend.profileIcon)}
-                      </div>
-                    ) : (
-                      <Asset.Icon
-                        name={
-                          friend.profileIcon as unknown as Parameters<
-                            typeof Asset.Icon
-                          >[0]["name"]
-                        }
-                        frameShape={Asset.frameShape.CleanW24}
-                        style={{ width: 60, height: 60 }}
-                      />
-                    )}
+                    <Asset.Icon
+                      name={
+                        (friend.profileIcon?.startsWith("icon-")
+                          ? friend.profileIcon
+                          : "icon-face-cap") as IconName
+                      }
+                      frameShape={Asset.frameShape.CleanW60}
+                    />
                   </div>
                   <Spacing size={12} />
                   <Text
@@ -258,13 +241,10 @@ export function MainPage() {
                     >
                       광고 타임
                     </Text>
-                    <Text
-                      typography="t3"
-                      fontWeight="bold"
-                      color={adaptive.grey700}
-                    >
-                      😅
-                    </Text>
+                    <Asset.Icon
+                      name="icon-box-cat-grey-blue-eye"
+                      frameShape={Asset.frameShape.CleanW16}
+                    />
                   </div>
                 </div>
               ) : null}

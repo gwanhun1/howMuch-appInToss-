@@ -12,8 +12,9 @@ import {
 import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "@/stores/useFriendStore";
 import type { Friend } from "@/types/friend";
-import { emojiCodeToString, isEmojiCode } from "@/utils/emoji";
 import { ProfileImageBottomSheet } from "@/components/friend/ProfileImageBottomSheet";
+
+type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
 interface Props {
   open: boolean;
@@ -38,13 +39,15 @@ export function FriendFormBottomSheet({
   const editingFriend = useFriendStore((state) => state.editingFriend);
   const setEditingFriend = useFriendStore((state) => state.setEditingFriend);
 
+  const addFriend = useFriendStore((state) => state.addFriend);
+  const selectedFriendId = useFriendStore((state) => state.selectedFriendId);
+
   const [expanded, setExpanded] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
   const [isProfilePickerOpen, setIsProfilePickerOpen] = useState(false);
 
   useEffect(() => {
     if (open && friend && !editingFriend) {
-      // 만약 store에 editingFriend가 없으면 초기화 (보통 store의 openFriendForm에서 처리됨)
       setEditingFriend({ ...friend });
     }
   }, [open, friend, editingFriend, setEditingFriend]);
@@ -55,11 +58,10 @@ export function FriendFormBottomSheet({
     onClose();
   };
 
-  // editingFriend가 아직 세팅 안됐으면 렌더링 안함
   const currentFriend = editingFriend || friend;
   if (!currentFriend) return null;
 
-  const isCreateMode = friend ? friend.name.trim() === "" : true;
+  const isCreateMode = selectedFriendId === "new";
   const isNameInvalid = showValidationError && currentFriend.name.trim() === "";
   const isTypeInvalid = showValidationError && currentFriend.type == null;
   const isAmountInvalid = showValidationError && currentFriend.amount <= 0;
@@ -71,13 +73,21 @@ export function FriendFormBottomSheet({
       setShowValidationError(true);
       return;
     }
-    if (friend) {
+
+    if (isCreateMode) {
+      addFriend(currentFriend);
+    } else if (friend) {
       updateFriend(friend.id, currentFriend);
     }
     handleClose();
   };
 
   const handleDelete = () => {
+    if (isCreateMode) {
+      handleClose();
+      return;
+    }
+
     if (friend) {
       removeFriend(friend.id);
       setSelectedFriendId(null);
@@ -138,22 +148,14 @@ export function FriendFormBottomSheet({
                     currentFriend.type === "조의금" ? "grayscale(1)" : "none",
                 }}
               >
-                {isEmojiCode(currentFriend.profileIcon || "") ? (
-                  <div style={{ fontSize: 120, lineHeight: 1 }}>
-                    {emojiCodeToString(currentFriend.profileIcon || "u1F428")}
-                  </div>
-                ) : (
-                  <Asset.Icon
-                    name={
-                      (currentFriend.profileIcon ||
-                        "icon-person-1-color") as unknown as Parameters<
-                        typeof Asset.Icon
-                      >[0]["name"]
-                    }
-                    frameShape={Asset.frameShape.CleanW24}
-                    style={{ width: 72, height: 72 }}
-                  />
-                )}
+                <Asset.Icon
+                  name={
+                    (currentFriend.profileIcon?.startsWith("icon-")
+                      ? currentFriend.profileIcon
+                      : "icon-face-cap") as IconName
+                  }
+                  frameShape={Asset.frameShape.CleanW100}
+                />
                 <div
                   style={{
                     position: "absolute",
@@ -233,22 +235,24 @@ export function FriendFormBottomSheet({
                   </Text>
                 </div>
               )}
-              <ListRow
-                contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
-                right={
-                  currentFriend.amount > 0 ? (
-                    <Text color={adaptive.grey600}>
-                      {currentFriend.amount.toLocaleString()}원
-                    </Text>
-                  ) : (
-                    <Text color={adaptive.grey500}>입력하기</Text>
-                  )
-                }
-                onClick={() => {
-                  onOpenAmountInput();
-                }}
-                arrowType="right"
-              />
+              <div className="add-card-pulse">
+                <ListRow
+                  contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
+                  right={
+                    currentFriend.amount > 0 ? (
+                      <Text color={adaptive.grey600}>
+                        {currentFriend.amount.toLocaleString()}원
+                      </Text>
+                    ) : (
+                      <Text color={adaptive.grey500}>입력하기</Text>
+                    )
+                  }
+                  onClick={() => {
+                    onOpenAmountInput();
+                  }}
+                  arrowType="right"
+                />
+              </div>
               {isAmountInvalid && (
                 <div style={{ padding: "6px 20px 0" }}>
                   <Text typography="t7" color={adaptive.red500}>
@@ -264,7 +268,14 @@ export function FriendFormBottomSheet({
                 }
                 verticalPadding="small"
                 arrowType={expanded ? "down" : "right"}
-                onClick={() => setExpanded(!expanded)}
+                onClick={() => {
+                  const nextExpanded = !expanded;
+                  setExpanded(nextExpanded);
+                  if (nextExpanded && !currentFriend.date) {
+                    const today = new Date().toISOString().split("T")[0];
+                    setEditingFriend({ ...currentFriend, date: today });
+                  }
+                }}
               />
               <div
                 style={{
@@ -363,7 +374,11 @@ export function FriendFormBottomSheet({
         open={isProfilePickerOpen}
         onClose={() => setIsProfilePickerOpen(false)}
         onHome={onHome}
-        currentIcon={currentFriend?.profileIcon || "u1F428"}
+        currentIcon={
+          (currentFriend?.profileIcon?.startsWith("icon-")
+            ? currentFriend.profileIcon
+            : "icon-face-cap") as IconName
+        }
         onSelect={(icon) => {
           if (currentFriend) {
             setEditingFriend({ ...currentFriend, profileIcon: icon });
