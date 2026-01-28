@@ -47,7 +47,7 @@ export function AmountInputPage({ value, onSave, onBack, onHome }: Props) {
       <Top
         title={
           <Top.TitleParagraph color={adaptive.grey900}>
-            보낸 돈을 입력해주세요
+            이번에 얼마를 전했나요?
           </Top.TitleParagraph>
         }
       />
