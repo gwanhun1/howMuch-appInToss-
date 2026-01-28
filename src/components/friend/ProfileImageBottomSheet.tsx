@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Asset, BottomSheet, Button, Text, Spacing } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
+import { emojiCodeToString } from "@/utils/emoji";
 
 interface Props {
   open: boolean;
@@ -10,6 +11,27 @@ interface Props {
   currentIcon: string;
 }
 
+const PROFILE_ICONS = [
+  { code: "u1F428", name: "smirking-face" },
+  { code: "u1F438", name: "smirking-face" },
+  { code: "u1F981", name: "smirking-face" },
+  { code: "u1F42E", name: "smirking-face" },
+  { code: "u1F436", name: "smirking-face" },
+  { code: "u1F42F", name: "smirking-face" },
+  { code: "u1F98A", name: "grinning-face" },
+  { code: "u1F435", name: "grinning-face" },
+  { code: "u1F430", name: "grinning-face" },
+  { code: "u1F43C", name: "grinning-face" },
+  { code: "u1F42D", name: "slightly-smiling-face" },
+  { code: "u1F437", name: "face-with-tears-of-joy" },
+  { code: "u1F47D", name: "grinning-face-big-eyes" },
+  { code: "u1F921", name: "grinning-face-smiling-eyes" },
+  { code: "u1F4A9", name: "grinning-sweat" },
+  { code: "u1F916", name: "rolling-on-floor-laughing" },
+  { code: "u1F608", name: "upside-down-face" },
+  { code: "u1F479", name: "winking-face" },
+] as const;
+
 export function ProfileImageBottomSheet({
   open,
   onClose,
@@ -17,33 +39,20 @@ export function ProfileImageBottomSheet({
   onSelect,
   currentIcon,
 }: Props) {
-  const defaultIcon = "icon-person-1-color";
-  const icons = [
-    "icon-person-1-color",
-    "icon-person-2-color",
-    "icon-person-3-color",
-    "icon-person-4-color",
-    "icon-person-5-color",
-    "icon-person-6-color",
-    "icon-person-7-color",
-    "icon-person-8-color",
-    "icon-person-9-color",
-    "icon-person-10-color",
-    "icon-person-11-color",
-    "icon-person-12-color",
-  ];
+  const defaultIcon = PROFILE_ICONS[0].code;
 
   const [selected, setSelected] = useState<string>(currentIcon);
 
   useEffect(() => {
     if (!open) return;
     setSelected(currentIcon || defaultIcon);
-  }, [open, currentIcon]);
+  }, [open, currentIcon, defaultIcon]);
 
   return (
     <BottomSheet
       open={open}
       onClose={onClose}
+      maxHeight="90vh"
       cta={
         <BottomSheet.DoubleCTA
           leftButton={
@@ -73,6 +82,8 @@ export function ProfileImageBottomSheet({
         style={{
           display: "flex",
           flexDirection: "column",
+          height: "80vh", // 고정 높이를 주어 뒤 시트를 가리도록 함
+          maxHeight: "90vh",
         }}
       >
         {/* Header */}
@@ -85,7 +96,7 @@ export function ProfileImageBottomSheet({
           }}
         >
           <Text typography="t4" fontWeight="bold">
-            프로필 이미지 선택
+            프로필 아이콘 선택
           </Text>
           <Asset.Icon
             name="icon-home-mono"
@@ -118,13 +129,9 @@ export function ProfileImageBottomSheet({
               marginBottom: 24,
             }}
           >
-            <Asset.Icon
-              name={
-                selected as unknown as Parameters<typeof Asset.Icon>[0]["name"]
-              }
-              frameShape={Asset.frameShape.CleanW24}
-              style={{ width: 64, height: 64 }}
-            />
+            <div style={{ fontSize: 64, lineHeight: 1 }}>
+              {emojiCodeToString(selected)}
+            </div>
             <div
               onClick={(e) => {
                 e.stopPropagation();
@@ -171,32 +178,30 @@ export function ProfileImageBottomSheet({
               padding: "0 16px 16px",
             }}
           >
-            {icons.map((icon) => (
+            {PROFILE_ICONS.map((iconItem) => (
               <div
-                key={icon}
-                onClick={() => setSelected(icon)}
+                key={iconItem.code}
+                onClick={() => setSelected(iconItem.code)}
                 style={{
                   aspectRatio: "1 / 1",
                   borderRadius: "50%",
                   backgroundColor:
-                    selected === icon ? adaptive.grey100 : adaptive.grey50,
+                    selected === iconItem.code
+                      ? adaptive.grey100
+                      : adaptive.grey50,
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
                   cursor: "pointer",
                   border:
-                    selected === icon
+                    selected === iconItem.code
                       ? `2px solid ${adaptive.blue500}`
                       : "none",
                 }}
               >
-                <Asset.Icon
-                  name={
-                    icon as unknown as Parameters<typeof Asset.Icon>[0]["name"]
-                  }
-                  frameShape={Asset.frameShape.CleanW24}
-                  style={{ width: 40, height: 40 }}
-                />
+                <div style={{ fontSize: 40, lineHeight: 1 }}>
+                  {emojiCodeToString(iconItem.code)}
+                </div>
               </div>
             ))}
           </div>

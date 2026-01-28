@@ -64,11 +64,11 @@ export default StyleSheet.create({
     'background': 'linear-gradient(
     120deg,
     rgba(49, 130, 246, 0) 35%,
-    rgba(49, 130, 246, 0.35) 50%,
+    rgba(49, 130, 246, 0.15) 50%,
     rgba(49, 130, 246, 0) 65%
   )',
     'transform': 'translateX(-120%)',
-    'animation': 'add-card-twinkle 2.8s ease-in-out infinite',
+    'animation': 'add-card-twinkle 5s ease-in-out infinite',
     'pointerEvents': 'none'
   },
   'h1': {

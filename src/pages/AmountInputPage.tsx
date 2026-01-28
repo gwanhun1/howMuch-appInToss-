@@ -14,33 +14,49 @@ export function AmountInputPage({ value, onSave, onBack, onHome }: Props) {
   const [amount, setAmount] = useState(value.toString());
 
   const handleChangeAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
+    const val = e.target.value.replace(/[^0-9]/g, "");
+    setAmount(val);
+  };
+
+  const handleSave = () => {
+    const num = Number(amount);
+    if (!isNaN(num)) {
+      onSave(num);
+    }
   };
 
   return (
-    <>
-      <AppHeader title="금액 입력" onBack={onBack} onClose={onHome} />
-      <Spacing size={12} />
-      <Top
-        title={
-          <Top.TitleParagraph size={22} color={adaptive.grey900}>
-            보낸 돈을 입력해주세요
-          </Top.TitleParagraph>
-        }
-      />
-      <div style={{ padding: "20px" }}>
+    <div
+      style={{
+        backgroundColor: adaptive.grey50,
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <AppHeader title="" onBack={onBack} onClose={onHome} />
+      <div style={{ flex: 1, padding: "0 24px" }}>
+        <Spacing size={32} />
+        <Top
+          title={
+            <Top.TitleParagraph color={adaptive.grey900}>
+              보낸 돈을 입력해주세요
+            </Top.TitleParagraph>
+          }
+        />
+        <Spacing size={24} />
         <TextField.Clearable
           variant="line"
-          label=""
+          label="금액"
           value={amount}
           onChange={handleChangeAmount}
           inputMode="numeric"
-          placeholder="금액"
+          placeholder="0"
+          suffix="원"
+          autoFocus
         />
       </div>
-      <FixedBottomCTA onClick={() => onSave(Number(amount))}>
-        확인
-      </FixedBottomCTA>
-    </>
+      <FixedBottomCTA onClick={handleSave}>확인</FixedBottomCTA>
+    </div>
   );
 }

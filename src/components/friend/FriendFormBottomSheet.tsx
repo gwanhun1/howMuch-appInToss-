@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Asset,
   BottomSheet,
@@ -12,13 +12,15 @@ import {
 import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "@/stores/useFriendStore";
 import type { Friend } from "@/types/friend";
+import { emojiCodeToString, isEmojiCode } from "@/utils/emoji";
+import { ProfileImageBottomSheet } from "@/components/friend/ProfileImageBottomSheet";
 
 interface Props {
   open: boolean;
   friend: Friend | null;
   onClose: () => void;
   onOpenAmountInput: () => void;
-  onOpenProfilePicker: () => void;
+  onHome: () => void;
 }
 
 export function FriendFormBottomSheet({
@@ -26,294 +28,349 @@ export function FriendFormBottomSheet({
   friend,
   onClose,
   onOpenAmountInput,
-  onOpenProfilePicker,
+  onHome,
 }: Props) {
   const updateFriend = useFriendStore((state) => state.updateFriend);
   const removeFriend = useFriendStore((state) => state.removeFriend);
   const setSelectedFriendId = useFriendStore(
     (state) => state.setSelectedFriendId,
   );
+  const editingFriend = useFriendStore((state) => state.editingFriend);
+  const setEditingFriend = useFriendStore((state) => state.setEditingFriend);
+
   const [expanded, setExpanded] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const [isProfilePickerOpen, setIsProfilePickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && friend && !editingFriend) {
+      // 만약 store에 editingFriend가 없으면 초기화 (보통 store의 openFriendForm에서 처리됨)
+      setEditingFriend({ ...friend });
+    }
+  }, [open, friend, editingFriend, setEditingFriend]);
+
   const handleClose = () => {
     setExpanded(false);
     setShowValidationError(false);
     onClose();
   };
 
-  if (!friend) return null;
+  // editingFriend가 아직 세팅 안됐으면 렌더링 안함
+  const currentFriend = editingFriend || friend;
+  if (!currentFriend) return null;
 
-  const isCreateMode = friend.name.trim() === "";
-  const isNameInvalid = showValidationError && friend.name.trim() === "";
-  const isTypeInvalid = showValidationError && friend.type == null;
-  const isAmountInvalid = showValidationError && friend.amount <= 0;
+  const isCreateMode = friend ? friend.name.trim() === "" : true;
+  const isNameInvalid = showValidationError && currentFriend.name.trim() === "";
+  const isTypeInvalid = showValidationError && currentFriend.type == null;
+  const isAmountInvalid = showValidationError && currentFriend.amount <= 0;
 
   const handleSave = () => {
     const isValid =
-      friend.name.trim() !== "" && friend.type != null && friend.amount > 0;
+      currentFriend.name.trim() !== "" && currentFriend.type != null;
     if (!isValid) {
       setShowValidationError(true);
       return;
+    }
+    if (friend) {
+      updateFriend(friend.id, currentFriend);
     }
     handleClose();
   };
 
   const handleDelete = () => {
-    removeFriend(friend.id);
-    setSelectedFriendId(null);
+    if (friend) {
+      removeFriend(friend.id);
+      setSelectedFriendId(null);
+    }
     handleClose();
   };
-
-  const formattedDate =
-    friend.date.trim() === "" ? "" : friend.date.replaceAll("-", ".");
 
   const relationOptions = ["친구", "가족", "지인", "직장", "동료"];
 
   return (
-    <BottomSheet open={open} onClose={handleClose} maxHeight={"90vh"}>
-      <div
-        style={{
-          padding: "16px 20px",
-        }}
-      >
-        <Text typography="t4" fontWeight="bold">
-          {isCreateMode ? "추가하기" : `${friend.name} 정보 수정`}
-        </Text>
-      </div>
-
-      <Spacing size={15} />
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
+    <>
+      <BottomSheet
+        open={open}
+        onClose={handleClose}
+        maxHeight={"90vh"}
+        header={
+          <div style={{ padding: "16px 20px" }}>
+            <Text typography="t4" fontWeight="bold">
+              {isCreateMode ? "추가하기" : `${currentFriend.name} 정보 수정`}
+            </Text>
+          </div>
+        }
       >
         <div
-          onClick={onOpenProfilePicker}
           style={{
-            width: 100,
-            height: 100,
-            borderRadius: "50%",
-            backgroundColor: "#D6E6FB",
             display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            position: "relative",
-            cursor: "pointer",
+            flexDirection: "column",
+            maxHeight: "90vh", // 시트 전체의 최대 높이만 제한
           }}
         >
-          <Asset.Icon
-            name={
-              friend.profileIcon as unknown as Parameters<
-                typeof Asset.Icon
-              >[0]["name"]
-            }
-            frameShape={Asset.frameShape.CleanW24}
-            style={{ width: 72, height: 72 }}
-          />
+          {/* 스크롤 가능한 본문 영역 */}
           <div
             style={{
-              position: "absolute",
-              bottom: 0,
-              right: 0,
-              backgroundColor: "#ffffff",
-              borderRadius: "50%",
-              width: "28px",
-              height: "28px",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              overflowY: "auto",
+              paddingBottom: "12px",
             }}
           >
-            <Asset.Icon
-              name="icon-plus-mono"
-              frameShape={Asset.frameShape.CleanW16}
-              color={adaptive.grey500}
-              style={{ width: 30, height: 30 }}
-            />
-          </div>
-        </div>
-      </div>
-      <Spacing size={2} />
-
-      <List>
-        <div style={{ flex: 1, width: "100%" }}>
-          <TextField
-            variant="line"
-            label="이름"
-            labelOption="sustain"
-            value={friend.name}
-            onChange={(e) => updateFriend(friend.id, { name: e.target.value })}
-            placeholder="이름"
-            hasError={isNameInvalid}
-            help={isNameInvalid ? "이름을 입력해주세요" : undefined}
-            paddingTop={4}
-            paddingBottom={4}
-          />
-        </div>
-        <ListRow
-          contents={<ListRow.Texts type="1RowTypeB" top="어떤 상황인가요?" />}
-          right={
-            <div style={{ display: "flex", gap: "8px" }}>
-              <Button
-                variant={friend.type === "축의금" ? "fill" : "weak"}
-                size="small"
-                onClick={() => {
-                  if (showValidationError) setShowValidationError(false);
-                  updateFriend(friend.id, { type: "축의금" });
+            <Spacing size={10} />
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <div
+                onClick={() => setIsProfilePickerOpen(true)}
+                style={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: "50%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  position: "relative",
+                  cursor: "pointer",
+                  filter:
+                    currentFriend.type === "조의금" ? "grayscale(1)" : "none",
                 }}
               >
-                축의금
-              </Button>
-              <Button
-                variant={friend.type === "조의금" ? "fill" : "weak"}
-                size="small"
-                onClick={() => {
-                  if (showValidationError) setShowValidationError(false);
-                  updateFriend(friend.id, { type: "조의금" });
-                }}
-              >
-                조의금
-              </Button>
-            </div>
-          }
-        />
-        {isTypeInvalid ? (
-          <div style={{ padding: "6px 20px 0" }}>
-            <Text
-              typography="t7"
-              color={adaptive.red500}
-              style={{ fontSize: "12px" }}
-            >
-              어떤 상황인지 선택해주세요
-            </Text>
-          </div>
-        ) : null}
-        <ListRow
-          contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
-          right={
-            friend.amount > 0 ? (
-              <Text color={adaptive.grey600}>
-                {friend.amount.toLocaleString()}원
-              </Text>
-            ) : (
-              <Text color={adaptive.grey500}>입력하기</Text>
-            )
-          }
-          onClick={onOpenAmountInput}
-          arrowType="right"
-        />
-        {isAmountInvalid ? (
-          <div style={{ padding: "6px 20px 0" }}>
-            <Text
-              typography="t7"
-              color={adaptive.red500}
-              style={{ fontSize: "12px" }}
-            >
-              금액을 입력해주세요
-            </Text>
-          </div>
-        ) : null}
-        <ListRow
-          contents={
-            <Text
-              typography="t7"
-              color={adaptive.grey600}
-              style={{ fontSize: "13px" }}
-            >
-              추가 정보 (선택)
-            </Text>
-          }
-          verticalPadding="small"
-          arrowType={expanded ? "down" : "right"}
-          onClick={() => setExpanded(!expanded)}
-        />
-        <div
-          style={{
-            maxHeight: expanded ? "1000px" : "0",
-            overflow: "hidden",
-            transition: "max-height 0.3s ease-in-out",
-          }}
-        >
-          <ListRow
-            verticalPadding="small"
-            horizontalPadding="small"
-            contents={
-              <div style={{ flex: 1 }}>
-                <Text
-                  typography="t7"
-                  color={adaptive.grey600}
-                  style={{ marginBottom: "4px" }}
-                >
-                  관계
-                </Text>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  {relationOptions.map((rel) => (
-                    <Button
-                      key={rel}
-                      variant={friend.relation === rel ? "fill" : "weak"}
-                      size="small"
-                      onClick={() => updateFriend(friend.id, { relation: rel })}
-                    >
-                      {rel}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            }
-          />
-          <ListRow
-            verticalPadding="small"
-            horizontalPadding="small"
-            contents={
-              <div style={{ flex: 1 }}>
-                <Text
-                  typography="t7"
-                  color={adaptive.grey600}
-                  style={{ marginBottom: "4px" }}
-                >
-                  날짜
-                </Text>
-                <div style={{ position: "relative" }}>
-                  <TextField.Button
-                    variant="line"
-                    label=""
-                    value={formattedDate}
-                    placeholder="선택"
-                    paddingTop={4}
-                    paddingBottom={4}
-                  />
-                  <input
-                    type="date"
-                    value={friend.date}
-                    onChange={(e) =>
-                      updateFriend(friend.id, { date: e.target.value })
+                {isEmojiCode(currentFriend.profileIcon || "") ? (
+                  <div style={{ fontSize: 120, lineHeight: 1 }}>
+                    {emojiCodeToString(currentFriend.profileIcon || "u1F428")}
+                  </div>
+                ) : (
+                  <Asset.Icon
+                    name={
+                      (currentFriend.profileIcon ||
+                        "icon-person-1-color") as unknown as Parameters<
+                        typeof Asset.Icon
+                      >[0]["name"]
                     }
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      opacity: 0,
-                      cursor: "pointer",
-                    }}
+                    frameShape={Asset.frameShape.CleanW24}
+                    style={{ width: 72, height: 72 }}
+                  />
+                )}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    backgroundColor: "#ffffff",
+                    borderRadius: "50%",
+                    width: "28px",
+                    height: "28px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <Asset.Icon
+                    name="icon-plus-mono"
+                    frameShape={Asset.frameShape.CleanW16}
+                    color={adaptive.grey500}
+                    style={{ width: 30, height: 30 }}
                   />
                 </div>
               </div>
-            }
-          />
+            </div>
+            <Spacing size={2} />
+
+            <List>
+              <TextField
+                variant="line"
+                label="이름"
+                labelOption="sustain"
+                value={currentFriend.name}
+                onChange={(e) =>
+                  setEditingFriend({ ...currentFriend, name: e.target.value })
+                }
+                placeholder="이름"
+                hasError={isNameInvalid}
+                help={isNameInvalid ? "이름을 입력해주세요" : undefined}
+              />
+              <ListRow
+                contents={
+                  <ListRow.Texts type="1RowTypeB" top="어떤 상황인가요?" />
+                }
+                right={
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <Button
+                      variant={
+                        currentFriend.type === "축의금" ? "fill" : "weak"
+                      }
+                      size="small"
+                      onClick={() => {
+                        if (showValidationError) setShowValidationError(false);
+                        setEditingFriend({ ...currentFriend, type: "축의금" });
+                      }}
+                    >
+                      축의금
+                    </Button>
+                    <Button
+                      variant={
+                        currentFriend.type === "조의금" ? "fill" : "weak"
+                      }
+                      size="small"
+                      onClick={() => {
+                        if (showValidationError) setShowValidationError(false);
+                        setEditingFriend({ ...currentFriend, type: "조의금" });
+                      }}
+                    >
+                      조의금
+                    </Button>
+                  </div>
+                }
+              />
+              {isTypeInvalid && (
+                <div style={{ padding: "6px 20px 0" }}>
+                  <Text typography="t7" color={adaptive.red500}>
+                    어떤 상황인지 선택해주세요
+                  </Text>
+                </div>
+              )}
+              <ListRow
+                contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
+                right={
+                  currentFriend.amount > 0 ? (
+                    <Text color={adaptive.grey600}>
+                      {currentFriend.amount.toLocaleString()}원
+                    </Text>
+                  ) : (
+                    <Text color={adaptive.grey500}>입력하기</Text>
+                  )
+                }
+                onClick={() => {
+                  onOpenAmountInput();
+                }}
+                arrowType="right"
+              />
+              {isAmountInvalid && (
+                <div style={{ padding: "6px 20px 0" }}>
+                  <Text typography="t7" color={adaptive.red500}>
+                    금액을 입력해주세요
+                  </Text>
+                </div>
+              )}
+              <ListRow
+                contents={
+                  <Text typography="t7" color={adaptive.grey600}>
+                    추가 정보 (선택)
+                  </Text>
+                }
+                verticalPadding="small"
+                arrowType={expanded ? "down" : "right"}
+                onClick={() => setExpanded(!expanded)}
+              />
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateRows: expanded ? "1fr" : "0fr",
+                  transition: "grid-template-rows 0.3s ease-out",
+                  overflow: "hidden",
+                }}
+              >
+                <div style={{ minHeight: 0 }}>
+                  <div
+                    style={{
+                      padding: "0 20px",
+                      opacity: expanded ? 1 : 0,
+                      transition: "opacity 0.2s ease-in-out",
+                    }}
+                  >
+                    <Spacing size={12} />
+                    <Text typography="t7" color={adaptive.grey600}>
+                      관계
+                    </Text>
+                    <Spacing size={8} />
+                    <div
+                      style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}
+                    >
+                      {relationOptions.map((rel) => (
+                        <Button
+                          key={rel}
+                          variant={
+                            currentFriend.relation === rel ? "fill" : "weak"
+                          }
+                          size="small"
+                          onClick={() =>
+                            setEditingFriend({
+                              ...currentFriend,
+                              relation: rel,
+                            })
+                          }
+                        >
+                          {rel}
+                        </Button>
+                      ))}
+                    </div>
+                    <Spacing size={16} />
+                    <TextField
+                      variant="line"
+                      label="날짜"
+                      type="date"
+                      value={currentFriend.date}
+                      onChange={(e) =>
+                        setEditingFriend({
+                          ...currentFriend,
+                          date: e.target.value,
+                        })
+                      }
+                    />
+                    <Spacing size={20} />
+                  </div>
+                </div>
+              </div>
+            </List>
+          </div>
+
+          {/* 하단 고정 버튼 영역 */}
+          <div
+            style={{
+              padding: "16px 20px calc(24px + env(safe-area-inset-bottom))",
+              display: "flex",
+              gap: "12px",
+              backgroundColor: "#ffffff",
+              borderTop: `1px solid ${adaptive.grey100}`,
+              boxShadow: "0 -4px 10px rgba(0,0,0,0.02)",
+            }}
+          >
+            <Button
+              style={{ flex: 1 }}
+              variant="weak"
+              size="medium"
+              onClick={handleDelete}
+            >
+              삭제
+            </Button>
+            <Button
+              style={{ flex: 1 }}
+              variant="fill"
+              size="medium"
+              onClick={handleSave}
+            >
+              저장
+            </Button>
+          </div>
         </div>
-      </List>
-      <div style={{ padding: "10px", display: "flex", gap: "8px" }}>
-        <Button onClick={handleDelete} style={{ flex: 1 }} variant="weak">
-          삭제
-        </Button>
-        <Button onClick={handleSave} style={{ flex: 1 }} variant="fill">
-          저장
-        </Button>
-      </div>
-    </BottomSheet>
+      </BottomSheet>
+
+      <ProfileImageBottomSheet
+        open={isProfilePickerOpen}
+        onClose={() => setIsProfilePickerOpen(false)}
+        onHome={onHome}
+        currentIcon={currentFriend?.profileIcon || "u1F428"}
+        onSelect={(icon) => {
+          if (currentFriend) {
+            setEditingFriend({ ...currentFriend, profileIcon: icon });
+          }
+          setIsProfilePickerOpen(false);
+        }}
+      />
+    </>
   );
 }
