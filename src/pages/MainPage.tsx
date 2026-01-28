@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Spacing, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import { AppHeader } from "@/components/common/AppHeader";
+// import { AppHeader } from "@/components/common/AppHeader";
 import { useFriendStore } from "@/stores/useFriendStore";
 import { FriendFormBottomSheet } from "@/components/friend/FriendFormBottomSheet";
 import { AmountInputPage } from "@/pages/AmountInputPage";
