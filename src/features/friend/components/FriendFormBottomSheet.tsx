@@ -279,6 +279,7 @@ export function FriendFormBottomSheet({
               variant="fill"
               size="medium"
               onClick={handleSave}
+              loading={isSubmitting}
               disabled={isSubmitting}
             >
               저장

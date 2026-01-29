@@ -2,9 +2,11 @@ import type { Friend } from "../types/friend";
 import { FriendCard } from "./FriendCard";
 import { AddFriendCard } from "./AddFriendCard";
 import { AdCard } from "./AdCard";
+import { FriendCardSkeleton } from "./FriendCardSkeleton";
 
 interface FriendListProps {
   friends: Friend[];
+  isLoading: boolean;
   lastAdMilestoneShown: number;
   onAddFriend: () => void;
   onFriendClick: (friendId: string) => void;
@@ -12,6 +14,7 @@ interface FriendListProps {
 
 export function FriendList({
   friends,
+  isLoading,
   lastAdMilestoneShown,
   onAddFriend,
   onFriendClick,
@@ -34,16 +37,19 @@ export function FriendList({
       }}
     >
       <AddFriendCard onClick={onAddFriend} />
+      {isLoading
+        ? Array.from({ length: 5 }).map((_, i) => (
+            <FriendCardSkeleton key={i} />
+          ))
+        : friends.map((friend) => (
+            <FriendCard
+              key={friend.id}
+              friend={friend}
+              onClick={() => onFriendClick(friend.id)}
+            />
+          ))}
 
-      {friends.map((friend) => (
-        <FriendCard
-          key={friend.id}
-          friend={friend}
-          onClick={() => onFriendClick(friend.id)}
-        />
-      ))}
-
-      {shouldShowNextAdBadge && <AdCard />}
+      {!isLoading && shouldShowNextAdBadge && <AdCard />}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Spacing, Text, Badge } from "@toss/tds-mobile";
+import { Spacing, Text, Badge, Skeleton } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 // import { AppHeader } from "../../../components/common/AppHeader";
 import { useFriendStore } from "../stores/useFriendStore";
@@ -7,6 +7,7 @@ import { FriendFormBottomSheet } from "../components/FriendFormBottomSheet";
 import { AmountInputPage } from "./AmountInputPage";
 import { FriendList } from "../components/FriendList";
 import { CoinRain } from "../components/CoinRain";
+import { GlobalErrorView } from "../components/GlobalErrorView";
 
 export function MainPage() {
   const {
@@ -28,6 +29,8 @@ export function MainPage() {
     setFilterType,
     isCelebrating,
     setCelebrating,
+    isLoading,
+    error,
   } = useFriendStore();
 
   // 서비스 첫 진입 시 데이터 초기화 및 메인 페이지 보장
@@ -48,6 +51,12 @@ export function MainPage() {
   });
 
   const selectedFriend = friends.find((f) => f.id === selectedFriendId) || null;
+
+  if (error) {
+    return (
+      <GlobalErrorView description={error} onRetry={() => initializeStore()} />
+    );
+  }
 
   return (
     <div
@@ -93,27 +102,33 @@ export function MainPage() {
               <Text typography="t4" fontWeight="bold" color={adaptive.grey900}>
                 오간 마음을 확인해보세요
               </Text>
-              {friends.length > 0 && (
-                <Badge
-                  color="blue"
-                  variant="fill"
-                  size="small"
-                  className="premium-amount-badge"
-                  style={{
-                    maxWidth: "120px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    display: "inline-block",
-                    flexShrink: 0,
-                  }}
-                >
-                  총{" "}
-                  {friends
-                    .reduce((acc, f) => acc + f.amount, 0)
-                    .toLocaleString()}
-                  원
-                </Badge>
+              {isLoading ? (
+                <Skeleton.Item
+                  style={{ width: 80, height: 24, borderRadius: 12 }}
+                />
+              ) : (
+                friends.length > 0 && (
+                  <Badge
+                    color="blue"
+                    variant="fill"
+                    size="small"
+                    className="premium-amount-badge"
+                    style={{
+                      maxWidth: "120px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      display: "inline-block",
+                      flexShrink: 0,
+                    }}
+                  >
+                    총{" "}
+                    {friends
+                      .reduce((acc, f) => acc + f.amount, 0)
+                      .toLocaleString()}
+                    원
+                  </Badge>
+                )
               )}
             </div>
 
@@ -159,6 +174,7 @@ export function MainPage() {
 
             <FriendList
               friends={filteredFriends}
+              isLoading={isLoading}
               lastAdMilestoneShown={lastAdMilestoneShown}
               onAddFriend={startAddingFriend}
               onFriendClick={openFriendForm}

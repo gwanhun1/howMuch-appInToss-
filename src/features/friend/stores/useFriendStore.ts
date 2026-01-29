@@ -17,6 +17,8 @@ interface FriendStore {
   userIdentifier: string | null;
   filterType: "all" | "wedding" | "funeral";
   isCelebrating: boolean;
+  isLoading: boolean;
+  error: string | null;
 
   // Actions
   setUserIdentifier: (id: string) => void;
@@ -73,12 +75,15 @@ export const useFriendStore = create<FriendStore>()(
       userIdentifier: null,
       filterType: "all",
       isCelebrating: false,
+      isLoading: true,
+      error: null,
 
       setUserIdentifier: (id) => set({ userIdentifier: id }),
       setFilterType: (type) => set({ filterType: type }),
       setCelebrating: (isCelebrating) => set({ isCelebrating }),
 
       initializeStore: async () => {
+        set({ isLoading: true, error: null });
         try {
           // 1. Firebase 익명 로그인 (백그라운드)
           const userCredential = await signInAnonymously(auth);
@@ -111,6 +116,11 @@ export const useFriendStore = create<FriendStore>()(
           }
         } catch (error) {
           console.error("초기화 및 로그인 실패:", error);
+          set({
+            error: "데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+          });
+        } finally {
+          set({ isLoading: false });
         }
       },
 
