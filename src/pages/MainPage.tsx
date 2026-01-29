@@ -22,10 +22,13 @@ export function MainPage() {
     resetToMain,
     startAddingFriend,
     lastAdMilestoneShown,
+    initializeStore,
   } = useFriendStore();
 
-  // 서비스 첫 진입 시 항상 메인 페이지가 뜨도록 보장
+  // 서비스 첫 진입 시 데이터 초기화 및 메인 페이지 보장
   useEffect(() => {
+    initializeStore();
+
     if (currentPage !== "main") {
       resetToMain();
     }
