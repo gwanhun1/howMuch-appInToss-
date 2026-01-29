@@ -53,15 +53,15 @@ export function FormAdditionalInfo({
             ))}
           </div>
           <Spacing size={16} />
-          <TextField
-            variant="line"
-            label="날짜"
-            type="date"
-            value={date}
-            onChange={(e) => onDateChange(e.target.value)}
-          />
-          <Spacing size={20} />
         </div>
+        <TextField
+          variant="line"
+          label="날짜"
+          type="date"
+          value={date}
+          onChange={(e) => onDateChange(e.target.value)}
+        />
+        <Spacing size={20} />
       </div>
     </div>
   );

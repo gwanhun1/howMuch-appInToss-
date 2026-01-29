@@ -14,6 +14,7 @@ interface FriendListProps {
   lastAdMilestoneShown: number;
   onAddFriend: () => void;
   onFriendClick: (friendId: string) => void;
+  onToggleFavorite: (friendId: string) => void;
 }
 
 export function FriendList({
@@ -25,6 +26,7 @@ export function FriendList({
   lastAdMilestoneShown,
   onAddFriend,
   onFriendClick,
+  onToggleFavorite,
 }: FriendListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -70,6 +72,7 @@ export function FriendList({
           key={friend.id}
           friend={friend}
           onClick={() => onFriendClick(friend.id)}
+          onToggleFavorite={onToggleFavorite}
         />
       ))}
 

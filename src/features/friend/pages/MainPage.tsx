@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Spacing, Text, Badge, Skeleton } from "@toss/tds-mobile";
+import { Spacing, Text, Badge, Skeleton, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "../stores/useFriendStore";
 import { FriendFormBottomSheet } from "../components/FriendFormBottomSheet";
@@ -9,6 +9,8 @@ import { CoinRain } from "../components/CoinRain";
 import { GlobalErrorView } from "../components/GlobalErrorView";
 
 export function MainPage() {
+  const { openToast } = useToast();
+
   const {
     friends,
     selectedFriendId,
@@ -34,6 +36,7 @@ export function MainPage() {
     fetchMoreFriends,
     hasMore,
     isLoadingMore,
+    updateFriend,
   } = useFriendStore();
 
   // 서비스 첫 진입 시 데이터 초기화 및 메인 페이지 보장
@@ -187,6 +190,29 @@ export function MainPage() {
               lastAdMilestoneShown={lastAdMilestoneShown}
               onAddFriend={startAddingFriend}
               onFriendClick={openFriendForm}
+              onToggleFavorite={async (id) => {
+                const friend = friends.find((f) => f.id === id);
+                if (friend) {
+                  const willBeFavorite = !friend.isFavorite;
+
+                  try {
+                    await updateFriend(id, { isFavorite: willBeFavorite });
+
+                    if (willBeFavorite) {
+                      openToast("⭐ 중요 표시되었습니다");
+                    } else {
+                      openToast("중요 표시가 해제되었습니다");
+                    }
+                  } catch (error) {
+                    console.error("즐겨찾기 토글 실패:", error);
+                    const errorMessage =
+                      error instanceof Error
+                        ? error.message
+                        : "중요 표시 변경에 실패했습니다.";
+                    openToast(errorMessage);
+                  }
+                }
+              }}
             />
           </div>
         </>

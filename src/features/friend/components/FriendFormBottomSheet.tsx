@@ -93,33 +93,44 @@ export function FriendFormBottomSheet({
 
     try {
       if (isCreateMode) {
-        addFriend(currentFriend);
+        await addFriend(currentFriend);
         openToast("기록이 추가되었습니다.");
         setCelebrating(true); // 등록 시에만 애니메이션 실행
       } else if (friend) {
-        updateFriend(friend.id, currentFriend);
+        await updateFriend(friend.id, currentFriend);
         openToast("정보가 수정되었습니다.");
         // 수정 시에는 setCelebrating 호출하지 않음
       }
       handleClose();
     } catch (error) {
       console.error("저장 실패:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "저장에 실패했습니다.";
+      openToast(errorMessage);
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (isCreateMode) {
       handleClose();
       return;
     }
 
     if (friend) {
-      removeFriend(friend.id);
-      setSelectedFriendId(null);
-      openToast("기록이 삭제되었습니다.");
+      try {
+        await removeFriend(friend.id);
+        setSelectedFriendId(null);
+        openToast("기록이 삭제되었습니다.");
+        handleClose();
+      } catch (error) {
+        console.error("삭제 실패:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "삭제에 실패했습니다.";
+        openToast(errorMessage);
+      }
     }
-    handleClose();
   };
 
   return (

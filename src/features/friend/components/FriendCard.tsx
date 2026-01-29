@@ -8,9 +8,14 @@ type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 interface FriendCardProps {
   friend: Friend;
   onClick: () => void;
+  onToggleFavorite: (id: string) => void;
 }
 
-export function FriendCard({ friend, onClick }: FriendCardProps) {
+export function FriendCard({
+  friend,
+  onClick,
+  onToggleFavorite,
+}: FriendCardProps) {
   const isCondolence = friend.type === "조의금";
   const isCgratulatory = friend.type === "축의금";
 
@@ -58,9 +63,29 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
         minHeight: "148px",
       }}
     >
-      {/* 즐겨찾기 별 */}
+      {/* 즐겨찾기 별 (활성화된 경우만 표시, 클릭 시 해제 가능) */}
       {friend.isFavorite && (
-        <div style={{ position: "absolute", top: "8px", left: "8px" }}>
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(friend.id);
+          }}
+          style={{
+            position: "absolute",
+            top: "8px",
+            left: "8px",
+            cursor: "pointer",
+            padding: "4px",
+            borderRadius: "50%",
+            transition: "background-color 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.05)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+        >
           <Asset.Icon
             name="icon-star-yellow"
             frameShape={Asset.frameShape.CleanW16}

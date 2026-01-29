@@ -208,23 +208,39 @@ export const useFriendStore = create<FriendStore>()(
       addFriend: async (friend) => {
         const { userIdentifier, friends, totalAmount, lastAdMilestoneShown } =
           get();
-        if (!userIdentifier) return;
+        if (!userIdentifier) {
+          throw new Error("사용자 인증이 필요합니다.");
+        }
 
         const newFriend = { ...friend, createdAt: new Date().toISOString() };
-        const recordRef = doc(
-          db,
-          "users",
-          userIdentifier,
-          "records",
-          newFriend.id,
-        );
-        const userDocRef = doc(db, "users", userIdentifier);
+        const newTotalAmount = totalAmount + newFriend.amount;
+        const newCount = friends.length + 1;
+        const isMilestone = newCount > 0 && newCount % 5 === 0;
+        const nextMilestone = isMilestone ? newCount : lastAdMilestoneShown;
 
+        // 낙관적 업데이트: 먼저 UI 업데이트
+        const optimisticFriends = [newFriend, ...friends].sort((a, b) => {
+          if (a.isFavorite && !b.isFavorite) return -1;
+          if (!a.isFavorite && b.isFavorite) return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        set({
+          friends: optimisticFriends,
+          totalAmount: newTotalAmount,
+          lastAdMilestoneShown: nextMilestone,
+        });
+
+        // Firebase에 저장 시도
         try {
-          const newTotalAmount = totalAmount + newFriend.amount;
-          const newCount = friends.length + 1;
-          const isMilestone = newCount > 0 && newCount % 5 === 0;
-          const nextMilestone = isMilestone ? newCount : lastAdMilestoneShown;
+          const recordRef = doc(
+            db,
+            "users",
+            userIdentifier,
+            "records",
+            newFriend.id,
+          );
+          const userDocRef = doc(db, "users", userIdentifier);
 
           if (isMilestone && nextMilestone > lastAdMilestoneShown) {
             alert(`광고(테스트): 친구 ${nextMilestone}명 달성!`);
@@ -237,83 +253,100 @@ export const useFriendStore = create<FriendStore>()(
             lastAdMilestoneShown: nextMilestone,
           });
           await batch.commit();
-
-          set({
-            friends: [newFriend, ...friends].sort((a, b) => {
-              if (a.isFavorite && !b.isFavorite) return -1;
-              if (!a.isFavorite && b.isFavorite) return 1;
-              return a.name.localeCompare(b.name);
-            }),
-            totalAmount: newTotalAmount,
-            lastAdMilestoneShown: nextMilestone,
-          });
         } catch (error) {
+          // 실패 시 롤백
+          set({
+            friends,
+            totalAmount,
+            lastAdMilestoneShown,
+          });
           console.error("추가 실패:", error);
+          throw new Error("기록 저장에 실패했습니다. 다시 시도해주세요.");
         }
       },
 
       removeFriend: async (id) => {
         const { userIdentifier, friends, totalAmount } = get();
-        if (!userIdentifier) return;
+        if (!userIdentifier) {
+          throw new Error("사용자 인증이 필요합니다.");
+        }
 
         const friendToRemove = friends.find((f) => f.id === id);
         if (!friendToRemove) return;
 
+        const newTotalAmount = Math.max(0, totalAmount - friendToRemove.amount);
+
+        // 낙관적 업데이트: 먼저 UI에서 제거
+        set({
+          friends: friends.filter((f) => f.id !== id),
+          totalAmount: newTotalAmount,
+        });
+
+        // Firebase에서 삭제 시도
         try {
           const recordRef = doc(db, "users", userIdentifier, "records", id);
           const userDocRef = doc(db, "users", userIdentifier);
-          const newTotalAmount = Math.max(
-            0,
-            totalAmount - friendToRemove.amount,
-          );
 
           const batch = writeBatch(db);
           batch.delete(recordRef);
           batch.update(userDocRef, { totalAmount: newTotalAmount });
           await batch.commit();
-
-          set({
-            friends: friends.filter((f) => f.id !== id),
-            totalAmount: newTotalAmount,
-          });
         } catch (error) {
+          // 실패 시 롤백
+          set({
+            friends,
+            totalAmount,
+          });
           console.error("삭제 실패:", error);
+          throw new Error("기록 삭제에 실패했습니다. 다시 시도해주세요.");
         }
       },
 
       updateFriend: async (id, updates) => {
         const { userIdentifier, friends, totalAmount } = get();
-        if (!userIdentifier) return;
+        if (!userIdentifier) {
+          throw new Error("사용자 인증이 필요합니다.");
+        }
 
         const oldFriend = friends.find((f) => f.id === id);
         if (!oldFriend) return;
 
+        let newTotalAmount = totalAmount;
+        if (updates.amount !== undefined) {
+          newTotalAmount = totalAmount - oldFriend.amount + updates.amount;
+        }
+
+        // 낙관적 업데이트: 먼저 UI 업데이트
+        const optimisticFriends = friends
+          .map((f) => (f.id === id ? { ...f, ...updates } : f))
+          .sort((a, b) => {
+            if (a.isFavorite && !b.isFavorite) return -1;
+            if (!a.isFavorite && b.isFavorite) return 1;
+            return a.name.localeCompare(b.name);
+          });
+
+        set({
+          friends: optimisticFriends,
+          totalAmount: newTotalAmount,
+        });
+
+        // Firebase에 저장 시도
         try {
           const recordRef = doc(db, "users", userIdentifier, "records", id);
           const userDocRef = doc(db, "users", userIdentifier);
-
-          let newTotalAmount = totalAmount;
-          if (updates.amount !== undefined) {
-            newTotalAmount = totalAmount - oldFriend.amount + updates.amount;
-          }
 
           const batch = writeBatch(db);
           batch.update(recordRef, updates);
           batch.update(userDocRef, { totalAmount: newTotalAmount });
           await batch.commit();
-
-          set({
-            friends: friends
-              .map((f) => (f.id === id ? { ...f, ...updates } : f))
-              .sort((a, b) => {
-                if (a.isFavorite && !b.isFavorite) return -1;
-                if (!a.isFavorite && b.isFavorite) return 1;
-                return a.name.localeCompare(b.name);
-              }),
-            totalAmount: newTotalAmount,
-          });
         } catch (error) {
+          // 실패 시 롤백
+          set({
+            friends,
+            totalAmount,
+          });
           console.error("수정 실패:", error);
+          throw new Error("기록 수정에 실패했습니다. 다시 시도해주세요.");
         }
       },
 
