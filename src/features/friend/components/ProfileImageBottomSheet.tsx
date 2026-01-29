@@ -23,6 +23,13 @@ const PROFILE_ICONS: Array<{ code: IconName }> = [
   { code: "icon-anipang" },
   { code: "icon-penguin-face" },
   { code: "icon-dog-siback-face1" },
+  { code: "icon-fairy-face" },
+  { code: "icon-emoji-pig-face" },
+  { code: "icon-emoji-angry-face-with-horns" },
+  { code: "icon-emoji-cow-yellow" },
+  { code: "icon-mole" },
+  { code: "icon-king-blonde" },
+  { code: "icon-blue-dragon" },
 ];
 
 const DEFAULT_ICON: IconName = "icon-face-cap";
@@ -79,7 +86,7 @@ export function ProfileImageBottomSheet({
         style={{
           display: "flex",
           flexDirection: "column",
-          height: "80vh", // 고정 높이를 주어 뒤 시트를 가리도록 함
+          height: "65vh", // 고정 높이를 주어 뒤 시트를 가리도록 함
           maxHeight: "90vh",
         }}
       >

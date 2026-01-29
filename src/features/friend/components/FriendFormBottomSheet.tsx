@@ -173,14 +173,21 @@ export function FriendFormBottomSheet({
           style={{
             display: "flex",
             flexDirection: "column",
-            maxHeight: "90vh",
+            height: "calc(90vh - 220px)", // header 높이 제외
+            position: "relative",
           }}
         >
           {/* 스크롤 가능한 본문 영역 */}
           <div
+            onTouchMove={(e) => {
+              // 스크롤 중 BottomSheet 드래그 방지
+              e.stopPropagation();
+            }}
             style={{
+              flex: 1,
               overflowY: "auto",
-              paddingBottom: "12px",
+              overflowX: "hidden",
+              // paddingBottom: "80px", // 버튼 영역 높이만큼 여백
             }}
           >
             <Spacing size={10} />
@@ -286,21 +293,26 @@ export function FriendFormBottomSheet({
             </List>
           </div>
 
-          {/* 하단 고정 버튼 영역 */}
+          {/* 하단 고정 버튼 영역 - sticky로 하단 고정 */}
           <div
             style={{
-              padding: "16px 20px calc(24px + env(safe-area-inset-bottom))",
+              position: "sticky",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: "14px 10px",
               display: "flex",
-              gap: "12px",
+              gap: "4px",
               backgroundColor: "#ffffff",
               borderTop: `1px solid ${adaptive.grey100}`,
               boxShadow: "0 -4px 10px rgba(0,0,0,0.02)",
+              zIndex: 10,
             }}
           >
             <Button
               style={{ flex: 1 }}
               variant="weak"
-              size="medium"
+              size="large"
               onClick={handleDelete}
             >
               삭제

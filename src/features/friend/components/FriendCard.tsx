@@ -60,8 +60,11 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
     >
       {/* 즐겨찾기 별 */}
       {friend.isFavorite && (
-        <div style={{ position: "absolute", top: "10px", left: "10px" }}>
-          <Asset.Icon name="icon-star-yellow" size={16} />
+        <div style={{ position: "absolute", top: "8px", left: "8px" }}>
+          <Asset.Icon
+            name="icon-star-yellow"
+            frameShape={Asset.frameShape.CleanW16}
+          />
         </div>
       )}
       {/* 구분 배지 */}

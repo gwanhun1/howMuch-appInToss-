@@ -21,8 +21,8 @@ export function ProfileIconPreview({
     >
       <div
         style={{
-          width: 100,
-          height: 100,
+          width: 140,
+          height: 140,
           borderRadius: "50%",
           display: "flex",
           justifyContent: "center",
@@ -33,7 +33,7 @@ export function ProfileIconPreview({
       >
         <Asset.Icon
           name={iconName}
-          frameShape={Asset.frameShape.CleanW100}
+          frameShape={{ width: 150 }}
           style={{
             transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
