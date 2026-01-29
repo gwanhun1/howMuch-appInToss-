@@ -13,19 +13,27 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
   const isCondolence = friend.type === "조의금";
   const isCgratulatory = friend.type === "축의금";
 
+  const cardBgColor = isCgratulatory
+    ? "#f0f7ff" // 토스 blue50 느낌의 연한 하늘색
+    : isCondolence
+      ? adaptive.grey100 // 토스 연한 그레이
+      : "#ffffff";
+
   const borderColor = isCgratulatory
-    ? "rgba(0, 100, 255, 0.15)"
-    : adaptive.grey200;
+    ? "rgba(49, 130, 246, 0.15)"
+    : isCondolence
+      ? adaptive.grey200
+      : adaptive.grey200;
 
   const badgeBgColor = isCgratulatory
-    ? "rgba(0, 100, 255, 0.08)"
-    : "rgba(107, 107, 107, 0.08)";
+    ? "rgba(0, 100, 255, 0.1)"
+    : "rgba(107, 107, 107, 0.1)";
 
-  const badgeColor = isCgratulatory ? adaptive.blue600 : adaptive.grey600;
+  const badgeColor = isCgratulatory ? adaptive.blue600 : adaptive.grey700;
 
   const badgeText = isCgratulatory ? "축" : "조";
 
-  const amountColor = isCgratulatory ? adaptive.blue600 : adaptive.grey500;
+  const amountColor = isCgratulatory ? adaptive.blue700 : adaptive.grey800;
 
   return (
     <div
@@ -36,12 +44,12 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
         alignItems: "center",
         justifyContent: "center",
         padding: "20px 8px",
-        backgroundColor: "#ffffff",
+        backgroundColor: cardBgColor,
         borderRadius: "20px",
         cursor: "pointer",
         border: `1px solid ${borderColor}`,
         position: "relative",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.03)",
         overflow: "hidden",
         minHeight: "148px",
       }}

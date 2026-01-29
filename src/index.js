@@ -71,36 +71,21 @@ export default StyleSheet.create({
     'animation': 'add-card-twinkle 5s ease-in-out infinite',
     'pointerEvents': 'none'
   },
-  // 프리미엄 금액 뱃지 스타일
+  // 프리미엄 금액 뱃지 스타일 - 은은한 아우라 효과
   'premium-amount-badge': {
     'position': 'relative',
-    'overflow': 'hidden',
     'background': 'linear-gradient(135deg, #3182f6 0%, #a259ff 100%)',
     'color': 'white !important',
     'border': [{ 'unit': 'string', 'value': 'none' }, { 'unit': 'string', 'value': '!important' }],
-    'padding': [{ 'unit': 'px', 'value': 4 }, { 'unit': 'px', 'value': 10 }, { 'unit': 'string', 'value': '!important' }, { 'unit': 'px', 'value': 10 }],
+    'padding': [{ 'unit': 'px', 'value': 4 }, { 'unit': 'px', 'value': 12 }, { 'unit': 'string', 'value': '!important' }, { 'unit': 'px', 'value': 12 }],
     'borderRadius': '100px !important',
     'fontWeight': '700 !important',
-    'boxShadow': [{ 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 4 }, { 'unit': 'px', 'value': 12 }, { 'unit': 'string', 'value': 'rgba(162, 89, 255, 0.3)' }],
     'display': 'inline-flex',
     'alignItems': 'center',
-    'justifyContent': 'center'
-  },
-  'premium-amount-badge::after': {
-    'content': '""',
-    'position': 'absolute',
-    'top': [{ 'unit': 'px', 'value': 0 }],
-    'left': [{ 'unit': '%H', 'value': -1 }],
-    'width': [{ 'unit': '%H', 'value': 0.5 }],
-    'height': [{ 'unit': '%V', 'value': 1 }],
-    'background': 'linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    rgba(255, 255, 255, 0) 100%
-  )',
-    'transform': 'skewX(-25deg)',
-    'animation': 'shine-sweep 3s infinite'
+    'justifyContent': 'center',
+    // 기본 그림자 및 애니메이션 설정
+    'boxShadow': [{ 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'string', 'value': 'rgba(162, 89, 255, 0.4)' }],
+    'animation': 'premium-aura-pulse 3s infinite'
   },
   'h1': {
     'fontSize': [{ 'unit': 'em', 'value': 3.2 }],

@@ -121,7 +121,6 @@ export function MainPage() {
                 display: "flex",
                 gap: "4px",
                 padding: "0 20px",
-                justifyContent: "flex-end",
               }}
             >
               <Badge
