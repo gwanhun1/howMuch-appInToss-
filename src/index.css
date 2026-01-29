@@ -1,50 +1,18 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #f2f4f6;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
+/* TDS Mobile이 기본 스타일을 관리하므로 global reset은 최소화합니다. */
 body {
   margin: 0;
   padding: 0;
-  background-color: #f9fafb; /* 토스 기본 배경색 (adaptive.grey50) */
-  min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   touch-action: manipulation;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard",
-    sans-serif;
-}
-
-html,
-body,
-#root {
-  height: 100%;
 }
 
 #root {
   min-height: 100vh;
-  background-color: #f9fafb;
+  /* 배경색은 App 내부에서 adaptive 토큰으로 제어합니다 */
 }
+
+/* 커스텀 애니메이션 스타일 */
 
 .add-card-pulse {
   position: relative;
@@ -88,10 +56,11 @@ body,
 }
 
 /* 프리미엄 금액 뱃지 스타일 - 은은한 아우라 효과 */
+/* 이 스타일은 TDS Badge 컴포넌트 위에 적용되며, 그라데이션은 브랜드 색상으로 유지 */
 .premium-amount-badge {
   position: relative;
-  background: linear-gradient(135deg, #3182f6 0%, #a259ff 100%);
-  color: white !important;
+  background: linear-gradient(135deg, var(--tds-color-blue500, #3182f6) 0%, #a259ff 100%);
+  color: var(--tds-color-static-white, #fff) !important;
   border: none !important;
   padding: 4px 12px !important;
   border-radius: 100px !important;
@@ -176,39 +145,22 @@ body,
   }
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* BottomSheet 다크모드 지원 */
+/* ColorSchemeArea가 dark일 때 BottomSheet 배경색 변경 */
+:root {
+  --bottomsheet-bg: #ffffff;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+[data-tds-color-scheme="dark"] {
+  --bottomsheet-bg: #17171c;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #f2f4f6;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* BottomSheet 컴포넌트 배경색 오버라이드 */
+.bottomsheet-content {
+  background-color: var(--bottomsheet-bg) !important;
+}
+
+/* BottomSheet 내부 모든 자식 요소 배경색 */
+.bottomsheet-content > div {
+  background-color: var(--bottomsheet-bg) !important;
 }

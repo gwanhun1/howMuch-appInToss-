@@ -58,9 +58,11 @@ export function FriendFormBottomSheet({
     if (open && friend && !editingFriend) {
       setEditingFriend({ ...friend });
     }
-    // 창이 닫힐 때 제출 상태 초기화
+    // 창이 닫힐 때 상태 초기화
     if (!open) {
       setIsSubmitting(false);
+      setExpanded(false);
+      setShowValidationError(false);
     }
   }, [open, friend, editingFriend, setEditingFriend]);
 
@@ -68,6 +70,7 @@ export function FriendFormBottomSheet({
     setExpanded(false);
     setShowValidationError(false);
     setIsSubmitting(false);
+    setEditingFriend(null);
     onClose();
   };
 
@@ -190,15 +193,13 @@ export function FriendFormBottomSheet({
         >
           {/* 스크롤 가능한 본문 영역 */}
           <div
-            onTouchMove={(e) => {
-              // 스크롤 중 BottomSheet 드래그 방지
-              e.stopPropagation();
-            }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
             style={{
               flex: 1,
               overflowY: "auto",
               overflowX: "hidden",
-              // paddingBottom: "80px", // 버튼 영역 높이만큼 여백
+              WebkitOverflowScrolling: "touch",
             }}
           >
             <Spacing size={10} />

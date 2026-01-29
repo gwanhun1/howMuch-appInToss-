@@ -12,7 +12,7 @@ export default defineConfig({
     withHomeButton: false, // 홈 버튼 불필요
   },
   web: {
-    host: "192.168.0.40",
+    host: "192.168.0.5",
     port: 5173,
     commands: {
       dev: "vite --host",
