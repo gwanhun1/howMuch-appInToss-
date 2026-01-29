@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FixedBottomCTA, Spacing, TextField, Top } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import { AppHeader } from "@/components/common/AppHeader";
+import { AppHeader } from "../../../components/common/AppHeader";
 
 interface Props {
   value: number;

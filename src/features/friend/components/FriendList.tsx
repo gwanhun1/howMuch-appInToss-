@@ -1,4 +1,4 @@
-import type { Friend } from "@/types/friend";
+import type { Friend } from "../types/friend";
 import { FriendCard } from "./FriendCard";
 import { AddFriendCard } from "./AddFriendCard";
 import { AdCard } from "./AdCard";

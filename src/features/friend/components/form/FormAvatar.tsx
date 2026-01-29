@@ -1,6 +1,6 @@
 import { Asset } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import type { FriendType } from "@/types/friend";
+import type { FriendType } from "../../types/friend";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 

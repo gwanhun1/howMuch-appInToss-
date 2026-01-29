@@ -1,4 +1,4 @@
-import { MainPage } from "@/pages/MainPage";
+import { MainPage } from "@/features/friend/pages/MainPage";
 
 function App() {
   return <MainPage />;

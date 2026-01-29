@@ -8,14 +8,15 @@ import {
   Button,
   Spacing,
   TextField,
+  useToast,
 } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import { useFriendStore } from "@/stores/useFriendStore";
-import type { Friend } from "@/types/friend";
-import { ProfileImageBottomSheet } from "@/components/friend/ProfileImageBottomSheet";
-import { FormAvatar } from "@/components/friend/form/FormAvatar";
-import { FormTypeSelector } from "@/components/friend/form/FormTypeSelector";
-import { FormAdditionalInfo } from "@/components/friend/form/FormAdditionalInfo";
+import { useFriendStore } from "../stores/useFriendStore";
+import type { Friend } from "../types/friend";
+import { ProfileImageBottomSheet } from "./ProfileImageBottomSheet";
+import { FormAvatar } from "./form/FormAvatar";
+import { FormTypeSelector } from "./form/FormTypeSelector";
+import { FormAdditionalInfo } from "./form/FormAdditionalInfo";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
@@ -44,6 +45,8 @@ export function FriendFormBottomSheet({
 
   const addFriend = useFriendStore((state) => state.addFriend);
   const selectedFriendId = useFriendStore((state) => state.selectedFriendId);
+
+  const { openToast } = useToast();
 
   const [expanded, setExpanded] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
@@ -79,8 +82,10 @@ export function FriendFormBottomSheet({
 
     if (isCreateMode) {
       addFriend(currentFriend);
+      openToast("기록이 추가되었습니다.");
     } else if (friend) {
       updateFriend(friend.id, currentFriend);
+      openToast("정보가 수정되었습니다.");
     }
     handleClose();
   };
@@ -94,6 +99,7 @@ export function FriendFormBottomSheet({
     if (friend) {
       removeFriend(friend.id);
       setSelectedFriendId(null);
+      openToast("기록이 삭제되었습니다.");
     }
     handleClose();
   };
@@ -107,7 +113,9 @@ export function FriendFormBottomSheet({
         header={
           <div style={{ padding: "16px 20px" }}>
             <Text typography="t4" fontWeight="bold">
-              {isCreateMode ? "추가하기" : `${currentFriend.name} 정보 수정`}
+              {isCreateMode
+                ? "추가하기"
+                : `${friend?.name || "친구"} 정보 수정`}
             </Text>
           </div>
         }

@@ -1,5 +1,5 @@
 import { Button, ListRow } from "@toss/tds-mobile";
-import type { FriendType } from "@/types/friend";
+import type { FriendType } from "../../types/friend";
 
 interface FormTypeSelectorProps {
   value: FriendType | null;

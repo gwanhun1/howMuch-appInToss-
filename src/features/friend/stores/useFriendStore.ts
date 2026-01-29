@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { signInAnonymously } from "firebase/auth";
 import { auth, db } from "@/utils/firebase";
 import { getTossUserIdentifier } from "@/utils/toss";
-import type { Friend } from "@/types/friend";
+import type { Friend } from "../types/friend";
 
 interface FriendStore {
   friends: Friend[];
@@ -15,9 +15,11 @@ interface FriendStore {
   isProfileImageSheetOpen: boolean;
   lastAdMilestoneShown: number;
   userIdentifier: string | null;
+  filterType: "all" | "wedding" | "funeral";
 
   // Actions
   setUserIdentifier: (id: string) => void;
+  setFilterType: (type: "all" | "wedding" | "funeral") => void;
   initializeStore: () => Promise<void>;
   addFriend: (friend: Friend) => void;
   removeFriend: (id: string) => void;
@@ -67,8 +69,10 @@ export const useFriendStore = create<FriendStore>()(
       isProfileImageSheetOpen: false,
       lastAdMilestoneShown: 0,
       userIdentifier: null,
+      filterType: "all",
 
       setUserIdentifier: (id) => set({ userIdentifier: id }),
+      setFilterType: (type) => set({ filterType: type }),
 
       initializeStore: async () => {
         try {
