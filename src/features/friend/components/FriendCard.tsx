@@ -1,5 +1,6 @@
 import { Asset, Spacing, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
+import { motion } from "framer-motion";
 import type { Friend } from "../types/friend";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
@@ -36,8 +37,11 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
   const amountColor = isCgratulatory ? adaptive.blue700 : adaptive.grey800;
 
   return (
-    <div
+    <motion.div
       onClick={onClick}
+      whileTap={{ scale: 0.96 }}
+      whileHover={{ y: -2 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -54,6 +58,12 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
         minHeight: "148px",
       }}
     >
+      {/* 즐겨찾기 별 */}
+      {friend.isFavorite && (
+        <div style={{ position: "absolute", top: "10px", left: "10px" }}>
+          <Asset.Icon name="icon-star-yellow" size={16} />
+        </div>
+      )}
       {/* 구분 배지 */}
       {friend.type && (
         <div
@@ -67,6 +77,7 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
             fontWeight: "bold",
             backgroundColor: badgeBgColor,
             color: badgeColor,
+            transition: "all 0.2s",
           }}
         >
           {badgeText}
@@ -100,6 +111,6 @@ export function FriendCard({ friend, onClick }: FriendCardProps) {
           {friend.amount.toLocaleString()}원
         </Text>
       )}
-    </div>
+    </motion.div>
   );
 }

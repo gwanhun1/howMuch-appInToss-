@@ -25,7 +25,7 @@ export function GlobalErrorView({
       <Result
         figure={
           <Asset.Icon
-            name="icon-warning-mono"
+            name="icon-warning-circle-red500"
             color={adaptive.red500}
             size={60}
           />

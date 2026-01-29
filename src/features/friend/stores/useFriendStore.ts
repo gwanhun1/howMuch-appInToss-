@@ -1,6 +1,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  query,
+  orderBy,
+  limit,
+  startAfter,
+  writeBatch,
+  DocumentSnapshot,
+} from "firebase/firestore";
 import { signInAnonymously } from "firebase/auth";
 import { auth, db } from "@/utils/firebase";
 import { getTossUserIdentifier } from "@/utils/toss";
@@ -18,16 +30,21 @@ interface FriendStore {
   filterType: "all" | "wedding" | "funeral";
   isCelebrating: boolean;
   isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
+  totalAmount: number;
   error: string | null;
+  lastVisible: DocumentSnapshot | null;
 
   // Actions
   setUserIdentifier: (id: string) => void;
   setFilterType: (type: "all" | "wedding" | "funeral") => void;
   setCelebrating: (isCelebrating: boolean) => void;
   initializeStore: () => Promise<void>;
-  addFriend: (friend: Friend) => void;
-  removeFriend: (id: string) => void;
-  updateFriend: (id: string, updates: Partial<Friend>) => void;
+  fetchMoreFriends: () => Promise<void>;
+  addFriend: (friend: Friend) => Promise<void>;
+  removeFriend: (id: string) => Promise<void>;
+  updateFriend: (id: string, updates: Partial<Friend>) => Promise<void>;
   setEditingFriend: (friend: Friend | null) => void;
   setSelectedFriendId: (id: string | null) => void;
   startAddingFriend: () => void;
@@ -40,31 +57,11 @@ interface FriendStore {
   resetToMain: () => void;
 }
 
-// Firestore에 데이터 저장하는 유틸리티
-const syncToFirebase = async (
-  uid: string,
-  friends: Friend[],
-  lastAdMilestone: number,
-) => {
-  try {
-    const userDocRef = doc(db, "users", uid);
-    await setDoc(
-      userDocRef,
-      {
-        friends,
-        lastAdMilestoneShown: lastAdMilestone,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true },
-    );
-  } catch (error) {
-    console.error("Firebase 동기화 실패:", error);
-  }
-};
+const PAGE_SIZE = 20;
 
 export const useFriendStore = create<FriendStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       friends: [],
       selectedFriendId: null,
       editingFriend: null,
@@ -76,7 +73,11 @@ export const useFriendStore = create<FriendStore>()(
       filterType: "all",
       isCelebrating: false,
       isLoading: true,
+      isLoadingMore: false,
+      hasMore: true,
+      totalAmount: 0,
       error: null,
+      lastVisible: null,
 
       setUserIdentifier: (id) => set({ userIdentifier: id }),
       setFilterType: (type) => set({ filterType: type }),
@@ -85,100 +86,236 @@ export const useFriendStore = create<FriendStore>()(
       initializeStore: async () => {
         set({ isLoading: true, error: null });
         try {
-          // 1. Firebase 익명 로그인 (백그라운드)
           const userCredential = await signInAnonymously(auth);
           const uid = userCredential.user.uid;
-
-          // 2. 토스 기기 식별자 가져오기 (메타데이터용)
           const tossId = await getTossUserIdentifier();
-
           set({ userIdentifier: uid });
 
-          // 3. Firebase에서 데이터 불러오기
           const userDocRef = doc(db, "users", uid);
           const userDoc = await getDoc(userDocRef);
 
-          if (userDoc.exists()) {
-            const data = userDoc.data();
+          // 1. 기존 데이터 마이그레이션 (필요시)
+          if (userDoc.exists() && userDoc.data().friends) {
+            const legacyData = userDoc.data();
+            const friendsArray = legacyData.friends as Friend[];
+
+            // 하위 컬렉션으로 마이그레이션
+            const batch = writeBatch(db);
+            const recordsColRef = collection(db, "users", uid, "records");
+
+            friendsArray.forEach((f) => {
+              const fRef = doc(recordsColRef, f.id);
+              batch.set(fRef, { ...f, createdAt: new Date().toISOString() });
+            });
+
+            // 마이그레이션된 문서 업데이트 (기존 friends 배열 제거)
+            batch.update(userDocRef, {
+              friends: null, // 제거
+              totalAmount: friendsArray.reduce((acc, f) => acc + f.amount, 0),
+              lastAdMilestoneShown: legacyData.lastAdMilestoneShown || 0,
+              migratedAt: new Date().toISOString(),
+            });
+
+            await batch.commit();
+            console.log("마이그레이션 완료");
+          }
+
+          // 2. 메타 데이터 로드
+          const updatedUserDoc = await getDoc(userDocRef);
+          if (updatedUserDoc.exists()) {
+            const data = updatedUserDoc.data();
             set({
-              friends: data.friends || [],
+              totalAmount: data.totalAmount || 0,
               lastAdMilestoneShown: data.lastAdMilestoneShown || 0,
             });
-            console.log("Firebase에서 데이터를 불러왔습니다.");
           } else {
-            // 처음 방문한 유저라면 문서 생성 (Toss ID 기록)
             await setDoc(userDocRef, {
               tossId,
-              friends: [],
-              lastAdMilestoneShown: 0,
               createdAt: new Date().toISOString(),
+              totalAmount: 0,
             });
           }
-        } catch (error) {
-          console.error("초기화 및 로그인 실패:", error);
+
+          // 3. 첫 페이지 로드
+          const recordsColRef = collection(db, "users", uid, "records");
+          const q = query(
+            recordsColRef,
+            orderBy("name", "asc"),
+            limit(PAGE_SIZE),
+          );
+
+          const snapshot = await getDocs(q);
+          const fetchedFriends = snapshot.docs.map(
+            (doc) => doc.data() as Friend,
+          );
+          const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+
           set({
-            error: "데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+            friends: fetchedFriends,
+            lastVisible,
+            hasMore: fetchedFriends.length === PAGE_SIZE,
           });
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.";
+          console.error("초기화 실패:", error);
+          set({ error: errorMessage });
         } finally {
           set({ isLoading: false });
         }
       },
 
-      addFriend: (friend) => {
-        set((state) => {
-          const nextFriends = [...state.friends, friend];
-          const nextCount = nextFriends.length;
-          const isMilestone = nextCount > 0 && nextCount % 5 === 0;
-          const nextMilestone = isMilestone
-            ? nextCount
-            : state.lastAdMilestoneShown;
+      fetchMoreFriends: async () => {
+        const { userIdentifier, lastVisible, friends, hasMore, isLoadingMore } =
+          get();
+        if (!userIdentifier || !lastVisible || !hasMore || isLoadingMore)
+          return;
 
-          if (isMilestone && nextMilestone > state.lastAdMilestoneShown) {
-            // 광고 로직 유지
+        set({ isLoadingMore: true });
+        try {
+          const recordsColRef = collection(
+            db,
+            "users",
+            userIdentifier,
+            "records",
+          );
+          const q = query(
+            recordsColRef,
+            orderBy("name", "asc"),
+            startAfter(lastVisible),
+            limit(PAGE_SIZE),
+          );
+
+          const snapshot = await getDocs(q);
+          const newFriends = snapshot.docs.map((doc) => doc.data() as Friend);
+          const newLastVisible =
+            snapshot.docs[snapshot.docs.length - 1] || null;
+
+          set({
+            friends: [...friends, ...newFriends],
+            lastVisible: newLastVisible,
+            hasMore: newFriends.length === PAGE_SIZE,
+          });
+        } catch (error) {
+          console.error("추가 로드 실패:", error);
+        } finally {
+          set({ isLoadingMore: false });
+        }
+      },
+
+      addFriend: async (friend) => {
+        const { userIdentifier, friends, totalAmount, lastAdMilestoneShown } =
+          get();
+        if (!userIdentifier) return;
+
+        const newFriend = { ...friend, createdAt: new Date().toISOString() };
+        const recordRef = doc(
+          db,
+          "users",
+          userIdentifier,
+          "records",
+          newFriend.id,
+        );
+        const userDocRef = doc(db, "users", userIdentifier);
+
+        try {
+          const newTotalAmount = totalAmount + newFriend.amount;
+          const newCount = friends.length + 1;
+          const isMilestone = newCount > 0 && newCount % 5 === 0;
+          const nextMilestone = isMilestone ? newCount : lastAdMilestoneShown;
+
+          if (isMilestone && nextMilestone > lastAdMilestoneShown) {
             alert(`광고(테스트): 친구 ${nextMilestone}명 달성!`);
           }
 
-          const newState = {
-            friends: nextFriends,
+          const batch = writeBatch(db);
+          batch.set(recordRef, newFriend);
+          batch.update(userDocRef, {
+            totalAmount: newTotalAmount,
             lastAdMilestoneShown: nextMilestone,
-          };
+          });
+          await batch.commit();
 
-          // Firebase 동기화
-          if (state.userIdentifier) {
-            syncToFirebase(state.userIdentifier, nextFriends, nextMilestone);
-          }
-
-          return newState;
-        });
+          set({
+            friends: [newFriend, ...friends].sort((a, b) => {
+              if (a.isFavorite && !b.isFavorite) return -1;
+              if (!a.isFavorite && b.isFavorite) return 1;
+              return a.name.localeCompare(b.name);
+            }),
+            totalAmount: newTotalAmount,
+            lastAdMilestoneShown: nextMilestone,
+          });
+        } catch (error) {
+          console.error("추가 실패:", error);
+        }
       },
 
-      removeFriend: (id) =>
-        set((state) => {
-          const nextFriends = state.friends.filter((f) => f.id !== id);
-          if (state.userIdentifier) {
-            syncToFirebase(
-              state.userIdentifier,
-              nextFriends,
-              state.lastAdMilestoneShown,
-            );
-          }
-          return { friends: nextFriends };
-        }),
+      removeFriend: async (id) => {
+        const { userIdentifier, friends, totalAmount } = get();
+        if (!userIdentifier) return;
 
-      updateFriend: (id, updates) =>
-        set((state) => {
-          const nextFriends = state.friends.map((f) =>
-            f.id === id ? { ...f, ...updates } : f,
+        const friendToRemove = friends.find((f) => f.id === id);
+        if (!friendToRemove) return;
+
+        try {
+          const recordRef = doc(db, "users", userIdentifier, "records", id);
+          const userDocRef = doc(db, "users", userIdentifier);
+          const newTotalAmount = Math.max(
+            0,
+            totalAmount - friendToRemove.amount,
           );
-          if (state.userIdentifier) {
-            syncToFirebase(
-              state.userIdentifier,
-              nextFriends,
-              state.lastAdMilestoneShown,
-            );
+
+          const batch = writeBatch(db);
+          batch.delete(recordRef);
+          batch.update(userDocRef, { totalAmount: newTotalAmount });
+          await batch.commit();
+
+          set({
+            friends: friends.filter((f) => f.id !== id),
+            totalAmount: newTotalAmount,
+          });
+        } catch (error) {
+          console.error("삭제 실패:", error);
+        }
+      },
+
+      updateFriend: async (id, updates) => {
+        const { userIdentifier, friends, totalAmount } = get();
+        if (!userIdentifier) return;
+
+        const oldFriend = friends.find((f) => f.id === id);
+        if (!oldFriend) return;
+
+        try {
+          const recordRef = doc(db, "users", userIdentifier, "records", id);
+          const userDocRef = doc(db, "users", userIdentifier);
+
+          let newTotalAmount = totalAmount;
+          if (updates.amount !== undefined) {
+            newTotalAmount = totalAmount - oldFriend.amount + updates.amount;
           }
-          return { friends: nextFriends };
-        }),
+
+          const batch = writeBatch(db);
+          batch.update(recordRef, updates);
+          batch.update(userDocRef, { totalAmount: newTotalAmount });
+          await batch.commit();
+
+          set({
+            friends: friends
+              .map((f) => (f.id === id ? { ...f, ...updates } : f))
+              .sort((a, b) => {
+                if (a.isFavorite && !b.isFavorite) return -1;
+                if (!a.isFavorite && b.isFavorite) return 1;
+                return a.name.localeCompare(b.name);
+              }),
+            totalAmount: newTotalAmount,
+          });
+        } catch (error) {
+          console.error("수정 실패:", error);
+        }
+      },
 
       setEditingFriend: (friend) => set({ editingFriend: friend }),
       setSelectedFriendId: (id) => set({ selectedFriendId: id }),
@@ -194,6 +331,7 @@ export const useFriendStore = create<FriendStore>()(
             amount: 0,
             relation: "",
             date: "",
+            isFavorite: false,
           },
           isFriendFormOpen: true,
           currentPage: "main",
@@ -233,10 +371,10 @@ export const useFriendStore = create<FriendStore>()(
         }),
     }),
     {
-      name: "howmuch-friends-storage",
-      version: 2,
+      name: "howmuch-friends-storage-v3", // 구조 변경으로 인한 버전업
+      version: 3,
       partialize: (state) => ({
-        friends: state.friends,
+        // 로컬에는 최소한의 상태만 유지 (동기화가 기본이므로)
         lastAdMilestoneShown: state.lastAdMilestoneShown,
       }),
     },

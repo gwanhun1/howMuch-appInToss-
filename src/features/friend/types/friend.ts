@@ -8,4 +8,5 @@ export interface Friend {
   amount: number;
   relation: string;
   date: string;
+  isFavorite?: boolean;
 }

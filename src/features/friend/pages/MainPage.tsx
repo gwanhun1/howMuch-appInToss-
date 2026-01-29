@@ -31,6 +31,10 @@ export function MainPage() {
     setCelebrating,
     isLoading,
     error,
+    totalAmount,
+    fetchMoreFriends,
+    hasMore,
+    isLoadingMore,
   } = useFriendStore();
 
   // 서비스 첫 진입 시 데이터 초기화 및 메인 페이지 보장
@@ -43,12 +47,21 @@ export function MainPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filteredFriends = friends.filter((f) => {
-    if (filterType === "all") return true;
-    if (filterType === "wedding") return f.type === "축의금";
-    if (filterType === "funeral") return f.type === "조의금";
-    return true;
-  });
+  const filteredFriends = friends
+    .filter((f) => {
+      if (filterType === "all") return true;
+      if (filterType === "wedding") return f.type === "축의금";
+      if (filterType === "funeral") return f.type === "조의금";
+      return true;
+    })
+    .sort((a, b) => {
+      // 1. 즐겨찾기 우선 정렬
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+
+      // 2. 같은 조건이면 이름순 (또는 최신순 등)
+      return a.name.localeCompare(b.name);
+    });
 
   const selectedFriend = friends.find((f) => f.id === selectedFriendId) || null;
 
@@ -122,11 +135,7 @@ export function MainPage() {
                       flexShrink: 0,
                     }}
                   >
-                    총{" "}
-                    {friends
-                      .reduce((acc, f) => acc + f.amount, 0)
-                      .toLocaleString()}
-                    원
+                    총 {totalAmount.toLocaleString()}원
                   </Badge>
                 )
               )}
@@ -175,6 +184,9 @@ export function MainPage() {
             <FriendList
               friends={filteredFriends}
               isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+              hasMore={hasMore}
+              onLoadMore={fetchMoreFriends}
               lastAdMilestoneShown={lastAdMilestoneShown}
               onAddFriend={startAddingFriend}
               onFriendClick={openFriendForm}

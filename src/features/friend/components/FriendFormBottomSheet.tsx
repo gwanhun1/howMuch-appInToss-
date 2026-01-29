@@ -129,12 +129,43 @@ export function FriendFormBottomSheet({
         onClose={handleClose}
         maxHeight={"90vh"}
         header={
-          <div style={{ padding: "16px 20px" }}>
+          <div
+            style={{
+              padding: "16px 20px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Text typography="t4" fontWeight="bold">
               {isCreateMode
                 ? "추가하기"
                 : `${friend?.name || "친구"} 정보 수정`}
             </Text>
+            <div
+              onClick={() => {
+                const newStatus = !currentFriend.isFavorite;
+                setEditingFriend({
+                  ...currentFriend,
+                  isFavorite: newStatus,
+                });
+                if (!isCreateMode && friend) {
+                  updateFriend(friend.id, { isFavorite: newStatus });
+                }
+              }}
+              style={{
+                cursor: "pointer",
+                padding: "4px",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <Asset.Icon
+                name="icon-star-yellow"
+                size={24}
+                color={currentFriend.isFavorite ? undefined : adaptive.grey300}
+              />
+            </div>
           </div>
         }
       >
