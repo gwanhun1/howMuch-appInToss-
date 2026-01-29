@@ -45,22 +45,29 @@ export function FriendFormBottomSheet({
 
   const addFriend = useFriendStore((state) => state.addFriend);
   const selectedFriendId = useFriendStore((state) => state.selectedFriendId);
+  const setCelebrating = useFriendStore((state) => state.setCelebrating);
 
   const { openToast } = useToast();
 
   const [expanded, setExpanded] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
   const [isProfilePickerOpen, setIsProfilePickerOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open && friend && !editingFriend) {
       setEditingFriend({ ...friend });
+    }
+    // 창이 닫힐 때 제출 상태 초기화
+    if (!open) {
+      setIsSubmitting(false);
     }
   }, [open, friend, editingFriend, setEditingFriend]);
 
   const handleClose = () => {
     setExpanded(false);
     setShowValidationError(false);
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -72,7 +79,9 @@ export function FriendFormBottomSheet({
   const isTypeInvalid = showValidationError && currentFriend.type == null;
   const isAmountInvalid = showValidationError && currentFriend.amount <= 0;
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (isSubmitting) return;
+
     const isValid =
       currentFriend.name.trim() !== "" && currentFriend.type != null;
     if (!isValid) {
@@ -80,14 +89,23 @@ export function FriendFormBottomSheet({
       return;
     }
 
-    if (isCreateMode) {
-      addFriend(currentFriend);
-      openToast("기록이 추가되었습니다.");
-    } else if (friend) {
-      updateFriend(friend.id, currentFriend);
-      openToast("정보가 수정되었습니다.");
+    setIsSubmitting(true);
+
+    try {
+      if (isCreateMode) {
+        addFriend(currentFriend);
+        openToast("기록이 추가되었습니다.");
+        setCelebrating(true); // 등록 시에만 애니메이션 실행
+      } else if (friend) {
+        updateFriend(friend.id, currentFriend);
+        openToast("정보가 수정되었습니다.");
+        // 수정 시에는 setCelebrating 호출하지 않음
+      }
+      handleClose();
+    } catch (error) {
+      console.error("저장 실패:", error);
+      setIsSubmitting(false);
     }
-    handleClose();
   };
 
   const handleDelete = () => {
@@ -261,6 +279,7 @@ export function FriendFormBottomSheet({
               variant="fill"
               size="medium"
               onClick={handleSave}
+              disabled={isSubmitting}
             >
               저장
             </Button>

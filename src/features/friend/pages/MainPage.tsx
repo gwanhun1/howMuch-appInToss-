@@ -6,6 +6,7 @@ import { useFriendStore } from "../stores/useFriendStore";
 import { FriendFormBottomSheet } from "../components/FriendFormBottomSheet";
 import { AmountInputPage } from "./AmountInputPage";
 import { FriendList } from "../components/FriendList";
+import { CoinRain } from "../components/CoinRain";
 
 export function MainPage() {
   const {
@@ -25,6 +26,8 @@ export function MainPage() {
     initializeStore,
     filterType,
     setFilterType,
+    isCelebrating,
+    setCelebrating,
   } = useFriendStore();
 
   // 서비스 첫 진입 시 데이터 초기화 및 메인 페이지 보장
@@ -57,6 +60,7 @@ export function MainPage() {
         position: "relative",
       }}
     >
+      {isCelebrating && <CoinRain onComplete={() => setCelebrating(false)} />}
       {currentPage === "amountInput" && editingFriend ? (
         <AmountInputPage
           value={editingFriend.amount}

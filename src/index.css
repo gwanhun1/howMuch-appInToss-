@@ -116,6 +116,56 @@ body,
   }
 }
 
+/* 동전 떨어지는 애니메이션 */
+.coin-rain-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+  perspective: 1000px; /* 3D 효과를 위한 원근감 추가 */
+}
+
+.coin-item {
+  position: absolute;
+  top: -60px;
+  animation: coin-fall ease-in forwards; /* linear에서 ease-in으로 변경하여 가속도 추가 */
+  will-change: transform, opacity;
+}
+
+/* 3D 회전 클래스 */
+.coin-spinning {
+  animation:
+    coin-fall ease-in forwards,
+    coin-spin linear infinite;
+}
+
+@keyframes coin-fall {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) translateX(40px) rotate(360deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes coin-spin {
+  0% {
+    transform: translateY(0) rotateY(0deg);
+  }
+  100% {
+    transform: translateY(0) rotateY(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .add-card-pulse {
     animation: none;

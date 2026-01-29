@@ -87,6 +87,31 @@ export default StyleSheet.create({
     'boxShadow': [{ 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'string', 'value': 'rgba(162, 89, 255, 0.4)' }],
     'animation': 'premium-aura-pulse 3s infinite'
   },
+  // 동전 떨어지는 애니메이션
+  'coin-rain-container': {
+    'position': 'fixed',
+    'top': [{ 'unit': 'px', 'value': 0 }],
+    'left': [{ 'unit': 'px', 'value': 0 }],
+    'width': [{ 'unit': 'vw', 'value': 100 }],
+    'height': [{ 'unit': 'vh', 'value': 100 }],
+    'pointerEvents': 'none',
+    'zIndex': '9999',
+    'overflow': 'hidden',
+    'perspective': '1000px',
+    // 3D 효과를 위한 원근감 추가
+  },
+  'coin-item': {
+    'position': 'absolute',
+    'top': [{ 'unit': 'px', 'value': -60 }],
+    'animation': 'coin-fall ease-in forwards',
+    // linear에서 ease-in으로 변경하여 가속도 추가
+    'willChange': 'transform, opacity'
+  },
+  // 3D 회전 클래스
+  'coin-spinning': {
+    'animation': 'coin-fall ease-in forwards,
+    coin-spin linear infinite'
+  },
   'h1': {
     'fontSize': [{ 'unit': 'em', 'value': 3.2 }],
     'lineHeight': [{ 'unit': 'px', 'value': 1.1 }]

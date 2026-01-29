@@ -16,10 +16,12 @@ interface FriendStore {
   lastAdMilestoneShown: number;
   userIdentifier: string | null;
   filterType: "all" | "wedding" | "funeral";
+  isCelebrating: boolean;
 
   // Actions
   setUserIdentifier: (id: string) => void;
   setFilterType: (type: "all" | "wedding" | "funeral") => void;
+  setCelebrating: (isCelebrating: boolean) => void;
   initializeStore: () => Promise<void>;
   addFriend: (friend: Friend) => void;
   removeFriend: (id: string) => void;
@@ -70,9 +72,11 @@ export const useFriendStore = create<FriendStore>()(
       lastAdMilestoneShown: 0,
       userIdentifier: null,
       filterType: "all",
+      isCelebrating: false,
 
       setUserIdentifier: (id) => set({ userIdentifier: id }),
       setFilterType: (type) => set({ filterType: type }),
+      setCelebrating: (isCelebrating) => set({ isCelebrating }),
 
       initializeStore: async () => {
         try {
