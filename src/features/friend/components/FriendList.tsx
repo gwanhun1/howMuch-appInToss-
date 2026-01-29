@@ -74,7 +74,7 @@ export function FriendList({
       ))}
 
       {isLoading &&
-        Array.from({ length: 6 }).map((_, i) => <FriendCardSkeleton key={i} />)}
+        Array.from({ length: 5 }).map((_, i) => <FriendCardSkeleton key={i} />)}
 
       {isLoadingMore &&
         Array.from({ length: 3 }).map((_, i) => (

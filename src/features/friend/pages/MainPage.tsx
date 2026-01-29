@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { Spacing, Text, Badge, Skeleton } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-// import { AppHeader } from "../../../components/common/AppHeader";
 import { useFriendStore } from "../stores/useFriendStore";
 import { FriendFormBottomSheet } from "../components/FriendFormBottomSheet";
 import { AmountInputPage } from "./AmountInputPage";
@@ -94,8 +93,6 @@ export function MainPage() {
         />
       ) : (
         <>
-          {/* <AppHeader /> */}
-
           <div
             style={{
               flex: 1,
