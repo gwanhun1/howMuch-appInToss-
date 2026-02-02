@@ -19,24 +19,24 @@ export function AddFriendCard({ onClick }: AddFriendCardProps) {
         justifyContent: "center",
         flexDirection: "column",
         alignItems: "center",
-        backgroundColor: "#ffffff",
-        borderRadius: "20px",
+        backgroundColor: "rgba(49, 130, 246, 0.04)",
+        borderRadius: "24px",
         cursor: "pointer",
-        border: `1px solid ${adaptive.grey200}`,
-        minHeight: "148px",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.03)",
+        border: `1px solid rgba(49, 130, 246, 0.1)`,
+        minHeight: "156px",
+        boxShadow: "0 4px 12px rgba(49, 130, 246, 0.05)",
       }}
     >
       <Asset.Icon
         name="icon-plus-circle-mono"
         frameShape={Asset.frameShape.CleanW24}
-        color={adaptive.grey600}
+        color={adaptive.blue600}
         style={{ width: 40, height: 40 }}
       />
       <Text
         typography="t7"
-        fontWeight="regular"
-        style={{ color: adaptive.grey700, marginTop: "8px" }}
+        fontWeight="bold"
+        style={{ color: adaptive.blue600, marginTop: "8px" }}
       >
         추가
       </Text>

@@ -59,7 +59,11 @@ body {
 /* 이 스타일은 TDS Badge 컴포넌트 위에 적용되며, 그라데이션은 브랜드 색상으로 유지 */
 .premium-amount-badge {
   position: relative;
-  background: linear-gradient(135deg, var(--tds-color-blue500, #3182f6) 0%, #a259ff 100%);
+  background: linear-gradient(
+    135deg,
+    var(--tds-color-blue500, #3182f6) 0%,
+    #a259ff 100%
+  );
   color: var(--tds-color-static-white, #fff) !important;
   border: none !important;
   padding: 4px 12px !important;
@@ -145,6 +149,35 @@ body {
   }
 }
 
+/* 미래 일정 카드 (isUpcoming) 아우라 효과 */
+.upcoming-aura {
+  position: relative;
+  z-index: 1;
+}
+
+.upcoming-aura::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  box-shadow: 0 0 15px 2px rgba(49, 130, 246, 0.25);
+  animation: upcoming-glow 3s ease-in-out infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes upcoming-glow {
+  0%,
+  100% {
+    opacity: 0.15;
+    box-shadow: 0 0 10px 1px rgba(49, 130, 246, 0.15);
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow: 0 0 15px 3px rgba(49, 130, 246, 0.25);
+  }
+}
+
 /* BottomSheet 다크모드 지원 */
 /* ColorSchemeArea가 dark일 때 BottomSheet 배경색 변경 */
 :root {
@@ -163,4 +196,24 @@ body {
 /* BottomSheet 내부 모든 자식 요소 배경색 */
 .bottomsheet-content > div {
   background-color: var(--bottomsheet-bg) !important;
+}
+
+/* TDS Toast 커스텀 - 연한 파이트 블루 테마 */
+/* TDS Mobile의 Toast 클래스를 대상으로 스타일 오버라이드 */
+div[role="alert"],
+.tds-toast {
+  background-color: #f2f8ff !important; /* 연한 파랑 배경 */
+  color: #3182f6 !important; /* 토스 블루 텍스트 */
+  border: 1px solid rgba(49, 130, 246, 0.2) !important;
+  box-shadow: 0 8px 16px rgba(49, 130, 246, 0.1) !important;
+  border-radius: 14px !important;
+}
+
+/* 토스트 내부 텍스트 색상 강제 적용 */
+div[role="alert"] span,
+div[role="alert"] div,
+.tds-toast span,
+.tds-toast div {
+  color: #3182f6 !important;
+  font-weight: 500 !important;
 }

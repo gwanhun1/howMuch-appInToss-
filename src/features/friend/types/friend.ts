@@ -1,4 +1,4 @@
-export type FriendType = "축의금" | "조의금";
+export type FriendType = "축의금" | "조의금" | "돌잔치";
 
 export interface Friend {
   id: string;

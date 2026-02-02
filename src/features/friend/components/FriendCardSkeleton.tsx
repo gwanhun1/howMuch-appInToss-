@@ -9,12 +9,12 @@ export function FriendCardSkeleton() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "20px 8px",
+        padding: "28px 12px 20px",
         backgroundColor: "#ffffff",
-        borderRadius: "20px",
+        borderRadius: "24px",
         border: `1px solid ${adaptive.grey200}`,
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.03)",
-        minHeight: "148px",
+        minHeight: "156px",
       }}
     >
       <div

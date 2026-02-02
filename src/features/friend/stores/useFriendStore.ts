@@ -27,7 +27,7 @@ interface FriendStore {
   isProfileImageSheetOpen: boolean;
   lastAdMilestoneShown: number;
   userIdentifier: string | null;
-  filterType: "all" | "wedding" | "funeral";
+  filterType: "전체" | "축의금" | "조의금" | "돌잔치";
   isCelebrating: boolean;
   isLoading: boolean;
   isLoadingMore: boolean;
@@ -38,7 +38,7 @@ interface FriendStore {
 
   // Actions
   setUserIdentifier: (id: string) => void;
-  setFilterType: (type: "all" | "wedding" | "funeral") => void;
+  setFilterType: (type: "전체" | "축의금" | "조의금" | "돌잔치") => void;
   setCelebrating: (isCelebrating: boolean) => void;
   initializeStore: () => Promise<void>;
   fetchMoreFriends: () => Promise<void>;
@@ -70,7 +70,7 @@ export const useFriendStore = create<FriendStore>()(
       isProfileImageSheetOpen: false,
       lastAdMilestoneShown: 0,
       userIdentifier: null,
-      filterType: "all",
+      filterType: "전체",
       isCelebrating: false,
       isLoading: true,
       isLoadingMore: false,

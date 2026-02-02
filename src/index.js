@@ -36,10 +36,15 @@ export default StyleSheet.create({
     'pointerEvents': 'none'
   },
   // 프리미엄 금액 뱃지 스타일 - 은은한 아우라 효과
+  // 이 스타일은 TDS Badge 컴포넌트 위에 적용되며, 그라데이션은 브랜드 색상으로 유지
   'premium-amount-badge': {
     'position': 'relative',
-    'background': 'linear-gradient(135deg, #3182f6 0%, #a259ff 100%)',
-    'color': 'white !important',
+    'background': 'linear-gradient(
+    135deg,
+    var(--tds-color-blue500, #3182f6) 0%,
+    #a259ff 100%
+  )',
+    'color': 'var(--tds-color-static-white, #fff) !important',
     'border': [{ 'unit': 'string', 'value': 'none' }, { 'unit': 'string', 'value': '!important' }],
     'padding': [{ 'unit': 'px', 'value': 4 }, { 'unit': 'px', 'value': 12 }, { 'unit': 'string', 'value': '!important' }, { 'unit': 'px', 'value': 12 }],
     'borderRadius': '100px !important',
@@ -75,5 +80,73 @@ export default StyleSheet.create({
   'coin-spinning': {
     'animation': 'coin-fall ease-in forwards,
     coin-spin linear infinite'
+  },
+  // 미래 일정 카드 (isUpcoming) 아우라 효과
+  'upcoming-aura': {
+    'position': 'relative',
+    'zIndex': '1'
+  },
+  'upcoming-aura::before': {
+    'content': '""',
+    'position': 'absolute',
+    'inset': '0',
+    'borderRadius': '24px',
+    'boxShadow': [{ 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 15 }, { 'unit': 'px', 'value': 2 }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.25)' }],
+    'animation': 'upcoming-glow 3s ease-in-out infinite',
+    'zIndex': '-1',
+    'pointerEvents': 'none'
+  },
+  // BottomSheet 다크모드 지원
+  // ColorSchemeArea가 dark일 때 BottomSheet 배경색 변경
+  ':root': {
+    'BottomsheetBg': '#ffffff'
+  },
+  '[data-tds-color-scheme="dark"]': {
+    'BottomsheetBg': '#17171c'
+  },
+  // BottomSheet 컴포넌트 배경색 오버라이드
+  'bottomsheet-content': {
+    'backgroundColor': 'var(--bottomsheet-bg) !important'
+  },
+  // BottomSheet 내부 모든 자식 요소 배경색
+  'bottomsheet-content > div': {
+    'backgroundColor': 'var(--bottomsheet-bg) !important'
+  },
+  // TDS Toast 커스텀 - 연한 파이트 블루 테마
+  // TDS Mobile의 Toast 클래스를 대상으로 스타일 오버라이드
+  'div[role="alert"]': {
+    'backgroundColor': '#f2f8ff !important',
+    // 연한 파랑 배경
+    'color': '#3182f6 !important',
+    // 토스 블루 텍스트
+    'border': [{ 'unit': 'px', 'value': 1 }, { 'unit': 'string', 'value': 'solid' }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.2)' }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.2)' }, { 'unit': 'string', 'value': '!important' }],
+    'boxShadow': [{ 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 8 }, { 'unit': 'px', 'value': 16 }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.1)' }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.1)' }, { 'unit': 'string', 'value': '!important' }],
+    'borderRadius': '14px !important'
+  },
+  'tds-toast': {
+    'backgroundColor': '#f2f8ff !important',
+    // 연한 파랑 배경
+    'color': '#3182f6 !important',
+    // 토스 블루 텍스트
+    'border': [{ 'unit': 'px', 'value': 1 }, { 'unit': 'string', 'value': 'solid' }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.2)' }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.2)' }, { 'unit': 'string', 'value': '!important' }],
+    'boxShadow': [{ 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 8 }, { 'unit': 'px', 'value': 16 }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.1)' }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.1)' }, { 'unit': 'string', 'value': '!important' }],
+    'borderRadius': '14px !important'
+  },
+  // 토스트 내부 텍스트 색상 강제 적용
+  'div[role="alert"] span': {
+    'color': '#3182f6 !important',
+    'fontWeight': '500 !important'
+  },
+  'div[role="alert"] div': {
+    'color': '#3182f6 !important',
+    'fontWeight': '500 !important'
+  },
+  'tds-toast span': {
+    'color': '#3182f6 !important',
+    'fontWeight': '500 !important'
+  },
+  'tds-toast div': {
+    'color': '#3182f6 !important',
+    'fontWeight': '500 !important'
   }
 });

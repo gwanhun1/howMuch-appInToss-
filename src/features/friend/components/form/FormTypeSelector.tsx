@@ -16,6 +16,11 @@ export function FormTypeSelector({ value, onChange }: FormTypeSelectorProps) {
             variant={value === "축의금" ? "fill" : "weak"}
             size="small"
             onClick={() => onChange("축의금")}
+            style={
+              value === "축의금"
+                ? { backgroundColor: "#FF4B78", border: "none" }
+                : {}
+            }
           >
             축의금
           </Button>
@@ -25,6 +30,18 @@ export function FormTypeSelector({ value, onChange }: FormTypeSelectorProps) {
             onClick={() => onChange("조의금")}
           >
             조의금
+          </Button>
+          <Button
+            variant={value === "돌잔치" ? "fill" : "weak"}
+            size="small"
+            onClick={() => onChange("돌잔치")}
+            style={
+              value === "돌잔치"
+                ? { backgroundColor: "#FFB900", border: "none" }
+                : {}
+            }
+          >
+            돌잔치
           </Button>
         </div>
       }

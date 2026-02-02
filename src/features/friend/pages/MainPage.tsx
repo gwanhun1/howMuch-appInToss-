@@ -51,10 +51,8 @@ export function MainPage() {
 
   const filteredFriends = friends
     .filter((f) => {
-      if (filterType === "all") return true;
-      if (filterType === "wedding") return f.type === "축의금";
-      if (filterType === "funeral") return f.type === "조의금";
-      return true;
+      if (filterType === "전체") return true;
+      return f.type === filterType;
     })
     .sort((a, b) => {
       // 1. 즐겨찾기 우선 정렬
@@ -152,30 +150,52 @@ export function MainPage() {
               }}
             >
               <Badge
-                color={filterType === "all" ? "blue" : "elephant"}
-                variant={filterType === "all" ? "fill" : "weak"}
+                color={filterType === "전체" ? "blue" : "elephant"}
+                variant={filterType === "전체" ? "fill" : "weak"}
                 size="small"
                 style={{ cursor: "pointer", transition: "all 0.2s" }}
-                onClick={() => setFilterType("all")}
+                onClick={() => setFilterType("전체")}
               >
                 전체
               </Badge>
               <Badge
-                color={filterType === "wedding" ? "blue" : "elephant"}
-                variant={filterType === "wedding" ? "fill" : "weak"}
+                color={filterType === "축의금" ? "blue" : "elephant"}
+                variant={filterType === "축의금" ? "fill" : "weak"}
                 size="small"
-                style={{ cursor: "pointer", transition: "all 0.2s" }}
-                onClick={() => setFilterType("wedding")}
+                style={{
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  ...(filterType === "축의금"
+                    ? { backgroundColor: "#FF4B78", border: "none" }
+                    : {}),
+                }}
+                onClick={() => setFilterType("축의금")}
               >
                 축의금
               </Badge>
               <Badge
-                color={filterType === "funeral" ? "elephant" : "elephant"}
-                variant={filterType === "funeral" ? "fill" : "weak"}
+                color={filterType === "조의금" ? "elephant" : "elephant"}
+                variant={filterType === "조의금" ? "fill" : "weak"}
                 size="small"
-                onClick={() => setFilterType("funeral")}
+                style={{ cursor: "pointer", transition: "all 0.2s" }}
+                onClick={() => setFilterType("조의금")}
               >
                 조의금
+              </Badge>
+              <Badge
+                color={filterType === "돌잔치" ? "blue" : "elephant"}
+                variant={filterType === "돌잔치" ? "fill" : "weak"}
+                size="small"
+                style={{
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  ...(filterType === "돌잔치"
+                    ? { backgroundColor: "#FFB900", border: "none" }
+                    : {}),
+                }}
+                onClick={() => setFilterType("돌잔치")}
+              >
+                돌잔치
               </Badge>
             </div>
 

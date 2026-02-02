@@ -12,7 +12,7 @@ export function AdCard() {
         padding: "20px 8px",
         backgroundColor: "transparent",
         borderRadius: "16px",
-        border: `2px dashed ${adaptive.grey400}`,
+        border: `2px dashed ${adaptive.blue100}`,
       }}
     >
       <div
@@ -26,7 +26,7 @@ export function AdCard() {
         <Text
           typography="t7"
           fontWeight="semibold"
-          color={adaptive.grey700}
+          color={adaptive.blue200}
           style={{ textAlign: "center" }}
         >
           광고 타임
