@@ -1,15 +1,19 @@
+import { adService } from "../apis/adService";
 import { useEffect, useRef } from "react";
 import type { Friend } from "../types/friend";
 import { FriendCard } from "./FriendCard";
 import { AddFriendCard } from "./AddFriendCard";
+import { AdCard } from "./AdCard";
 import { FriendCardSkeleton } from "./FriendCardSkeleton";
 
 interface FriendListProps {
   friends: Friend[];
+  totalCount: number;
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
+  lastAdMilestoneShown: number;
   onAddFriend: () => void;
   onFriendClick: (friendId: string) => void;
   onToggleFavorite: (friendId: string) => void;
@@ -17,10 +21,12 @@ interface FriendListProps {
 
 export function FriendList({
   friends,
+  totalCount,
   isLoading,
   isLoadingMore,
   hasMore,
   onLoadMore,
+  lastAdMilestoneShown,
   onAddFriend,
   onFriendClick,
   onToggleFavorite,
@@ -45,6 +51,12 @@ export function FriendList({
 
     return () => observer.disconnect();
   }, [hasMore, isLoading, isLoadingMore, onLoadMore]);
+
+  // 다음 광고가 언제 나올지 예고하는 로직 (서비스 정책에 따름)
+  const nextTarget = totalCount + 1;
+  const shouldShowNextAdBadge =
+    nextTarget > 0 &&
+    adService.checkIsMilestone(nextTarget, lastAdMilestoneShown);
 
   return (
     <div
@@ -79,7 +91,7 @@ export function FriendList({
         <div ref={bottomRef} style={{ height: "20px", gridColumn: "span 3" }} />
       )}
 
-      {/* {!isLoading && shouldShowNextAdBadge && <AdCard />} */}
+      {!isLoading && shouldShowNextAdBadge && <AdCard />}
     </div>
   );
 }

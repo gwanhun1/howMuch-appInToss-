@@ -28,6 +28,7 @@ export function MainPage() {
     closeAmountInput,
     resetToMain,
     startAddingFriend,
+    lastAdMilestoneShown,
     initializeStore,
     filterType,
     setFilterType,
@@ -40,11 +41,13 @@ export function MainPage() {
     hasMore,
     isLoadingMore,
     updateFriend,
+    loadAd,
   } = useFriendStore();
 
   // 서비스 첫 진입 시 데이터 초기화 및 메인 페이지 보장
   useEffect(() => {
     initializeStore();
+    loadAd(); // 전면 광고 미리 로드
 
     if (currentPage !== "main") {
       resetToMain();
@@ -124,10 +127,12 @@ export function MainPage() {
             <div style={{ minHeight: "70vh" }}>
               <FriendList
                 friends={filteredFriends}
+                totalCount={friends.length}
                 isLoading={isLoading}
                 isLoadingMore={isLoadingMore}
                 hasMore={hasMore}
                 onLoadMore={fetchMoreFriends}
+                lastAdMilestoneShown={lastAdMilestoneShown}
                 onAddFriend={startAddingFriend}
                 onFriendClick={openFriendForm}
                 onToggleFavorite={async (id) => {
