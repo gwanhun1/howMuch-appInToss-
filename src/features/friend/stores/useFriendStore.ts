@@ -1,22 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  query,
-  orderBy,
-  limit,
-  startAfter,
-  writeBatch,
-  DocumentSnapshot,
-} from "firebase/firestore";
-import { signInAnonymously } from "firebase/auth";
-import { auth, db } from "@/utils/firebase";
-import { getTossUserIdentifier } from "@/utils/toss";
+import type { DocumentSnapshot } from "firebase/firestore";
 import type { Friend } from "../types/friend";
+import { friendService, type UserMetadata } from "../apis/friendService";
 
 interface FriendStore {
   friends: Friend[];
@@ -86,69 +72,32 @@ export const useFriendStore = create<FriendStore>()(
       initializeStore: async () => {
         set({ isLoading: true, error: null });
         try {
-          const userCredential = await signInAnonymously(auth);
-          const uid = userCredential.user.uid;
-          const tossId = await getTossUserIdentifier();
+          const { uid, tossId } = await friendService.authenticate();
           set({ userIdentifier: uid });
 
-          const userDocRef = doc(db, "users", uid);
-          const userDoc = await getDoc(userDocRef);
+          const userData = (await friendService.getOrCreateUser(
+            uid,
+            tossId,
+          )) as UserMetadata;
 
-          // 1. 기존 데이터 마이그레이션 (필요시)
-          if (userDoc.exists() && userDoc.data().friends) {
-            const legacyData = userDoc.data();
-            const friendsArray = legacyData.friends as Friend[];
-
-            // 하위 컬렉션으로 마이그레이션
-            const batch = writeBatch(db);
-            const recordsColRef = collection(db, "users", uid, "records");
-
-            friendsArray.forEach((f) => {
-              const fRef = doc(recordsColRef, f.id);
-              batch.set(fRef, { ...f, createdAt: new Date().toISOString() });
-            });
-
-            // 마이그레이션된 문서 업데이트 (기존 friends 배열 제거)
-            batch.update(userDocRef, {
-              friends: null, // 제거
-              totalAmount: friendsArray.reduce((acc, f) => acc + f.amount, 0),
-              lastAdMilestoneShown: legacyData.lastAdMilestoneShown || 0,
-              migratedAt: new Date().toISOString(),
-            });
-
-            await batch.commit();
-            console.log("마이그레이션 완료");
-          }
-
-          // 2. 메타 데이터 로드
-          const updatedUserDoc = await getDoc(userDocRef);
-          if (updatedUserDoc.exists()) {
-            const data = updatedUserDoc.data();
+          // 1. 레거시 데이터 마이그레이션 처리
+          if (userData && userData.friends) {
+            const { totalAmount } = await friendService.migrateLegacyData(
+              uid,
+              userData.friends,
+              userData.lastAdMilestoneShown || 0,
+            );
+            set({ totalAmount });
+          } else if (userData) {
             set({
-              totalAmount: data.totalAmount || 0,
-              lastAdMilestoneShown: data.lastAdMilestoneShown || 0,
-            });
-          } else {
-            await setDoc(userDocRef, {
-              tossId,
-              createdAt: new Date().toISOString(),
-              totalAmount: 0,
+              totalAmount: userData.totalAmount || 0,
+              lastAdMilestoneShown: userData.lastAdMilestoneShown || 0,
             });
           }
 
-          // 3. 첫 페이지 로드
-          const recordsColRef = collection(db, "users", uid, "records");
-          const q = query(
-            recordsColRef,
-            orderBy("name", "asc"),
-            limit(PAGE_SIZE),
-          );
-
-          const snapshot = await getDocs(q);
-          const fetchedFriends = snapshot.docs.map(
-            (doc) => doc.data() as Friend,
-          );
-          const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
+          // 2. 첫 페이지 로드
+          const { fetchedFriends, lastVisible } =
+            await friendService.fetchFriendsPage(uid);
 
           set({
             friends: fetchedFriends,
@@ -175,23 +124,8 @@ export const useFriendStore = create<FriendStore>()(
 
         set({ isLoadingMore: true });
         try {
-          const recordsColRef = collection(
-            db,
-            "users",
-            userIdentifier,
-            "records",
-          );
-          const q = query(
-            recordsColRef,
-            orderBy("name", "asc"),
-            startAfter(lastVisible),
-            limit(PAGE_SIZE),
-          );
-
-          const snapshot = await getDocs(q);
-          const newFriends = snapshot.docs.map((doc) => doc.data() as Friend);
-          const newLastVisible =
-            snapshot.docs[snapshot.docs.length - 1] || null;
+          const { newFriends, newLastVisible } =
+            await friendService.fetchMoreFriends(userIdentifier, lastVisible);
 
           set({
             friends: [...friends, ...newFriends],
@@ -208,9 +142,7 @@ export const useFriendStore = create<FriendStore>()(
       addFriend: async (friend) => {
         const { userIdentifier, friends, totalAmount, lastAdMilestoneShown } =
           get();
-        if (!userIdentifier) {
-          throw new Error("사용자 인증이 필요합니다.");
-        }
+        if (!userIdentifier) throw new Error("사용자 인증이 필요합니다.");
 
         const newFriend = { ...friend, createdAt: new Date().toISOString() };
         const newTotalAmount = totalAmount + newFriend.amount;
@@ -218,7 +150,7 @@ export const useFriendStore = create<FriendStore>()(
         const isMilestone = newCount > 0 && newCount % 5 === 0;
         const nextMilestone = isMilestone ? newCount : lastAdMilestoneShown;
 
-        // 낙관적 업데이트: 먼저 UI 업데이트
+        // 낙관적 업데이트
         const optimisticFriends = [newFriend, ...friends].sort((a, b) => {
           if (a.isFavorite && !b.isFavorite) return -1;
           if (!a.isFavorite && b.isFavorite) return 1;
@@ -228,38 +160,25 @@ export const useFriendStore = create<FriendStore>()(
         set({
           friends: optimisticFriends,
           totalAmount: newTotalAmount,
-          lastAdMilestoneShown: nextMilestone,
+          // lastAdMilestoneShown: nextMilestone, // 광고 기능 비활성화로 주석 처리
         });
 
-        // Firebase에 저장 시도
         try {
-          const recordRef = doc(
-            db,
-            "users",
-            userIdentifier,
-            "records",
-            newFriend.id,
-          );
-          const userDocRef = doc(db, "users", userIdentifier);
-
+          // 광고 알림 및 마일스톤 로직 주석 처리 (다음 버전 대응)
+          /*
           if (isMilestone && nextMilestone > lastAdMilestoneShown) {
             alert(`광고(테스트): 친구 ${nextMilestone}명 달성!`);
           }
-
-          const batch = writeBatch(db);
-          batch.set(recordRef, newFriend);
-          batch.update(userDocRef, {
-            totalAmount: newTotalAmount,
-            lastAdMilestoneShown: nextMilestone,
-          });
-          await batch.commit();
+          */
+          await friendService.addFriend(
+            userIdentifier,
+            newFriend,
+            newTotalAmount,
+            nextMilestone,
+          );
         } catch (error) {
           // 실패 시 롤백
-          set({
-            friends,
-            totalAmount,
-            lastAdMilestoneShown,
-          });
+          set({ friends, totalAmount, lastAdMilestoneShown });
           console.error("추가 실패:", error);
           throw new Error("기록 저장에 실패했습니다. 다시 시도해주세요.");
         }
@@ -267,36 +186,23 @@ export const useFriendStore = create<FriendStore>()(
 
       removeFriend: async (id) => {
         const { userIdentifier, friends, totalAmount } = get();
-        if (!userIdentifier) {
-          throw new Error("사용자 인증이 필요합니다.");
-        }
+        if (!userIdentifier) throw new Error("사용자 인증이 필요합니다.");
 
         const friendToRemove = friends.find((f) => f.id === id);
         if (!friendToRemove) return;
 
         const newTotalAmount = Math.max(0, totalAmount - friendToRemove.amount);
 
-        // 낙관적 업데이트: 먼저 UI에서 제거
+        // 낙관적 업데이트
         set({
           friends: friends.filter((f) => f.id !== id),
           totalAmount: newTotalAmount,
         });
 
-        // Firebase에서 삭제 시도
         try {
-          const recordRef = doc(db, "users", userIdentifier, "records", id);
-          const userDocRef = doc(db, "users", userIdentifier);
-
-          const batch = writeBatch(db);
-          batch.delete(recordRef);
-          batch.update(userDocRef, { totalAmount: newTotalAmount });
-          await batch.commit();
+          await friendService.removeFriend(userIdentifier, id, newTotalAmount);
         } catch (error) {
-          // 실패 시 롤백
-          set({
-            friends,
-            totalAmount,
-          });
+          set({ friends, totalAmount });
           console.error("삭제 실패:", error);
           throw new Error("기록 삭제에 실패했습니다. 다시 시도해주세요.");
         }
@@ -304,9 +210,7 @@ export const useFriendStore = create<FriendStore>()(
 
       updateFriend: async (id, updates) => {
         const { userIdentifier, friends, totalAmount } = get();
-        if (!userIdentifier) {
-          throw new Error("사용자 인증이 필요합니다.");
-        }
+        if (!userIdentifier) throw new Error("사용자 인증이 필요합니다.");
 
         const oldFriend = friends.find((f) => f.id === id);
         if (!oldFriend) return;
@@ -316,7 +220,7 @@ export const useFriendStore = create<FriendStore>()(
           newTotalAmount = totalAmount - oldFriend.amount + updates.amount;
         }
 
-        // 낙관적 업데이트: 먼저 UI 업데이트
+        // 낙관적 업데이트
         const optimisticFriends = friends
           .map((f) => (f.id === id ? { ...f, ...updates } : f))
           .sort((a, b) => {
@@ -330,21 +234,15 @@ export const useFriendStore = create<FriendStore>()(
           totalAmount: newTotalAmount,
         });
 
-        // Firebase에 저장 시도
         try {
-          const recordRef = doc(db, "users", userIdentifier, "records", id);
-          const userDocRef = doc(db, "users", userIdentifier);
-
-          const batch = writeBatch(db);
-          batch.update(recordRef, updates);
-          batch.update(userDocRef, { totalAmount: newTotalAmount });
-          await batch.commit();
+          await friendService.updateFriend(
+            userIdentifier,
+            id,
+            updates,
+            newTotalAmount,
+          );
         } catch (error) {
-          // 실패 시 롤백
-          set({
-            friends,
-            totalAmount,
-          });
+          set({ friends, totalAmount });
           console.error("수정 실패:", error);
           throw new Error("기록 수정에 실패했습니다. 다시 시도해주세요.");
         }
@@ -404,10 +302,9 @@ export const useFriendStore = create<FriendStore>()(
         }),
     }),
     {
-      name: "howmuch-friends-storage-v3", // 구조 변경으로 인한 버전업
+      name: "howmuch-friends-storage-v3",
       version: 3,
       partialize: (state) => ({
-        // 로컬에는 최소한의 상태만 유지 (동기화가 기본이므로)
         lastAdMilestoneShown: state.lastAdMilestoneShown,
       }),
     },

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Spacing, Text, Badge, Skeleton, useToast } from "@toss/tds-mobile";
+import { Spacing, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "../stores/useFriendStore";
 import { FriendFormBottomSheet } from "../components/FriendFormBottomSheet";
@@ -7,6 +7,10 @@ import { AmountInputPage } from "./AmountInputPage";
 import { FriendList } from "../components/FriendList";
 import { CoinRain } from "../components/CoinRain";
 import { GlobalErrorView } from "../components/GlobalErrorView";
+import { MainSummaryCard } from "../components/MainSummaryCard";
+import { MainCategoryFilter } from "../components/MainCategoryFilter";
+import { FRIEND_CATEGORIES } from "../constants/category";
+import { ServiceFooter } from "../components/ServiceFooter";
 
 export function MainPage() {
   const { openToast } = useToast();
@@ -24,7 +28,6 @@ export function MainPage() {
     closeAmountInput,
     resetToMain,
     startAddingFriend,
-    lastAdMilestoneShown,
     initializeStore,
     filterType,
     setFilterType,
@@ -51,7 +54,7 @@ export function MainPage() {
 
   const filteredFriends = friends
     .filter((f) => {
-      if (filterType === "전체") return true;
+      if (filterType === FRIEND_CATEGORIES.ALL) return true;
       return f.type === filterType;
     })
     .sort((a, b) => {
@@ -102,138 +105,59 @@ export function MainPage() {
             }}
           >
             <Spacing size={12} />
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "0 20px",
-              }}
-            >
-              <Text typography="t4" fontWeight="bold" color={adaptive.grey900}>
-                오간 마음을 확인해보세요
-              </Text>
-              {isLoading ? (
-                <Skeleton.Item
-                  style={{ width: 80, height: 24, borderRadius: 12 }}
-                />
-              ) : (
-                friends.length > 0 && (
-                  <Badge
-                    color="blue"
-                    variant="fill"
-                    size="small"
-                    className="premium-amount-badge"
-                    style={{
-                      maxWidth: "120px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      display: "inline-block",
-                      flexShrink: 0,
-                    }}
-                  >
-                    총 {totalAmount.toLocaleString()}원
-                  </Badge>
-                )
-              )}
-            </div>
 
-            <Spacing size={16} />
-
-            {/* 필터링 버튼 영역 */}
-            <div
-              style={{
-                display: "flex",
-                gap: "4px",
-                padding: "0 20px",
-              }}
-            >
-              <Badge
-                color={filterType === "전체" ? "blue" : "elephant"}
-                variant={filterType === "전체" ? "fill" : "weak"}
-                size="small"
-                style={{ cursor: "pointer", transition: "all 0.2s" }}
-                onClick={() => setFilterType("전체")}
-              >
-                전체
-              </Badge>
-              <Badge
-                color={filterType === "축의금" ? "blue" : "elephant"}
-                variant={filterType === "축의금" ? "fill" : "weak"}
-                size="small"
-                style={{
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  ...(filterType === "축의금"
-                    ? { backgroundColor: "#FF4B78", border: "none" }
-                    : {}),
-                }}
-                onClick={() => setFilterType("축의금")}
-              >
-                축의금
-              </Badge>
-              <Badge
-                color={filterType === "조의금" ? "elephant" : "elephant"}
-                variant={filterType === "조의금" ? "fill" : "weak"}
-                size="small"
-                style={{ cursor: "pointer", transition: "all 0.2s" }}
-                onClick={() => setFilterType("조의금")}
-              >
-                조의금
-              </Badge>
-              <Badge
-                color={filterType === "돌잔치" ? "blue" : "elephant"}
-                variant={filterType === "돌잔치" ? "fill" : "weak"}
-                size="small"
-                style={{
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  ...(filterType === "돌잔치"
-                    ? { backgroundColor: "#FFB900", border: "none" }
-                    : {}),
-                }}
-                onClick={() => setFilterType("돌잔치")}
-              >
-                돌잔치
-              </Badge>
-            </div>
-
-            <Spacing size={16} />
-
-            <FriendList
-              friends={filteredFriends}
+            <MainSummaryCard
+              totalAmount={totalAmount}
               isLoading={isLoading}
-              isLoadingMore={isLoadingMore}
-              hasMore={hasMore}
-              onLoadMore={fetchMoreFriends}
-              lastAdMilestoneShown={lastAdMilestoneShown}
-              onAddFriend={startAddingFriend}
-              onFriendClick={openFriendForm}
-              onToggleFavorite={async (id) => {
-                const friend = friends.find((f) => f.id === id);
-                if (friend) {
-                  const willBeFavorite = !friend.isFavorite;
-
-                  try {
-                    await updateFriend(id, { isFavorite: willBeFavorite });
-
-                    if (willBeFavorite) {
-                      openToast("⭐ 중요 표시되었습니다");
-                    } else {
-                      openToast("중요 표시가 해제되었습니다");
-                    }
-                  } catch (error) {
-                    console.error("즐겨찾기 토글 실패:", error);
-                    const errorMessage =
-                      error instanceof Error
-                        ? error.message
-                        : "중요 표시 변경에 실패했습니다.";
-                    openToast(errorMessage);
-                  }
-                }
-              }}
+              friendsCount={friends.length}
             />
+
+            <Spacing size={16} />
+
+            <MainCategoryFilter
+              filterType={filterType}
+              onFilterChange={setFilterType}
+            />
+
+            <Spacing size={16} />
+
+            <div style={{ minHeight: "70vh" }}>
+              <FriendList
+                friends={filteredFriends}
+                isLoading={isLoading}
+                isLoadingMore={isLoadingMore}
+                hasMore={hasMore}
+                onLoadMore={fetchMoreFriends}
+                onAddFriend={startAddingFriend}
+                onFriendClick={openFriendForm}
+                onToggleFavorite={async (id) => {
+                  const friend = friends.find((f) => f.id === id);
+                  if (friend) {
+                    const willBeFavorite = !friend.isFavorite;
+
+                    try {
+                      await updateFriend(id, { isFavorite: willBeFavorite });
+
+                      if (willBeFavorite) {
+                        openToast("⭐ 중요 표시되었습니다");
+                      } else {
+                        openToast("중요 표시가 해제되었습니다");
+                      }
+                    } catch (error) {
+                      console.error("즐겨찾기 토글 실패:", error);
+                      const errorMessage =
+                        error instanceof Error
+                          ? error.message
+                          : "중요 표시 변경에 실패했습니다.";
+                      openToast(errorMessage);
+                    }
+                  }
+                }}
+              />
+            </div>
+
+            <Spacing size={32} />
+            <ServiceFooter />
           </div>
         </>
       )}

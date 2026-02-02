@@ -1,5 +1,6 @@
 import { Button, ListRow } from "@toss/tds-mobile";
 import type { FriendType } from "../../types/friend";
+import { FRIEND_CATEGORIES, CATEGORY_THEMES } from "../../constants/category";
 
 interface FormTypeSelectorProps {
   value: FriendType | null;
@@ -7,42 +8,37 @@ interface FormTypeSelectorProps {
 }
 
 export function FormTypeSelector({ value, onChange }: FormTypeSelectorProps) {
+  const categories = [
+    FRIEND_CATEGORIES.WEDDING,
+    FRIEND_CATEGORIES.FUNERAL,
+    FRIEND_CATEGORIES.DOL,
+  ] as const;
+
   return (
     <ListRow
       contents={<ListRow.Texts type="1RowTypeB" top="어떤 상황인가요?" />}
       right={
         <div style={{ display: "flex", gap: "8px" }}>
-          <Button
-            variant={value === "축의금" ? "fill" : "weak"}
-            size="small"
-            onClick={() => onChange("축의금")}
-            style={
-              value === "축의금"
-                ? { backgroundColor: "#FF4B78", border: "none" }
-                : {}
-            }
-          >
-            축의금
-          </Button>
-          <Button
-            variant={value === "조의금" ? "fill" : "weak"}
-            size="small"
-            onClick={() => onChange("조의금")}
-          >
-            조의금
-          </Button>
-          <Button
-            variant={value === "돌잔치" ? "fill" : "weak"}
-            size="small"
-            onClick={() => onChange("돌잔치")}
-            style={
-              value === "돌잔치"
-                ? { backgroundColor: "#FFB900", border: "none" }
-                : {}
-            }
-          >
-            돌잔치
-          </Button>
+          {categories.map((cat) => {
+            const theme = CATEGORY_THEMES[cat];
+            const isSelected = value === cat;
+
+            return (
+              <Button
+                key={cat}
+                variant={isSelected ? "fill" : "weak"}
+                size="small"
+                onClick={() => onChange(cat)}
+                style={
+                  isSelected && cat !== FRIEND_CATEGORIES.FUNERAL // 조의금은 기본 weak/fill 테마 유지
+                    ? { backgroundColor: theme.color, border: "none" }
+                    : {}
+                }
+              >
+                {theme.label}
+              </Button>
+            );
+          })}
         </div>
       }
     />

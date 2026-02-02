@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import type { Friend } from "../types/friend";
 import { FriendCard } from "./FriendCard";
 import { AddFriendCard } from "./AddFriendCard";
-import { AdCard } from "./AdCard";
 import { FriendCardSkeleton } from "./FriendCardSkeleton";
 
 interface FriendListProps {
@@ -11,7 +10,6 @@ interface FriendListProps {
   isLoadingMore: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
-  lastAdMilestoneShown: number;
   onAddFriend: () => void;
   onFriendClick: (friendId: string) => void;
   onToggleFavorite: (friendId: string) => void;
@@ -23,7 +21,6 @@ export function FriendList({
   isLoadingMore,
   hasMore,
   onLoadMore,
-  lastAdMilestoneShown,
   onAddFriend,
   onFriendClick,
   onToggleFavorite,
@@ -48,12 +45,6 @@ export function FriendList({
 
     return () => observer.disconnect();
   }, [hasMore, isLoading, isLoadingMore, onLoadMore]);
-
-  const nextMilestone = friends.length + 1;
-  const shouldShowNextAdBadge =
-    nextMilestone > 0 &&
-    nextMilestone % 5 === 0 &&
-    nextMilestone > lastAdMilestoneShown;
 
   return (
     <div
@@ -88,7 +79,7 @@ export function FriendList({
         <div ref={bottomRef} style={{ height: "20px", gridColumn: "span 3" }} />
       )}
 
-      {!isLoading && shouldShowNextAdBadge && <AdCard />}
+      {/* {!isLoading && shouldShowNextAdBadge && <AdCard />} */}
     </div>
   );
 }

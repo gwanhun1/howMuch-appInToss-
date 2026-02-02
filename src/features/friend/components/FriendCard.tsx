@@ -11,38 +11,22 @@ interface FriendCardProps {
   onToggleFavorite: (id: string) => void;
 }
 
+import { CATEGORY_THEMES, FRIEND_CATEGORIES } from "../constants/category";
+
 export function FriendCard({
   friend,
   onClick,
   onToggleFavorite,
 }: FriendCardProps) {
-  const isCondolence = friend.type === "조의금";
-  const isCgratulatory = friend.type === "축의금";
-  const isDol = friend.type === "돌잔치";
-
   // 날짜 기반 미래 일정 여부 확인 (오늘 포함)
   const todayStr = new Date().toISOString().split("T")[0];
   const isUpcoming = friend.date && friend.date >= todayStr;
 
-  // 상단 포인트 라인 컬러
-  const topBarColor = isCgratulatory
-    ? "#FF4B78"
-    : isCondolence
-      ? adaptive.grey400
-      : isDol
-        ? "#FFB900"
-        : "transparent";
+  // 카테고리 테마 정보 가져오기
+  const theme = CATEGORY_THEMES[friend.type || "전체"];
 
   // 배경색 로직 (미래 일정은 블루 틴트, 나머지는 카테고리별 파스텔 틴트)
-  const cardBgColor = isUpcoming
-    ? "#F2F8FF" // 연한 토스 블루
-    : isCgratulatory
-      ? "#FFF2F6" // 연한 핑크
-      : isCondolence
-        ? "#F8F9FA" // 연한 그레이
-        : isDol
-          ? "#FFFBEB" // 연한 노랑
-          : "#FFFFFF";
+  const cardBgColor = isUpcoming ? "#F2F8FF" : theme.lightColor;
 
   // 테두리 및 그림자 (다시 깔끔하게 복구)
   const borderColor = isUpcoming
@@ -53,9 +37,8 @@ export function FriendCard({
     : "0 4px 12px rgba(0, 0, 0, 0.03)";
 
   const amountColor = adaptive.blue600;
-  const badgeColor =
-    topBarColor !== "transparent" ? topBarColor : adaptive.grey600;
-  const badgeText = isCgratulatory ? "축" : isCondolence ? "조" : "돌";
+  const badgeColor = theme.defaultBadgeColor;
+  const badgeText = theme.badgeText;
 
   return (
     <motion.div
@@ -139,7 +122,8 @@ export function FriendCard({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          filter: isCondolence ? "grayscale(1)" : "none",
+          filter:
+            friend.type === FRIEND_CATEGORIES.FUNERAL ? "grayscale(1)" : "none",
           transition: "all 0.3s ease",
           marginTop: isUpcoming ? "6px" : "0",
         }}
