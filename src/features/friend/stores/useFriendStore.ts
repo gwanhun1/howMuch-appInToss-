@@ -11,12 +11,16 @@ import { adService } from "../apis/adService";
 declare global {
   interface Window {
     toss?: {
-      loadAppsInTossAdMob: (params: { adId: string }) => Promise<void>;
-      showAppsInTossAdMob: (params: {
-        adId: string;
-        onEvent?: (event: string) => void;
+      loadAppsInTossAdMob: (params: {
+        options: { adGroupId: string };
+        onEvent?: (event: { type: string; data?: unknown }) => void;
         onError?: (error: unknown) => void;
-      }) => Promise<void>;
+      }) => () => void;
+      showAppsInTossAdMob: (params: {
+        options: { adGroupId: string };
+        onEvent?: (event: { type: string; data?: unknown }) => void;
+        onError?: (error: unknown) => void;
+      }) => void;
     };
   }
 }
@@ -129,10 +133,49 @@ const createFriendSlice: StateCreator<
     const newFriend = { ...friend, createdAt: new Date().toISOString() };
     const newCount = friends.length + 1;
 
-    // 1. 광고 마일스톤 체크 및 노출 (테스트를 위해 1단위로 설정)
+    // 1. 광고 마일스톤 체크
     if (adService.checkIsMilestone(newCount, lastAdMilestoneShown)) {
-      await adService.showInterstitialAd();
-      set({ lastAdMilestoneShown: newCount });
+      set({ isLoading: true }); // 광고 전 로딩 표시
+
+      const showAdAndProceed = () => {
+        return new Promise<void>((resolve) => {
+          adService.showAd("interstitial", {
+            onDismissed: () => {
+              set({ lastAdMilestoneShown: newCount });
+              resolve();
+            },
+            onError: () => {
+              resolve(); // 에러나도 진행
+            },
+          });
+        });
+      };
+
+      if (!get().isAdLoaded) {
+        // 광고 준비 안됨: 잠시 기다림
+        await new Promise<void>((resolve) => {
+          const timeout = setTimeout(() => {
+            cleanup?.();
+            resolve();
+          }, adService.WAIT_TIMEOUT_MS);
+
+          const cleanup = adService.loadAd(
+            "interstitial",
+            0,
+            () => {
+              clearTimeout(timeout);
+              showAdAndProceed().then(resolve);
+            },
+            () => {
+              clearTimeout(timeout);
+              resolve(); // 결국 로드 안되면 그냥 진행
+            },
+          );
+        });
+      } else {
+        await showAdAndProceed();
+      }
+      set({ isLoading: false });
     }
 
     // 2. 상태 업데이트
@@ -307,6 +350,8 @@ const createUISlice: StateCreator<
  */
 interface AdSlice {
   lastAdMilestoneShown: number;
+  isAdLoaded: boolean;
+  isAdLoading: boolean;
   loadAd: () => Promise<void>;
 }
 
@@ -315,10 +360,24 @@ const createAdSlice: StateCreator<
   [["zustand/persist", unknown]],
   [],
   AdSlice
-> = () => ({
+> = (set, get) => ({
   lastAdMilestoneShown: 0,
+  isAdLoaded: false,
+  isAdLoading: false,
   loadAd: async () => {
-    await adService.loadInterstitialAd();
+    if (get().isAdLoading || get().isAdLoaded) return;
+
+    set({ isAdLoading: true });
+    adService.loadAd(
+      "interstitial",
+      0,
+      () => {
+        set({ isAdLoaded: true, isAdLoading: false });
+      },
+      () => {
+        set({ isAdLoaded: false, isAdLoading: false });
+      },
+    );
   },
 });
 

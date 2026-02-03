@@ -175,7 +175,7 @@ export function FriendFormBottomSheet({
               }}
             >
               <Asset.Icon
-                name="icon-star-yellow"
+                name="icon-star-blue"
                 size={24}
                 color={currentFriend.isFavorite ? undefined : adaptive.grey300}
               />
