@@ -1,6 +1,6 @@
 import { adService } from "../apis/adService";
 import { useEffect, useRef } from "react";
-import type { Friend } from "../types/friend";
+import type { Friend, FriendType } from "../types/friend";
 import { FriendCard } from "./FriendCard";
 import { AddFriendCard } from "./AddFriendCard";
 import { AdCard } from "./AdCard";
@@ -14,9 +14,10 @@ interface FriendListProps {
   hasMore: boolean;
   onLoadMore: () => void;
   lastAdMilestoneShown: number;
-  onAddFriend: () => void;
+  onAddFriend: (initialType?: FriendType | null) => void;
   onFriendClick: (friendId: string) => void;
   onToggleFavorite: (friendId: string) => void;
+  filterType?: string;
 }
 
 export function FriendList({
@@ -30,6 +31,7 @@ export function FriendList({
   onAddFriend,
   onFriendClick,
   onToggleFavorite,
+  filterType = "전체",
 }: FriendListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +71,7 @@ export function FriendList({
         marginBottom: "20px",
       }}
     >
-      <AddFriendCard onClick={onAddFriend} />
+      <AddFriendCard onClick={() => onAddFriend(filterType === "전체" ? null : (filterType as FriendType))} />
       {friends.map((friend) => (
         <FriendCard
           key={friend.id}
@@ -91,7 +93,7 @@ export function FriendList({
         <div ref={bottomRef} style={{ height: "20px", gridColumn: "span 3" }} />
       )}
 
-      {!isLoading && shouldShowNextAdBadge && <AdCard />}
+      {!isLoading && filterType === "전체" && shouldShowNextAdBadge && <AdCard />}
     </div>
   );
 }

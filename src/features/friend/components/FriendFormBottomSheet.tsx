@@ -219,7 +219,7 @@ export function FriendFormBottomSheet({
                 onChange={(e) =>
                   setEditingFriend({ ...currentFriend, name: e.target.value })
                 }
-                placeholder="이름"
+                placeholder="누구에게?"
                 hasError={isNameInvalid}
                 help={isNameInvalid ? "이름을 입력해주세요" : undefined}
               />

@@ -12,8 +12,9 @@ export function AdCard() {
         padding: "20px 8px",
         backgroundColor: adaptive.blue50,
         borderRadius: "24px",
-        border: `2px dashed ${adaptive.blue200}`,
-        minHeight: "156px", // FriendCard와 높이 통일
+        border: `1px dashed ${adaptive.blue200}`,
+        height: "160px",
+        boxSizing: "border-box",
       }}
     >
       <div

@@ -14,7 +14,8 @@ export function FriendCardSkeleton() {
         borderRadius: "24px",
         border: `1px solid ${adaptive.grey200}`,
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.03)",
-        minHeight: "156px",
+        height: "160px",
+        boxSizing: "border-box",
       }}
     >
       <div

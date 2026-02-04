@@ -135,6 +135,7 @@ export function MainPage() {
                 lastAdMilestoneShown={lastAdMilestoneShown}
                 onAddFriend={startAddingFriend}
                 onFriendClick={openFriendForm}
+                filterType={filterType}
                 onToggleFavorite={async (id) => {
                   const friend = friends.find((f) => f.id === id);
                   if (friend) {

@@ -12,7 +12,6 @@ export function AddFriendCard({ onClick }: AddFriendCardProps) {
       className="add-card-pulse"
       onClick={onClick}
       whileTap={{ scale: 0.96 }}
-      whileHover={{ y: -2 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       style={{
         display: "flex",
@@ -23,7 +22,8 @@ export function AddFriendCard({ onClick }: AddFriendCardProps) {
         borderRadius: "24px",
         cursor: "pointer",
         border: `1px solid rgba(49, 130, 246, 0.1)`,
-        minHeight: "156px",
+        height: "160px",
+        boxSizing: "border-box",
         boxShadow: "0 4px 12px rgba(49, 130, 246, 0.05)",
       }}
     >

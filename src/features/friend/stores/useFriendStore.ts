@@ -1,7 +1,7 @@
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DocumentSnapshot } from "firebase/firestore";
-import type { Friend } from "../types/friend";
+import type { Friend, FriendType } from "../types/friend";
 import { friendService, type UserMetadata } from "../apis/friendService";
 import { adService } from "../apis/adService";
 
@@ -268,7 +268,7 @@ interface UISlice {
   setCelebrating: (val: boolean) => void;
   setEditingFriend: (f: Friend | null) => void;
   setSelectedFriendId: (id: string | null) => void;
-  startAddingFriend: () => void;
+  startAddingFriend: (initialType?: FriendType | null) => void;
   openFriendForm: (id: string) => void;
   closeFriendForm: () => void;
   openProfileImageSheet: () => void;
@@ -297,14 +297,14 @@ const createUISlice: StateCreator<
   setEditingFriend: (editingFriend) => set({ editingFriend }),
   setSelectedFriendId: (selectedFriendId) => set({ selectedFriendId }),
 
-  startAddingFriend: () =>
+  startAddingFriend: (initialType) =>
     set({
       selectedFriendId: "new",
       editingFriend: {
         id: Date.now().toString(),
         name: "",
         profileIcon: "icon-face-cap",
-        type: null,
+        type: initialType || null,
         amount: 0,
         relation: "",
         date: "",
