@@ -133,48 +133,22 @@ const createFriendSlice: StateCreator<
     const newFriend = { ...friend, createdAt: new Date().toISOString() };
     const newCount = friends.length + 1;
 
-    // 1. 광고 마일스톤 체크
+    // 1. 광고 마일스톤 체크 (공식 패턴: load → show → 다음 load)
     if (adService.checkIsMilestone(newCount, lastAdMilestoneShown)) {
-      set({ isLoading: true }); // 광고 전 로딩 표시
+      console.log("[Store] 광고 표시 조건 충족");
+      set({ isLoading: true });
 
-      const showAdAndProceed = () => {
-        return new Promise<void>((resolve) => {
-          adService.showAd("interstitial", {
-            onDismissed: () => {
-              set({ lastAdMilestoneShown: newCount });
-              resolve();
-            },
-            onError: () => {
-              resolve(); // 에러나도 진행
-            },
-          });
-        });
-      };
+      // loadAndShowAd: 로드 → 표시 → 다음 광고 미리 로드까지 처리
+      await adService.loadAndShowAd({
+        onDismissed: () => {
+          console.log("[Store] 광고 닫힘 - 마일스톤 업데이트");
+          set({ lastAdMilestoneShown: newCount, isAdLoaded: false });
+        },
+        onError: (error) => {
+          console.error("[Store] 광고 에러:", error);
+        },
+      });
 
-      if (!get().isAdLoaded) {
-        // 광고 준비 안됨: 잠시 기다림
-        await new Promise<void>((resolve) => {
-          const timeout = setTimeout(() => {
-            cleanup?.();
-            resolve();
-          }, adService.WAIT_TIMEOUT_MS);
-
-          const cleanup = adService.loadAd(
-            "interstitial",
-            0,
-            () => {
-              clearTimeout(timeout);
-              showAdAndProceed().then(resolve);
-            },
-            () => {
-              clearTimeout(timeout);
-              resolve(); // 결국 로드 안되면 그냥 진행
-            },
-          );
-        });
-      } else {
-        await showAdAndProceed();
-      }
       set({ isLoading: false });
     }
 
@@ -195,7 +169,7 @@ const createFriendSlice: StateCreator<
         newTotalAmount,
         get().lastAdMilestoneShown,
       );
-      get().loadAd(); // 다음 광고 로드
+      get().loadAd(); // 다음 광고 미리 로드
     } catch (error) {
       set({ friends, totalAmount });
       throw error;
@@ -365,19 +339,24 @@ const createAdSlice: StateCreator<
   isAdLoaded: false,
   isAdLoading: false,
   loadAd: async () => {
-    if (get().isAdLoading || get().isAdLoaded) return;
+    if (get().isAdLoading || adService.isAdLoaded()) {
+      console.log("[Store] 광고 이미 로드 중이거나 로드됨 - 스킵");
+      return;
+    }
 
+    console.log("[Store] 광고 미리 로드 시작");
     set({ isAdLoading: true });
-    adService.loadAd(
-      "interstitial",
-      0,
-      () => {
+
+    adService.loadAd({
+      onLoaded: () => {
+        console.log("[Store] 광고 미리 로드 성공");
         set({ isAdLoaded: true, isAdLoading: false });
       },
-      () => {
+      onError: (error) => {
+        console.error("[Store] 광고 미리 로드 실패", error);
         set({ isAdLoaded: false, isAdLoading: false });
       },
-    );
+    });
   },
 });
 

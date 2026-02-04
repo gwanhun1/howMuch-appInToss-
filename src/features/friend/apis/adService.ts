@@ -1,131 +1,256 @@
 /**
- * 토스 앱인토스(AIT) 광고 SDK 연동 서비스
+ * 토스 앱인토스(AIT) 전면형 광고 SDK 연동 서비스
+ * 
+ * 공식 문서 기반 구현: https://developers-apps-in-toss.toss.im/ads/develop.html
+ * 
+ * 핵심 규칙:
+ * 1. 페이지별로 광고를 미리 로드 (load)
+ * 2. 로드 완료 이벤트('loaded') 수신 후에만 show 호출
+ * 3. load → show → 다음 광고 load 순서 준수
+ * 4. 한 번에 1개의 광고만 로드 가능
  */
 import { GoogleAdMob } from "@apps-in-toss/web-framework";
 
-/** 광고 그룹 ID */
-export const AD_GROUP_IDS = {
-  REWARDED: "ait-ad-test-rewarded-id", // 보상형 광고 (추후 확장용)
-  INTERSTITIAL: "ait-ad-test-interstitial-id", // 전면형 광고
-} as const;
+/** 전면형 광고 테스트 ID (개발 시 반드시 테스트 ID 사용) */
+const TEST_AD_GROUP_ID = "ait-ad-test-interstitial-id";
 
-/** 광고 재시도 설정 */
-const AD_RETRY_CONFIG = {
-  MAX_ATTEMPTS: 3,
-  DELAYS_MS: [1000, 3000, 5000],
-  WAIT_TIMEOUT_MS: 10000, // 광고 로드 최대 대기 시간
-} as const;
+/** 광고 상태 관리 */
+interface AdState {
+  isLoaded: boolean;
+  isLoading: boolean;
+  cleanup: (() => void) | null;
+}
 
-export type AdType = "rewarded" | "interstitial";
+const adState: AdState = {
+  isLoaded: false,
+  isLoading: false,
+  cleanup: null,
+};
 
 export const adService = {
   /**
    * 광고 기능 지원 여부 확인
    */
-  isSupported: () => {
+  isSupported: (): boolean => {
     return GoogleAdMob.loadAppsInTossAdMob.isSupported?.() === true;
   },
 
   /**
-   * 광고를 미리 로드합니다. (Retry 로직 포함)
+   * 현재 광고 로드 상태 확인
    */
-  loadAd: (
-    type: AdType = "interstitial",
-    attempt: number = 0,
-    onSuccess?: () => void,
-    onError?: (error: unknown) => void,
-  ): (() => void) | undefined => {
-    const adGroupId =
-      type === "rewarded" ? AD_GROUP_IDS.REWARDED : AD_GROUP_IDS.INTERSTITIAL;
+  isAdLoaded: (): boolean => {
+    return adState.isLoaded;
+  },
 
-    if (!adService.isSupported()) {
-      console.warn(`[AdService] 광고 기능 미지원 환경입니다.`);
-      onError?.(new Error("NOT_SUPPORTED"));
+  /**
+   * 현재 광고 로딩 중 여부 확인
+   */
+  isAdLoading: (): boolean => {
+    return adState.isLoading;
+  },
+
+  /**
+   * 광고를 미리 로드합니다.
+   * 
+   * 주의사항:
+   * - 페이지별로 광고를 미리 로드해야 합니다
+   * - 광고가 로드되지 않은 상태에서 show 호출 시 오류 발생
+   * - 한 번에 1개의 광고만 로드 가능
+   */
+  loadAd: (callbacks?: {
+    onLoaded?: () => void;
+    onError?: (error: unknown) => void;
+  }): (() => void) | undefined => {
+    // 이미 로드 중이거나 로드된 상태면 스킵
+    if (adState.isLoading) {
+      console.log("[AdService] 이미 광고 로드 중 - 스킵");
       return undefined;
     }
 
-    console.log(
-      `[AdService] 광고 로드 시도 (${attempt + 1}/${AD_RETRY_CONFIG.MAX_ATTEMPTS + 1})`,
-    );
+    if (adState.isLoaded) {
+      console.log("[AdService] 이미 광고 로드됨 - 스킵");
+      callbacks?.onLoaded?.();
+      return undefined;
+    }
+
+    // 지원 여부 확인
+    if (!adService.isSupported()) {
+      console.warn("[AdService] 광고 기능 미지원 환경");
+      callbacks?.onError?.(new Error("NOT_SUPPORTED"));
+      return undefined;
+    }
+
+    console.log(`[AdService] 광고 로드 시작: ${TEST_AD_GROUP_ID}`);
+    adState.isLoading = true;
 
     const cleanup = GoogleAdMob.loadAppsInTossAdMob({
-      options: { adGroupId },
+      options: {
+        adGroupId: TEST_AD_GROUP_ID,
+      },
       onEvent: (event) => {
+        console.log(`[AdService] 로드 이벤트: ${event.type}`);
+
         if (event.type === "loaded") {
-          console.log(`[AdService] 광고 로드 성공: ${adGroupId}`);
-          onSuccess?.();
+          console.log("[AdService] 광고 로드 완료");
+          adState.isLoaded = true;
+          adState.isLoading = false;
+          callbacks?.onLoaded?.();
         }
       },
       onError: (error) => {
-        console.error(`[AdService] 광고 로드 실패:`, error);
-
-        // 재시도 로직
-        if (attempt < AD_RETRY_CONFIG.MAX_ATTEMPTS) {
-          const delay = AD_RETRY_CONFIG.DELAYS_MS[attempt] || 5000;
-          setTimeout(() => {
-            adService.loadAd(type, attempt + 1, onSuccess, onError);
-          }, delay);
-        } else {
-          onError?.(error);
-        }
+        console.error("[AdService] 광고 로드 실패:", error);
+        adState.isLoaded = false;
+        adState.isLoading = false;
+        callbacks?.onError?.(error);
       },
     });
 
+    adState.cleanup = cleanup;
     return cleanup;
   },
 
   /**
    * 광고를 노출합니다.
+   * 
+   * 주의사항:
+   * - 반드시 loadAd 호출 후 'loaded' 이벤트를 받은 후에 호출
+   * - 로드되지 않은 상태에서 호출 시 오류 발생
+   * - show 완료 후 다음 광고를 미리 load 권장
    */
-  showAd: (
-    type: AdType = "interstitial",
-    callbacks: {
-      onDismissed: (rewardEarned?: boolean) => void;
-      onError: (error: unknown) => void;
-    },
-  ) => {
-    const adGroupId =
-      type === "rewarded" ? AD_GROUP_IDS.REWARDED : AD_GROUP_IDS.INTERSTITIAL;
-    let rewardEarned = false;
-
+  showAd: (callbacks: {
+    onDismissed: () => void;
+    onError?: (error: unknown) => void;
+  }): void => {
+    // show 지원 여부 확인
     if (!GoogleAdMob.showAppsInTossAdMob.isSupported?.()) {
-      console.warn("[AdService] 광고 표시 미지원 환경");
-      callbacks.onDismissed(true); // 지원 안하면 그냥 통과
+      console.warn("[AdService] 광고 표시 미지원 환경 - 스킵");
+      callbacks.onDismissed();
       return;
     }
 
+    // 로드 상태 확인
+    if (!adState.isLoaded) {
+      console.warn("[AdService] 광고가 로드되지 않음 - 스킵");
+      callbacks.onError?.(new Error("AD_NOT_LOADED"));
+      callbacks.onDismissed();
+      return;
+    }
+
+    console.log(`[AdService] 광고 표시 시작: ${TEST_AD_GROUP_ID}`);
+
     GoogleAdMob.showAppsInTossAdMob({
-      options: { adGroupId },
+      options: {
+        adGroupId: TEST_AD_GROUP_ID,
+      },
       onEvent: (event) => {
-        console.log(`[AdService] 광고 이벤트: ${event.type}`, event.data);
+        console.log(`[AdService] 광고 이벤트: ${event.type}`);
 
-        if (event.type === "userEarnedReward") {
-          rewardEarned = true;
-        }
+        switch (event.type) {
+          case "requested":
+          case "show":
+          case "impression":
+          case "clicked":
+            break;
 
-        if (event.type === "dismissed") {
-          callbacks.onDismissed(rewardEarned);
-        }
+          case "dismissed":
+            console.log("[AdService] 광고 닫힘");
+            adState.isLoaded = false;
+            callbacks.onDismissed();
+            break;
 
-        if (event.type === "failedToShow") {
-          callbacks.onError(event.data);
+          case "failedToShow":
+            console.error("[AdService] 광고 표시 실패:", event.data);
+            adState.isLoaded = false;
+            callbacks.onError?.(event.data);
+            callbacks.onDismissed();
+            break;
         }
       },
       onError: (error) => {
         console.error("[AdService] 광고 표시 에러:", error);
-        callbacks.onError(error);
+        adState.isLoaded = false;
+        callbacks.onError?.(error);
+        callbacks.onDismissed();
       },
     });
   },
 
   /**
-   * 광고 노출 마일스톤 여부를 판단합니다.
+   * 광고 로드 → 표시 → 다음 광고 로드를 순차적으로 실행합니다.
+   * 
+   * 공식 권장 패턴: load → show → (다음 load) → show
    */
-  checkIsMilestone: (count: number, lastAdMilestone: number): boolean => {
-    // 테스트용으로 1개일 때 바로 나오게 설정되어 있을 수 있으나,
-    // 기본적으로는 5단위로 설정 (필요시 조정 가능)
-    return count > 0 && count % 5 === 0 && count > lastAdMilestone;
+  loadAndShowAd: async (callbacks: {
+    onDismissed: () => void;
+    onError?: (error: unknown) => void;
+  }): Promise<void> => {
+    return new Promise((resolve) => {
+      // 이미 로드된 광고가 있으면 바로 표시
+      if (adState.isLoaded) {
+        console.log("[AdService] 이미 로드된 광고 표시");
+        adService.showAd({
+          onDismissed: () => {
+            callbacks.onDismissed();
+            // 다음 광고 미리 로드
+            adService.loadAd();
+            resolve();
+          },
+          onError: callbacks.onError,
+        });
+        return;
+      }
+
+      // 광고 로드 후 표시
+      console.log("[AdService] 광고 로드 후 표시 시작");
+      adService.loadAd({
+        onLoaded: () => {
+          adService.showAd({
+            onDismissed: () => {
+              callbacks.onDismissed();
+              // 다음 광고 미리 로드
+              adService.loadAd();
+              resolve();
+            },
+            onError: callbacks.onError,
+          });
+        },
+        onError: (error) => {
+          console.error("[AdService] 광고 로드 실패 - 계속 진행:", error);
+          callbacks.onError?.(error);
+          callbacks.onDismissed();
+          resolve();
+        },
+      });
+
+      // 타임아웃 처리 (10초)
+      setTimeout(() => {
+        if (adState.isLoading) {
+          console.warn("[AdService] 광고 로드 타임아웃 - 계속 진행");
+          adState.cleanup?.();
+          adState.isLoading = false;
+          callbacks.onDismissed();
+          resolve();
+        }
+      }, 10000);
+    });
   },
 
-  WAIT_TIMEOUT_MS: AD_RETRY_CONFIG.WAIT_TIMEOUT_MS,
+  /**
+   * 광고 상태 초기화 (cleanup)
+   */
+  reset: (): void => {
+    console.log("[AdService] 상태 초기화");
+    adState.cleanup?.();
+    adState.isLoaded = false;
+    adState.isLoading = false;
+    adState.cleanup = null;
+  },
+
+  /**
+   * 광고 노출 마일스톤 여부를 판단합니다.
+   * 5명 단위로 광고 표시 (5, 10, 15, 20...)
+   */
+  checkIsMilestone: (count: number, lastAdMilestone: number): boolean => {
+    return count > 0 && count % 5 === 0 && count > lastAdMilestone;
+  },
 };
