@@ -86,7 +86,10 @@ export function FriendFormBottomSheet({
     if (isSubmitting) return;
 
     const isValid =
-      currentFriend.name.trim() !== "" && currentFriend.type != null;
+      currentFriend.name.trim() !== "" &&
+      currentFriend.type != null &&
+      currentFriend.amount > 0;
+
     if (!isValid) {
       setShowValidationError(true);
       return;
