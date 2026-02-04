@@ -11,8 +11,8 @@
  */
 import { GoogleAdMob } from "@apps-in-toss/web-framework";
 
-/** 전면형 광고 테스트 ID (개발 시 반드시 테스트 ID 사용) */
-const TEST_AD_GROUP_ID = "ait-ad-test-interstitial-id";
+/** 전면형 광고 ID */
+const AD_GROUP_ID = "ait.v2.live.231b29cb798e48d0";
 
 /** 광고 상태 관리 */
 interface AdState {
@@ -80,12 +80,12 @@ export const adService = {
       return undefined;
     }
 
-    console.log(`[AdService] 광고 로드 시작: ${TEST_AD_GROUP_ID}`);
+    console.log(`[AdService] 광고 로드 시작: ${AD_GROUP_ID}`);
     adState.isLoading = true;
 
     const cleanup = GoogleAdMob.loadAppsInTossAdMob({
       options: {
-        adGroupId: TEST_AD_GROUP_ID,
+        adGroupId: AD_GROUP_ID,
       },
       onEvent: (event) => {
         console.log(`[AdService] 로드 이벤트: ${event.type}`);
@@ -136,11 +136,11 @@ export const adService = {
       return;
     }
 
-    console.log(`[AdService] 광고 표시 시작: ${TEST_AD_GROUP_ID}`);
+    console.log(`[AdService] 광고 표시 시작: ${AD_GROUP_ID}`);
 
     GoogleAdMob.showAppsInTossAdMob({
       options: {
-        adGroupId: TEST_AD_GROUP_ID,
+        adGroupId: AD_GROUP_ID,
       },
       onEvent: (event) => {
         console.log(`[AdService] 광고 이벤트: ${event.type}`);
