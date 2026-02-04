@@ -11,8 +11,8 @@
  */
 import { GoogleAdMob } from "@apps-in-toss/web-framework";
 
-/** 전면형 광고 ID */
-const AD_GROUP_ID = "ait.v2.live.231b29cb798e48d0";
+/** 전면형 광고 ID (환경변수에서 로드) */
+const AD_GROUP_ID = import.meta.env.VITE_AD_GROUP_ID || "ait-ad-test-interstitial-id";
 
 /** 광고 상태 관리 */
 interface AdState {

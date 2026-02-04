@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 .granite
+
+# Environment variables
+.env
+.env.production
+.env.local
