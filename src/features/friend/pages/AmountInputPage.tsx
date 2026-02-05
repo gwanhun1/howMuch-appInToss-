@@ -41,10 +41,17 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
     };
   }, [friends, editingFriend]);
 
+  // 금액 상한선: 1억원 (100,000,000)
+  const MAX_AMOUNT = 100000000;
+
   const handleChangeAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.replace(/[^0-9]/g, "");
     if (val.length > 1 && val.startsWith("0")) {
       val = val.replace(/^0+/, "");
+    }
+    // 상한선 초과 시 최대값으로 제한
+    if (val !== "" && Number(val) > MAX_AMOUNT) {
+      val = MAX_AMOUNT.toString();
     }
     setAmount(val);
   };

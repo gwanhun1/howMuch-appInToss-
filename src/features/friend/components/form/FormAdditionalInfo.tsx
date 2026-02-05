@@ -11,6 +11,20 @@ interface FormAdditionalInfoProps {
 
 const RELATION_OPTIONS = ["친구", "가족", "지인", "직장", "동료"];
 
+// 날짜 유효 범위: 오늘 기준 ±10년
+const getDateBounds = () => {
+  const today = new Date();
+  const minDate = new Date(today);
+  minDate.setFullYear(today.getFullYear() - 10);
+  const maxDate = new Date(today);
+  maxDate.setFullYear(today.getFullYear() + 10);
+  
+  return {
+    min: minDate.toISOString().split("T")[0],
+    max: maxDate.toISOString().split("T")[0],
+  };
+};
+
 export function FormAdditionalInfo({
   expanded,
   relation,
@@ -18,6 +32,16 @@ export function FormAdditionalInfo({
   onRelationChange,
   onDateChange,
 }: FormAdditionalInfoProps) {
+  const dateBounds = getDateBounds();
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 범위 내 날짜만 허용
+    if (value >= dateBounds.min && value <= dateBounds.max) {
+      onDateChange(value);
+    }
+  };
+
   return (
     <div
       style={{
@@ -59,7 +83,9 @@ export function FormAdditionalInfo({
           label="날짜"
           type="date"
           value={date}
-          onChange={(e) => onDateChange(e.target.value)}
+          onChange={handleDateChange}
+          min={dateBounds.min}
+          max={dateBounds.max}
         />
         <Spacing size={20} />
       </div>

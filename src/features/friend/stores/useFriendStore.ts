@@ -178,10 +178,10 @@ const createFriendSlice: StateCreator<
 
   updateFriend: async (id, updates) => {
     const { userIdentifier, friends, totalAmount } = get();
-    if (!userIdentifier) return;
+    if (!userIdentifier) throw new Error("인증 필요");
 
     const old = friends.find((f) => f.id === id);
-    if (!old) return;
+    if (!old) throw new Error("수정할 기록을 찾을 수 없습니다.");
 
     let nextTotal = totalAmount;
     if (updates.amount !== undefined) {
@@ -200,17 +200,19 @@ const createFriendSlice: StateCreator<
 
     try {
       await friendService.updateFriend(userIdentifier, id, updates, nextTotal);
-    } catch {
+    } catch (error) {
+      // 롤백 후 에러 전파
       set({ friends, totalAmount });
+      throw error;
     }
   },
 
   removeFriend: async (id) => {
     const { userIdentifier, friends, totalAmount } = get();
-    if (!userIdentifier) return;
+    if (!userIdentifier) throw new Error("인증 필요");
 
     const target = friends.find((f) => f.id === id);
-    if (!target) return;
+    if (!target) throw new Error("삭제할 기록을 찾을 수 없습니다.");
 
     const nextTotal = Math.max(0, totalAmount - target.amount);
     set({
@@ -220,8 +222,10 @@ const createFriendSlice: StateCreator<
 
     try {
       await friendService.removeFriend(userIdentifier, id, nextTotal);
-    } catch {
+    } catch (error) {
+      // 롤백 후 에러 전파
       set({ friends, totalAmount });
+      throw error;
     }
   },
 });

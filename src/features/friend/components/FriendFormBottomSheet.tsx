@@ -54,6 +54,8 @@ export function FriendFormBottomSheet({
   const [isProfilePickerOpen, setIsProfilePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isCreateMode = selectedFriendId === "new";
+
   useEffect(() => {
     if (open && friend && !editingFriend) {
       setEditingFriend({ ...friend });
@@ -77,13 +79,14 @@ export function FriendFormBottomSheet({
   const currentFriend = editingFriend || friend;
   if (!currentFriend) return null;
 
-  const isCreateMode = selectedFriendId === "new";
   const isNameInvalid = showValidationError && currentFriend.name.trim() === "";
   const isTypeInvalid = showValidationError && currentFriend.type == null;
   const isAmountInvalid = showValidationError && currentFriend.amount <= 0;
 
   const handleSave = async () => {
+    // 레이스 컨디션 방지: validation 전에 먼저 잠금
     if (isSubmitting) return;
+    setIsSubmitting(true);
 
     const isValid =
       currentFriend.name.trim() !== "" &&
@@ -92,18 +95,23 @@ export function FriendFormBottomSheet({
 
     if (!isValid) {
       setShowValidationError(true);
+      setIsSubmitting(false);
       return;
     }
 
-    setIsSubmitting(true);
+    // 저장 전 이름 trim 처리
+    const friendToSave = {
+      ...currentFriend,
+      name: currentFriend.name.trim(),
+    };
 
     try {
       if (isCreateMode) {
-        await addFriend(currentFriend);
+        await addFriend(friendToSave);
         openToast("기록이 추가되었습니다.");
         setCelebrating(true); // 등록 시에만 애니메이션 실행
       } else if (friend) {
-        await updateFriend(friend.id, currentFriend);
+        await updateFriend(friend.id, friendToSave);
         openToast("정보가 수정되었습니다.");
         // 수정 시에는 setCelebrating 호출하지 않음
       }
@@ -219,12 +227,15 @@ export function FriendFormBottomSheet({
                 label="이름"
                 labelOption="sustain"
                 value={currentFriend.name}
-                onChange={(e) =>
-                  setEditingFriend({ ...currentFriend, name: e.target.value })
-                }
+                onChange={(e) => {
+                  // 이름 최대 20자 제한
+                  const value = e.target.value.slice(0, 20);
+                  setEditingFriend({ ...currentFriend, name: value });
+                }}
                 placeholder="누구에게?"
                 hasError={isNameInvalid}
                 help={isNameInvalid ? "이름을 입력해주세요" : undefined}
+                maxLength={20}
               />
 
               <FormTypeSelector

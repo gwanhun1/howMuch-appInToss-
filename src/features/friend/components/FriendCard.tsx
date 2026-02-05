@@ -1,7 +1,7 @@
 import { Asset, Spacing, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { motion, useAnimation } from "framer-motion";
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { Friend } from "../types/friend";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
@@ -20,15 +20,27 @@ export function FriendCard({
   onToggleFavorite,
 }: FriendCardProps) {
   const controls = useAnimation();
+  const [isClicking, setIsClicking] = useState(false);
+  const lastClickTime = useRef(0);
 
   const handleTap = useCallback(async () => {
+    const now = Date.now();
+    // 300ms 디바운스
+    if (now - lastClickTime.current < 300 || isClicking) return;
+    
+    lastClickTime.current = now;
+    setIsClicking(true);
+
     // 눌림 효과 (빠르게)
     await controls.start({ scale: 0.96, transition: { duration: 0.08 } });
     // 바로 원복
     controls.start({ scale: 1, transition: { duration: 0.1 } });
     // 클릭 핸들러 실행
     onClick();
-  }, [controls, onClick]);
+
+    // 300ms 후 클릭 가능 상태로 복구
+    setTimeout(() => setIsClicking(false), 300);
+  }, [controls, onClick, isClicking]);
   // 날짜 기반 미래 일정 여부 확인 (오늘 포함)
   const todayStr = new Date().toISOString().split("T")[0];
   const isUpcoming = friend.date && friend.date >= todayStr;

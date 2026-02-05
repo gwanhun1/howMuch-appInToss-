@@ -200,10 +200,23 @@ export const adService = {
         return;
       }
 
+      // 타임아웃 처리 (10초)
+      const timeoutId = setTimeout(() => {
+        if (adState.isLoading) {
+          console.warn("[AdService] 광고 로드 타임아웃 - 계속 진행");
+          adState.cleanup?.();
+          adState.isLoading = false;
+          adState.isLoaded = false; // 상태 명확히 초기화
+          callbacks.onDismissed();
+          resolve();
+        }
+      }, 10000);
+
       // 광고 로드 후 표시
       console.log("[AdService] 광고 로드 후 표시 시작");
       adService.loadAd({
         onLoaded: () => {
+          clearTimeout(timeoutId); // 타임아웃 취소
           adService.showAd({
             onDismissed: () => {
               callbacks.onDismissed();
@@ -215,23 +228,13 @@ export const adService = {
           });
         },
         onError: (error) => {
+          clearTimeout(timeoutId); // 타임아웃 취소
           console.error("[AdService] 광고 로드 실패 - 계속 진행:", error);
           callbacks.onError?.(error);
           callbacks.onDismissed();
           resolve();
         },
       });
-
-      // 타임아웃 처리 (10초)
-      setTimeout(() => {
-        if (adState.isLoading) {
-          console.warn("[AdService] 광고 로드 타임아웃 - 계속 진행");
-          adState.cleanup?.();
-          adState.isLoading = false;
-          callbacks.onDismissed();
-          resolve();
-        }
-      }, 10000);
     });
   },
 

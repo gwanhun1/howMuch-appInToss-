@@ -38,6 +38,9 @@ export function FriendList({
   useEffect(() => {
     if (!hasMore || isLoading || isLoadingMore) return;
 
+    const currentRef = bottomRef.current;
+    if (!currentRef) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -47,11 +50,12 @@ export function FriendList({
       { threshold: 0.1 },
     );
 
-    if (bottomRef.current) {
-      observer.observe(bottomRef.current);
-    }
+    observer.observe(currentRef);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.unobserve(currentRef);
+      observer.disconnect();
+    };
   }, [hasMore, isLoading, isLoadingMore, onLoadMore]);
 
   // 다음 광고가 언제 나올지 예고하는 로직 (서비스 정책에 따름)

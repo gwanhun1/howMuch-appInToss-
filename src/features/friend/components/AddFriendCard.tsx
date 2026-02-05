@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { Asset, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { motion } from "framer-motion";
@@ -7,10 +8,26 @@ interface AddFriendCardProps {
 }
 
 export function AddFriendCard({ onClick }: AddFriendCardProps) {
+  const [isClicking, setIsClicking] = useState(false);
+  const lastClickTime = useRef(0);
+
+  const handleClick = () => {
+    const now = Date.now();
+    // 300ms 디바운스
+    if (now - lastClickTime.current < 300 || isClicking) return;
+    
+    lastClickTime.current = now;
+    setIsClicking(true);
+    onClick();
+    
+    // 300ms 후 클릭 가능 상태로 복구
+    setTimeout(() => setIsClicking(false), 300);
+  };
+
   return (
     <motion.div
       className="add-card-pulse"
-      onClick={onClick}
+      onClick={handleClick}
       whileTap={{ scale: 0.96 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       style={{
