@@ -1,74 +1,68 @@
-# React + TypeScript + Vite
+# 얼마나 (HowMuch)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+경조사비 기록 관리 앱 - 토스 앱인토스(Apps in Toss) 플랫폼용
 
-Currently, two official plugins are available:
+## 주요 기능
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 경조사비 수입/지출 기록 관리
+- 친구별 금액 추적
+- 총 수입/지출 요약
+- Firebase 기반 클라우드 동기화
+- 토스 앱 내 광고 연동
 
-## React Compiler
+## 기술 스택
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 18 + TypeScript
+- Vite + Granite (Apps in Toss 빌드 도구)
+- Firebase (Auth, Firestore)
+- Zustand (상태 관리)
+- Toss Design System
+- Framer Motion
 
-## Expanding the ESLint configuration
+## 시작하기
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+# 의존성 설치
+npm install
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# 개발 서버 실행
+npm run dev
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# 빌드
+npm run build
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 토스 앱인토스 배포
+npm run deploy
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 환경 변수
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+`.env.example`을 참고하여 `.env` 파일을 생성하세요:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
-# howMuch-appInToss-
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_AD_GROUP_ID=ait-ad-test-interstitial-id
+```
+
+## 프로젝트 구조
+
+```
+src/
+├── components/     # 공통 컴포넌트
+├── features/       # 기능별 모듈
+│   └── friend/     # 경조사 기록 기능
+│       ├── apis/       # API 서비스
+│       ├── components/ # UI 컴포넌트
+│       ├── stores/     # Zustand 스토어
+│       └── types/      # 타입 정의
+└── utils/          # 유틸리티 함수
+```
+
+## 라이선스
+
+MIT
