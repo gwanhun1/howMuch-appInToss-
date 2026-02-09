@@ -10,4 +10,5 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  appType: "spa", // 모든 경로를 index.html로 fallback (SPA 라우팅 지원)
 });
