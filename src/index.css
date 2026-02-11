@@ -160,7 +160,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 24px;
-  box-shadow: 0 0 15px 2px rgba(49, 130, 246, 0.25);
+  box-shadow: 0 0 15px 2px var(--aura-color, rgba(49, 130, 246, 0.25));
   animation: upcoming-glow 3s ease-in-out infinite;
   z-index: -1;
   pointer-events: none;
@@ -170,11 +170,11 @@ body {
   0%,
   100% {
     opacity: 0.15;
-    box-shadow: 0 0 10px 1px rgba(49, 130, 246, 0.15);
+    box-shadow: 0 0 10px 1px var(--aura-color, rgba(49, 130, 246, 0.15));
   }
   50% {
     opacity: 0.4;
-    box-shadow: 0 0 15px 3px rgba(49, 130, 246, 0.25);
+    box-shadow: 0 0 15px 3px var(--aura-color, rgba(49, 130, 246, 0.25));
   }
 }
 

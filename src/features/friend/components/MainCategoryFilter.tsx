@@ -16,6 +16,7 @@ export function MainCategoryFilter({
     FRIEND_CATEGORIES.WEDDING,
     FRIEND_CATEGORIES.FUNERAL,
     FRIEND_CATEGORIES.DOL,
+    FRIEND_CATEGORIES.ALLOWANCE,
   ] as const;
 
   return (

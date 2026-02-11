@@ -63,15 +63,15 @@ export function FriendCard({
   // 카테고리 테마 정보 가져오기
   const theme = CATEGORY_THEMES[friend.type || "전체"];
 
-  // 배경색 로직 (미래 일정은 블루 틴트, 나머지는 카테고리별 파스텔 틴트)
-  const cardBgColor = isUpcoming ? "#F2F8FF" : theme.lightColor;
+  // 배경색 로직 (미래 일정도 카테고리 색 사용)
+  const cardBgColor = theme.lightColor;
 
-  // 테두리 및 그림자 (다시 깔끔하게 복구)
+  // 테두리 및 그림자
   const borderColor = isUpcoming
-    ? "rgba(49, 130, 246, 0.15)"
-    : "rgba(0, 0, 0, 0.04)";
+    ? "rgba(0, 0, 0, 0.04)"
+    : `${theme.color}40`;
   const shadow = isUpcoming
-    ? "0 4px 12px rgba(49, 130, 246, 0.1)"
+    ? `0 4px 12px ${theme.color}18`
     : "0 4px 12px rgba(0, 0, 0, 0.03)";
 
   const amountColor = adaptive.blue600;
@@ -100,6 +100,7 @@ export function FriendCard({
         height: "160px",
         boxSizing: "border-box",
         overflow: "visible",
+        ...(isUpcoming ? { "--aura-color": `${theme.color}40` } as React.CSSProperties : {}),
       }}
     >
       {/* 즐겨찾기 별 */}
@@ -179,9 +180,7 @@ export function FriendCard({
           width: "60px",
           height: "60px",
           borderRadius: "50%",
-          backgroundColor: isUpcoming
-            ? "rgba(49, 130, 246, 0.08)"
-            : "rgba(255, 255, 255, 0.5)",
+          backgroundColor: "rgba(255, 255, 255, 0.5)",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",

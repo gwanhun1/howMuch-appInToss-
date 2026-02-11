@@ -6,6 +6,7 @@ export const FRIEND_CATEGORIES = {
   WEDDING: "축의금",
   FUNERAL: "조의금",
   DOL: "돌잔치",
+  ALLOWANCE: "용돈",
 } as const;
 
 export interface CategoryInfo {
@@ -33,10 +34,10 @@ export const CATEGORY_THEMES: Record<string, CategoryInfo> = {
   },
   [FRIEND_CATEGORIES.FUNERAL]: {
     label: "조의금",
-    color: adaptive.grey600,
+    color: "#6B7684",
     lightColor: "#F8F9FA",
     badgeText: "조",
-    defaultBadgeColor: adaptive.grey600,
+    defaultBadgeColor: "#6B7684",
   },
   [FRIEND_CATEGORIES.DOL]: {
     label: "돌잔치",
@@ -44,5 +45,12 @@ export const CATEGORY_THEMES: Record<string, CategoryInfo> = {
     lightColor: "#FFFBEB",
     badgeText: "돌",
     defaultBadgeColor: "#FFB900",
+  },
+  [FRIEND_CATEGORIES.ALLOWANCE]: {
+    label: "용돈",
+    color: "#3182F6",
+    lightColor: "#F2F8FF",
+    badgeText: "용",
+    defaultBadgeColor: "#3182F6",
   },
 };

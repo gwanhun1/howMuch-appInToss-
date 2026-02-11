@@ -198,7 +198,7 @@ export function FriendFormBottomSheet({
           style={{
             display: "flex",
             flexDirection: "column",
-            height: "calc(90vh - 220px)", // header 높이 제외
+            maxHeight: "calc(90vh - 200px)",
             position: "relative",
           }}
         >
@@ -208,7 +208,7 @@ export function FriendFormBottomSheet({
             onTouchMove={(e) => e.stopPropagation()}
             style={{
               flex: 1,
-              overflowY: "auto",
+              overflowY: expanded ? "auto" : "hidden",
               overflowX: "hidden",
               WebkitOverflowScrolling: "touch",
             }}
@@ -360,7 +360,10 @@ export function FriendFormBottomSheet({
       <ProfileImageBottomSheet
         open={isProfilePickerOpen}
         onClose={() => setIsProfilePickerOpen(false)}
-        onHome={onHome}
+        onHome={() => {
+          setIsProfilePickerOpen(false);
+          onHome();
+        }}
         currentIcon={
           (currentFriend?.profileIcon?.startsWith("icon-")
             ? currentFriend.profileIcon
