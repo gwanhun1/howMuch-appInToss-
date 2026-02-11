@@ -239,7 +239,7 @@ interface UISlice {
   currentPage: "main" | "amountInput";
   isFriendFormOpen: boolean;
   isProfileImageSheetOpen: boolean;
-  filterType: "전체" | "축의금" | "조의금" | "돌잔치";
+  filterType: "전체" | FriendType;
   isCelebrating: boolean;
 
   setFilterType: (type: UISlice["filterType"]) => void;

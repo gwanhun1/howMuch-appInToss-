@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Text, Skeleton, Badge } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "../stores/useFriendStore";
+import { CATEGORY_THEMES, FRIEND_CATEGORIES } from "../constants/category";
 
 interface MainSummaryCardProps {
   totalAmount: number;
@@ -30,9 +31,10 @@ export function MainSummaryCard({
   }, [friends]);
 
   const categories = [
-    { label: "축의금", key: "축의금" },
-    { label: "조의금", key: "조의금" },
-    { label: "돌잔치", key: "돌잔치" },
+    { label: "축의금", key: FRIEND_CATEGORIES.WEDDING },
+    { label: "조의금", key: FRIEND_CATEGORIES.FUNERAL },
+    { label: "돌잔치", key: FRIEND_CATEGORIES.DOL },
+    { label: "용돈", key: FRIEND_CATEGORIES.ALLOWANCE },
   ] as const;
 
   return (
@@ -96,7 +98,7 @@ export function MainSummaryCard({
                     position: "absolute",
                     top: "calc(100% + 12px)",
                     right: 0,
-                    width: "180px",
+                    width: "190px",
                     backgroundColor: adaptive.blue50,
                     borderRadius: "16px",
                     padding: "16px",
@@ -126,30 +128,44 @@ export function MainSummaryCard({
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "12px",
+                      gap: "10px",
                     }}
                   >
-                    {categories.map((cat) => (
-                      <div
-                        key={cat.key}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text typography="t7" color={adaptive.grey700}>
-                          {cat.label}
-                        </Text>
-                        <Text
-                          typography="t7"
-                          fontWeight="bold"
-                          color={adaptive.blue700}
+                    {categories.map((cat) => {
+                      const amount = breakdown[cat.key] || 0;
+                      const theme = CATEGORY_THEMES[cat.key];
+                      return (
+                        <div
+                          key={cat.key}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            opacity: amount === 0 ? 0.4 : 1,
+                          }}
                         >
-                          {(breakdown[cat.key] || 0).toLocaleString()}원
-                        </Text>
-                      </div>
-                    ))}
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <div style={{
+                              width: "6px",
+                              height: "6px",
+                              borderRadius: "50%",
+                              backgroundColor: theme?.color || adaptive.grey400,
+                              flexShrink: 0,
+                            }} />
+                            <Text typography="t7" color={adaptive.grey700}>
+                              {cat.label}
+                            </Text>
+                          </div>
+                          <Text
+                            typography="t7"
+                            fontWeight="bold"
+                            color={amount > 0 ? (theme?.color || adaptive.blue700) : adaptive.grey400}
+                          >
+                            {amount.toLocaleString()}원
+                          </Text>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

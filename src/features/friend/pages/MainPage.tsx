@@ -11,6 +11,7 @@ import { MainSummaryCard } from "../components/MainSummaryCard";
 import { MainCategoryFilter } from "../components/MainCategoryFilter";
 import { FRIEND_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/ServiceFooter";
+import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
 
 export function MainPage() {
   const { openToast } = useToast();
@@ -179,6 +180,8 @@ export function MainPage() {
         }}
         onHome={resetToMain}
       />
+
+      <RandomAmountPicker />
     </div>
   );
 }
