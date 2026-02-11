@@ -66,8 +66,8 @@ export function MainPage() {
       if (a.isFavorite && !b.isFavorite) return -1;
       if (!a.isFavorite && b.isFavorite) return 1;
 
-      // 2. 같은 조건이면 이름순 (또는 최신순 등)
-      return a.name.localeCompare(b.name);
+      // 2. 같은 조건이면 생성일 최신순
+      return (b.date ?? "").localeCompare(a.date ?? "");
     });
 
   const selectedFriend = friends.find((f) => f.id === selectedFriendId) || null;
