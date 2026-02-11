@@ -1,9 +1,9 @@
-import { adService } from "../apis/adService";
+import { adService } from "../../apis/adService";
 import { useEffect, useRef } from "react";
-import type { Friend, FriendType } from "../types/friend";
+import type { Friend, FriendType } from "../../types/friend";
 import { FriendCard } from "./FriendCard";
 import { AddFriendCard } from "./AddFriendCard";
-import { AdCard } from "./AdCard";
+import { AdCard } from "../common/AdCard";
 import { FriendCardSkeleton } from "./FriendCardSkeleton";
 
 interface FriendListProps {

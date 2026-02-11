@@ -2,15 +2,15 @@ import { useEffect } from "react";
 import { Spacing, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "../stores/useFriendStore";
-import { FriendFormBottomSheet } from "../components/FriendFormBottomSheet";
+import { FriendFormBottomSheet } from "../components/form/FriendFormBottomSheet";
 import { AmountInputPage } from "./AmountInputPage";
-import { FriendList } from "../components/FriendList";
-import { CoinRain } from "../components/CoinRain";
-import { GlobalErrorView } from "../components/GlobalErrorView";
-import { MainSummaryCard } from "../components/MainSummaryCard";
-import { MainCategoryFilter } from "../components/MainCategoryFilter";
+import { FriendList } from "../components/friend-card/FriendList";
+import { CoinRain } from "../components/common/CoinRain";
+import { GlobalErrorView } from "../components/common/GlobalErrorView";
+import { MainSummaryCard } from "../components/main/MainSummaryCard";
+import { MainCategoryFilter } from "../components/main/MainCategoryFilter";
 import { FRIEND_CATEGORIES } from "../constants/category";
-import { ServiceFooter } from "../components/ServiceFooter";
+import { ServiceFooter } from "../components/common/ServiceFooter";
 import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
 
 export function MainPage() {

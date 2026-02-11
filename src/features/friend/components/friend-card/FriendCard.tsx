@@ -2,7 +2,7 @@ import { Asset, Spacing, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { motion, useAnimation } from "framer-motion";
 import { useCallback, useRef, useState } from "react";
-import type { Friend } from "../types/friend";
+import type { Friend } from "../../types/friend";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
@@ -12,7 +12,7 @@ interface FriendCardProps {
   onToggleFavorite: (id: string) => void;
 }
 
-import { CATEGORY_THEMES, FRIEND_CATEGORIES } from "../constants/category";
+import { CATEGORY_THEMES, FRIEND_CATEGORIES } from "../../constants/category";
 
 export function FriendCard({
   friend,

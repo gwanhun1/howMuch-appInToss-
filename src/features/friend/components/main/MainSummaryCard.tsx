@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { Text, Skeleton, Badge } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import { useFriendStore } from "../stores/useFriendStore";
-import { CATEGORY_THEMES, FRIEND_CATEGORIES } from "../constants/category";
+import { useFriendStore } from "../../stores/useFriendStore";
+import { CATEGORY_THEMES, FRIEND_CATEGORIES } from "../../constants/category";
 
 interface MainSummaryCardProps {
   totalAmount: number;

@@ -11,12 +11,12 @@ import {
   useToast,
 } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import { useFriendStore } from "../stores/useFriendStore";
-import type { Friend } from "../types/friend";
+import { useFriendStore } from "../../stores/useFriendStore";
+import type { Friend } from "../../types/friend";
 import { ProfileImageBottomSheet } from "./ProfileImageBottomSheet";
-import { FormAvatar } from "./form/FormAvatar";
-import { FormTypeSelector } from "./form/FormTypeSelector";
-import { FormAdditionalInfo } from "./form/FormAdditionalInfo";
+import { FormAvatar } from "./FormAvatar";
+import { FormTypeSelector } from "./FormTypeSelector";
+import { FormAdditionalInfo } from "./FormAdditionalInfo";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 

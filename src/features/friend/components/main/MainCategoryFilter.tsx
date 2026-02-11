@@ -1,5 +1,5 @@
-import { FRIEND_CATEGORIES, CATEGORY_THEMES } from "../constants/category";
-import type { FriendType } from "../types/friend";
+import { FRIEND_CATEGORIES, CATEGORY_THEMES } from "../../constants/category";
+import type { FriendType } from "../../types/friend";
 
 interface MainCategoryFilterProps {
   filterType: FriendType | "전체";
