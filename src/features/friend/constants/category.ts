@@ -25,6 +25,13 @@ export const CATEGORY_THEMES: Record<string, CategoryInfo> = {
     badgeText: "전체",
     defaultBadgeColor: adaptive.blue600,
   },
+  [FRIEND_CATEGORIES.ALLOWANCE]: {
+    label: "용돈",
+    color: "#3182F6",
+    lightColor: "#F2F8FF",
+    badgeText: "용",
+    defaultBadgeColor: "#3182F6",
+  },  
   [FRIEND_CATEGORIES.WEDDING]: {
     label: "축의금",
     color: "#FF4B78",
@@ -46,11 +53,5 @@ export const CATEGORY_THEMES: Record<string, CategoryInfo> = {
     badgeText: "돌",
     defaultBadgeColor: "#FFB900",
   },
-  [FRIEND_CATEGORIES.ALLOWANCE]: {
-    label: "용돈",
-    color: "#3182F6",
-    lightColor: "#F2F8FF",
-    badgeText: "용",
-    defaultBadgeColor: "#3182F6",
-  },
+ 
 };

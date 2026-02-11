@@ -1,4 +1,4 @@
-import { Button, ListRow } from "@toss/tds-mobile";
+import { ListRow } from "@toss/tds-mobile";
 import type { FriendType } from "../../types/friend";
 import { FRIEND_CATEGORIES, CATEGORY_THEMES } from "../../constants/category";
 
@@ -24,19 +24,24 @@ export function FormTypeSelector({ value, onChange }: FormTypeSelectorProps) {
           const isSelected = value === cat;
 
           return (
-            <Button
+            <button
               key={cat}
-              variant={isSelected ? "fill" : "weak"}
-              size="small"
               onClick={() => onChange(cat)}
-              style={
-                isSelected && cat !== FRIEND_CATEGORIES.FUNERAL
-                  ? { backgroundColor: theme.color, border: "none" }
-                  : {}
-              }
+              style={{
+                padding: "6px 12px",
+                borderRadius: "20px",
+                border: isSelected ? "none" : "1px solid rgba(0, 0, 0, 0.08)",
+                backgroundColor: isSelected ? theme.color : "#fff",
+                color: isSelected ? "#fff" : "#333",
+                fontSize: "14px",
+                fontWeight: isSelected ? 700 : 500,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                whiteSpace: "nowrap",
+              }}
             >
               {theme.label}
-            </Button>
+            </button>
           );
         })}
       </div>
