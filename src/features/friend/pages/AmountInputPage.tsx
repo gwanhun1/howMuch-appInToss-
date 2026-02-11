@@ -23,21 +23,37 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
   const [amount, setAmount] = useState(value === 0 ? "" : value.toString());
   const { friends, editingFriend } = useFriendStore();
 
-  // 최근 해당 카테고리(축의금, 조의금 등)의 평균 금액 계산
+  // 같은 카테고리에서 가장 최근에 보낸 금액 + 최빈값 계산
   const categoryStats = useMemo(() => {
     if (!editingFriend?.type) return null;
 
-    const sameTypeFriends = friends.filter(
-      (f) => f.type === editingFriend.type,
-    );
+    const sameTypeFriends = friends
+      .filter((f) => f.type === editingFriend.type && f.amount > 0)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
     if (sameTypeFriends.length === 0) return null;
 
-    const total = sameTypeFriends.reduce((acc, f) => acc + f.amount, 0);
-    const average = Math.round(total / sameTypeFriends.length / 10000) * 10000; // 만원 단위 반올림
+    const lastAmount = sameTypeFriends[0].amount;
+
+    // 최빈값 계산 (가장 자주 낸 금액)
+    const freq = new Map<number, number>();
+    for (const f of sameTypeFriends) {
+      freq.set(f.amount, (freq.get(f.amount) || 0) + 1);
+    }
+    let modeAmount = lastAmount;
+    let maxCount = 0;
+    for (const [amount, count] of freq) {
+      if (count > maxCount) {
+        modeAmount = amount;
+        maxCount = count;
+      }
+    }
 
     return {
       type: editingFriend.type,
-      average,
+      lastAmount,
+      modeAmount,
+      isSame: lastAmount === modeAmount,
     };
   }, [friends, editingFriend]);
 
@@ -90,12 +106,18 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
         {categoryStats && (
           <div style={{ marginTop: 8 }}>
             <Text typography="t6" color={adaptive.blue600} fontWeight="medium">
-              최근 {categoryStats.type}에는 주로{" "}
+              지난번 {categoryStats.type}에는{" "}
               <span style={{ fontWeight: "bold" }}>
-                {(categoryStats.average / 10000).toLocaleString()}만원
+                {(categoryStats.lastAmount / 10000).toLocaleString()}만원
               </span>
-              을 보내셨네요.
+              을 보내셨어요.
             </Text>
+            {!categoryStats.isSame && (
+              <Text typography="t7" color={adaptive.grey500} style={{ marginTop: 4 }}>
+                주로 보내시는 금액은{" "}
+                {(categoryStats.modeAmount / 10000).toLocaleString()}만원이에요.
+              </Text>
+            )}
           </div>
         )}
 
