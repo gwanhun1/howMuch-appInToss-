@@ -1,4 +1,4 @@
-# 얼마나 (HowMuch)
+# 얼마냈지요 (HowMuch)
 
 경조사비 기록 관리 앱 - 토스 앱인토스(Apps in Toss) 플랫폼용
 

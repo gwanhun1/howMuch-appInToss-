@@ -6,7 +6,7 @@ interface Props {
   onBack?: () => void;
 }
 
-export function AppHeader({ title = "얼마냈지", onBack }: Props) {
+export function AppHeader({ title = "얼마냈지요", onBack }: Props) {
   return (
     <div
       style={{

@@ -1,4 +1,4 @@
-# 얼마냈지 앱 개발 가이드
+# 얼마냈지요 앱 개발 가이드
 
 > **Apps in Toss 정석 개발 패턴**  
 > 이 문서는 토스 인앱 WebView 환경에서 안정적이고 일관된 개발을 위한 필수 규칙과 패턴을 정리합니다.
@@ -478,5 +478,5 @@ import { Top, Spacing, ListRow } from "@toss/tds-mobile";
 ---
 
 **마지막 업데이트**: 2026-01-27  
-**프로젝트**: 얼마냈지 (Apps in Toss)  
+**프로젝트**: 얼마냈지요 (Apps in Toss)  
 **환경**: React 19 + Vite + @toss/tds-mobile 2.2.x
