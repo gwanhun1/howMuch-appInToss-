@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Text, Skeleton, Badge } from "@toss/tds-mobile";
+import { Text, Skeleton, Badge, Tooltip } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useFriendStore } from "../../stores/useFriendStore";
 import { CATEGORY_THEMES, FRIEND_CATEGORIES } from "../../constants/category";
@@ -38,7 +38,7 @@ export function MainSummaryCard({
   ] as const;
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", overflow: "visible" }}>
       {/* 바깥 영역 클릭 시 닫기 위한 오버레이 */}
       {isOpen && (
         <div
@@ -69,66 +69,15 @@ export function MainSummaryCard({
           <Skeleton.Item style={{ width: 80, height: 24, borderRadius: 12 }} />
         ) : (
           friendsCount > 0 && (
-            <div style={{ position: "relative" }}>
-              <Badge
-                color="blue"
-                variant="fill"
-                size="small"
-                className="premium-amount-badge"
-                style={{
-                  maxWidth: "140px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  display: "inline-block",
-                  paddingRight: "8px",
-                  cursor: "pointer",
-                  position: "relative",
-                  zIndex: 901,
-                }}
-                onClick={() => setIsOpen(!isOpen)}
-              >
-                총 {totalAmount.toLocaleString()}원
-              </Badge>
-
-              {/* 커스텀 팝오버 영역 */}
-              {isOpen && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 12px)",
-                    right: 0,
-                    width: "190px",
-                    backgroundColor: adaptive.blue50,
-                    borderRadius: "16px",
-                    padding: "16px",
-                    border: `1px solid ${adaptive.blue200}`,
-                    boxShadow: "0 10px 30px rgba(49, 130, 246, 0.12)",
-                    zIndex: 1000,
-                    animation:
-                      "popoverAppear 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)",
-                  }}
-                >
-                  {/* 말풍선 꼬리 */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "-6px",
-                      right: "24px",
-                      width: "10px",
-                      height: "10px",
-                      backgroundColor: adaptive.blue50,
-                      borderLeft: `1px solid ${adaptive.blue200}`,
-                      borderTop: `1px solid ${adaptive.blue200}`,
-                      transform: "rotate(45deg)",
-                    }}
-                  />
-
+            <div style={{ position: "relative", zIndex: 1000 }}>
+              <Tooltip
+                message={
                   <div
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "10px",
+                      gap: "6px",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {categories.map((cat) => {
@@ -139,47 +88,55 @@ export function MainSummaryCard({
                           key={cat.key}
                           style={{
                             display: "flex",
-                            justifyContent: "space-between",
                             alignItems: "center",
+                            gap: "4px",
                             opacity: amount === 0 ? 0.4 : 1,
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <div style={{
-                              width: "6px",
-                              height: "6px",
-                              borderRadius: "50%",
-                              backgroundColor: theme?.color || adaptive.grey400,
-                              flexShrink: 0,
-                            }} />
-                            <Text typography="t7" color={adaptive.grey700}>
-                              {cat.label}
-                            </Text>
-                          </div>
-                          <Text
-                            typography="t7"
-                            fontWeight="bold"
-                            color={amount > 0 ? (theme?.color || adaptive.blue700) : adaptive.grey400}
-                          >
-                            {amount.toLocaleString()}원
-                          </Text>
+                          <div style={{
+                            width: "6px",
+                            height: "6px",
+                            borderRadius: "50%",
+                            backgroundColor: theme?.color || adaptive.grey400,
+                            flexShrink: 0,
+                          }} />
+                          <span style={{ whiteSpace: "nowrap", fontSize: "12px" }}>
+                            {cat.label} {amount.toLocaleString()}원
+                          </span>
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              )}
+                }
+                placement="bottom"
+                clipToEnd="right"
+                open={isOpen}
+                size="small"
+                style={{ zIndex: 9999 }}
+              >
+                <Badge
+                  color="blue"
+                  variant="fill"
+                  size="small"
+                  className="premium-amount-badge"
+                  style={{
+                    maxWidth: "140px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    display: "inline-block",
+                    paddingRight: "8px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setIsOpen(!isOpen)}
+                >
+                  총 {totalAmount.toLocaleString()}원
+                </Badge>
+              </Tooltip>
             </div>
           )
         )}
       </div>
-
-      <style>{`
-        @keyframes popoverAppear {
-          from { opacity: 0; transform: translateY(-10px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
     </div>
   );
 }

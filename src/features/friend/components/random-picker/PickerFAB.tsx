@@ -1,4 +1,4 @@
-import { Asset } from "@toss/tds-mobile";
+import { Asset, Bubble } from "@toss/tds-mobile";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
@@ -42,22 +42,9 @@ export function PickerFAB({ onOpen, bubblePhase }: PickerFABProps) {
           pointerEvents: "none", display: "flex", alignItems: "center",
           willChange: "opacity, transform",
         }}>
-          <div style={{
-            backgroundColor: "#3182F6", borderRadius: "12px",
-            padding: "8px 12px", boxShadow: "0 4px 12px rgba(49,130,246,0.25)",
-          }}>
-            <span style={{
-              fontSize: "12px", fontWeight: 700, color: "#fff",
-              whiteSpace: "nowrap", display: "block", lineHeight: "16px",
-            }}>
-              💰 얼마 낼지 고민될 때!
-            </span>
-          </div>
-          <div style={{
-            width: "10px", height: "10px", backgroundColor: "#3182F6",
-            borderRadius: "0 2px 0 0", transform: "rotate(45deg)",
-            marginLeft: "-5px", flexShrink: 0,
-          }} />
+          <Bubble background="blue" withTail>
+            <span style={{ whiteSpace: "nowrap" }}>💰 얼마 낼지 고민될 때!</span>
+          </Bubble>
         </div>
       )}
 
