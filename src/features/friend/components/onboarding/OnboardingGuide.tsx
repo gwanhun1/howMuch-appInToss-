@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CATEGORY_THEMES } from "../../constants/category";
 import { MeltEffect } from "./MeltEffect";
 import { OnboardingModal } from "./OnboardingModal";
+import { EmptyState } from "./EmptyState";
 
 const SAMPLE_FRIEND = {
   name: "김토스",
@@ -86,7 +87,7 @@ function SampleCard({ theme }: SampleCardProps) {
 }
 
 const STORAGE_KEY = "howmuch_onboarding_dismiss_count";
-const MAX_DISMISS = 300;
+const MAX_DISMISS = 3;
 
 function getDismissCount(): number {
   try {
@@ -129,7 +130,9 @@ export function OnboardingGuide({ onAddFriend }: OnboardingGuideProps) {
   // 녹는 중 → 모달
   useEffect(() => {
     if (phase !== "melting") return;
-    const timer = setTimeout(() => setPhase("modal"), 2000);
+    const timer = setTimeout(() => {
+      setPhase("modal");
+    }, 2000);
     return () => clearTimeout(timer);
   }, [phase]);
 
@@ -144,7 +147,7 @@ export function OnboardingGuide({ onAddFriend }: OnboardingGuideProps) {
     onAddFriend();
   };
 
-  if (dismissed) return null;
+  if (dismissed) return <EmptyState />;
 
   const theme = CATEGORY_THEMES[SAMPLE_FRIEND.type];
 
@@ -187,6 +190,7 @@ export function OnboardingGuide({ onAddFriend }: OnboardingGuideProps) {
       )}
 
       {/* Phase 3: 하단 모달 */}
+      {phase === "modal" && <EmptyState />}
       <AnimatePresence>
         {phase === "modal" && (
           <OnboardingModal onDismiss={handleDismiss} onStart={handleStart} />

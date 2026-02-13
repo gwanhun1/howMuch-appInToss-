@@ -6,7 +6,6 @@ import { AddFriendCard } from "./AddFriendCard";
 import { AdCard } from "../common/AdCard";
 import { FriendCardSkeleton } from "./FriendCardSkeleton";
 import { OnboardingGuide } from "../onboarding/OnboardingGuide";
-import { PointerHint } from "../onboarding/PointerHint";
 
 interface FriendListProps {
   friends: Friend[];
@@ -80,15 +79,6 @@ export function FriendList({
       <AddFriendCard onClick={() => onAddFriend(filterType === "전체" ? null : (filterType as FriendType))} />
       {!isLoading && friends.length === 0 && (
         <OnboardingGuide onAddFriend={() => onAddFriend(null)} />
-      )}
-      {!isLoading && friends.length === 0 && (
-        <PointerHint
-          initialDelay={
-            Number(localStorage.getItem("howmuch_onboarding_dismiss_count") || 0) >= 3
-              ? 0
-              : 4000
-          }
-        />
       )}
       {friends.map((friend) => (
         <FriendCard
