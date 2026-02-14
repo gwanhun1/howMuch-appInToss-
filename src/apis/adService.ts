@@ -184,6 +184,13 @@ export const adService = {
     onDismissed: () => void;
     onError?: (error: unknown) => void;
   }): Promise<void> => {
+    // 개발 환경에서는 alert으로 광고 트리거 확인
+    if (import.meta.env.DEV && !adService.isSupported()) {
+      alert("[DEV] 광고가 트리거되었습니다 (미지원 환경)");
+      callbacks.onDismissed();
+      return;
+    }
+
     return new Promise((resolve) => {
       // 이미 로드된 광고가 있으면 바로 표시
       if (adState.isLoaded) {

@@ -121,7 +121,7 @@ export function MainPage() {
                 <div style={{ minHeight: "70vh" }}>
                   <RecordList
                   records={filteredRecords}
-                  totalCount={modeRecordsCount}
+                  totalCount={records.length}
                   isLoading={isLoading}
                   isLoadingMore={isLoadingMore}
                   hasMore={hasMore}
