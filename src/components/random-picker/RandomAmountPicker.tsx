@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useToast } from "@toss/tds-mobile";
-import { useFriendStore } from "../../stores/useFriendStore";
+import { useRecordStore } from "../../stores/useRecordStore";
 import { ALL_AMOUNTS, CARD_COUNT, INITIAL_POSITIONS, MESSAGES } from "./constants";
 import { shuffleAndPick, copyToClipboard } from "./utils";
 import { KEYFRAMES } from "./keyframes";
@@ -11,9 +11,9 @@ type Phase = "idle" | "shuffling" | "ready" | "revealed";
 
 export function RandomAmountPicker() {
   const { openToast } = useToast();
-  const currentPage = useFriendStore((s) => s.currentPage);
-  const isFriendFormOpen = useFriendStore((s) => s.isFriendFormOpen);
-  const isOnMain = currentPage === "main" && !isFriendFormOpen;
+  const currentPage = useRecordStore((s) => s.currentPage);
+  const isRecordFormOpen = useRecordStore((s) => s.isRecordFormOpen);
+  const isOnMain = currentPage === "main" && !isRecordFormOpen;
 
   const [isOpen, setIsOpen] = useState(false);
   const [cards, setCards] = useState<number[]>([]);
@@ -96,7 +96,6 @@ export function RandomAmountPicker() {
     setTimeout(() => startCountUp(cards[index]), 400);
   };
 
-  // cleanup
   useEffect(() => {
     return () => {
       if (shuffleTimer.current) clearTimeout(shuffleTimer.current);
@@ -104,7 +103,6 @@ export function RandomAmountPicker() {
     };
   }, []);
 
-  // body scroll lock
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -119,12 +117,8 @@ export function RandomAmountPicker() {
     };
   }, [isOpen]);
 
-  // 말풍선 주기
   useEffect(() => {
-    if (!isOnMain || isOpen) {
-      setBubblePhase(null);
-      return;
-    }
+    if (!isOnMain || isOpen) { setBubblePhase(null); return; }
     let showT: ReturnType<typeof setTimeout>;
     let hideT: ReturnType<typeof setTimeout>;
     let removeT: ReturnType<typeof setTimeout>;
@@ -136,34 +130,22 @@ export function RandomAmountPicker() {
     cycle();
     const intervalId = setInterval(cycle, 10000);
     return () => {
-      clearTimeout(showT);
-      clearTimeout(hideT);
-      clearTimeout(removeT);
-      clearInterval(intervalId);
-      setBubblePhase(null);
+      clearTimeout(showT); clearTimeout(hideT); clearTimeout(removeT);
+      clearInterval(intervalId); setBubblePhase(null);
     };
   }, [isOnMain, isOpen]);
 
   return (
     <>
       {isOnMain && <PickerFAB onOpen={handleOpen} bubblePhase={bubblePhase} />}
-
       {isOpen && (
         <PickerModal
-          cards={cards}
-          flippedIndex={flippedIndex}
-          phase={phase}
-          shufflePositions={shufflePositions}
-          countUpValue={countUpValue}
-          showParticles={showParticles}
-          message={message}
-          isJackpot={isJackpot}
-          onPickCard={handlePickCard}
-          onClose={() => setIsOpen(false)}
-          onReshuffle={runShuffle}
+          cards={cards} flippedIndex={flippedIndex} phase={phase}
+          shufflePositions={shufflePositions} countUpValue={countUpValue}
+          showParticles={showParticles} message={message} isJackpot={isJackpot}
+          onPickCard={handlePickCard} onClose={() => setIsOpen(false)} onReshuffle={runShuffle}
         />
       )}
-
       <style>{KEYFRAMES}</style>
     </>
   );

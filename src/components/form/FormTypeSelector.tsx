@@ -1,18 +1,18 @@
 import { ListRow } from "@toss/tds-mobile";
-import type { FriendType } from "../../types/friend";
-import { FRIEND_CATEGORIES, CATEGORY_THEMES } from "../../constants/category";
+import type { RecordType } from "../../types/record";
+import { RECORD_CATEGORIES, CATEGORY_THEMES } from "../../constants/category";
 
 interface FormTypeSelectorProps {
-  value: FriendType | null;
-  onChange: (type: FriendType) => void;
+  value: RecordType | null;
+  onChange: (type: RecordType) => void;
 }
 
 export function FormTypeSelector({ value, onChange }: FormTypeSelectorProps) {
   const categories = [
-    FRIEND_CATEGORIES.WEDDING,
-    FRIEND_CATEGORIES.FUNERAL,
-    FRIEND_CATEGORIES.DOL,
-    FRIEND_CATEGORIES.ALLOWANCE,
+    RECORD_CATEGORIES.WEDDING,
+    RECORD_CATEGORIES.FUNERAL,
+    RECORD_CATEGORIES.DOL,
+    RECORD_CATEGORIES.ALLOWANCE,
   ] as const;
 
   return (
@@ -22,7 +22,6 @@ export function FormTypeSelector({ value, onChange }: FormTypeSelectorProps) {
         {categories.map((cat) => {
           const theme = CATEGORY_THEMES[cat];
           const isSelected = value === cat;
-
           return (
             <button
               key={cat}

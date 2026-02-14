@@ -1,8 +1,8 @@
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DocumentSnapshot } from "firebase/firestore";
-import type { Friend, FriendType } from "../types/friend";
-import { friendService, type UserMetadata } from "../apis/friendService";
+import type { MoneyRecord, RecordMode, RecordType } from "../types/record";
+import { recordService, type UserMetadata } from "../apis/recordService";
 import { adService } from "../apis/adService";
 
 /**
@@ -26,11 +26,12 @@ declare global {
 }
 
 /**
- * 1. 친구 데이터 슬라이스 (State & Actions)
+ * 1. 레코드 데이터 슬라이스
  */
-interface FriendSlice {
-  friends: Friend[];
-  totalAmount: number;
+interface RecordSlice {
+  records: MoneyRecord[];
+  totalPaid: number;
+  totalReceived: number;
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
@@ -39,21 +40,22 @@ interface FriendSlice {
   error: string | null;
 
   initializeStore: () => Promise<void>;
-  fetchMoreFriends: () => Promise<void>;
-  addFriend: (friend: Friend) => Promise<void>;
-  updateFriend: (id: string, updates: Partial<Friend>) => Promise<void>;
-  removeFriend: (id: string) => Promise<void>;
+  fetchMoreRecords: () => Promise<void>;
+  addRecord: (record: MoneyRecord) => Promise<void>;
+  updateRecord: (id: string, updates: Partial<MoneyRecord>) => Promise<void>;
+  removeRecord: (id: string) => Promise<void>;
   setUserIdentifier: (id: string) => void;
 }
 
-const createFriendSlice: StateCreator<
-  FriendSlice & UISlice & AdSlice,
+const createRecordSlice: StateCreator<
+  RecordSlice & UISlice & AdSlice,
   [["zustand/persist", unknown]],
   [],
-  FriendSlice
+  RecordSlice
 > = (set, get) => ({
-  friends: [],
-  totalAmount: 0,
+  records: [],
+  totalPaid: 0,
+  totalReceived: 0,
   isLoading: true,
   isLoadingMore: false,
   hasMore: true,
@@ -66,34 +68,31 @@ const createFriendSlice: StateCreator<
   initializeStore: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { uid, tossId } = await friendService.authenticate();
+      const { uid, tossId } = await recordService.authenticate();
       set({ userIdentifier: uid });
 
-      const userData = (await friendService.getOrCreateUser(
-        uid,
-        tossId,
-      )) as UserMetadata;
+      const userData = (await recordService.getOrCreateUser(uid, tossId)) as UserMetadata;
 
       if (userData?.friends) {
-        const { totalAmount } = await friendService.migrateLegacyData(
+        const { totalAmount } = await recordService.migrateLegacyData(
           uid,
           userData.friends,
           userData.lastAdMilestoneShown || 0,
         );
-        set({ totalAmount });
+        set({ totalPaid: totalAmount, totalReceived: 0 });
       } else if (userData) {
         set({
-          totalAmount: userData.totalAmount || 0,
+          totalPaid: userData.totalPaid || userData.totalAmount || 0,
+          totalReceived: userData.totalReceived || 0,
           lastAdMilestoneShown: userData.lastAdMilestoneShown || 0,
         });
       }
 
-      const { fetchedFriends, lastVisible } =
-        await friendService.fetchFriendsPage(uid);
+      const { fetchedRecords, lastVisible } = await recordService.fetchRecordsPage(uid);
       set({
-        friends: fetchedFriends,
+        records: fetchedRecords,
         lastVisible,
-        hasMore: fetchedFriends.length === 20,
+        hasMore: fetchedRecords.length === 20,
       });
     } catch (error) {
       set({
@@ -104,19 +103,18 @@ const createFriendSlice: StateCreator<
     }
   },
 
-  fetchMoreFriends: async () => {
-    const { userIdentifier, lastVisible, friends, hasMore, isLoadingMore } =
-      get();
+  fetchMoreRecords: async () => {
+    const { userIdentifier, lastVisible, records, hasMore, isLoadingMore } = get();
     if (!userIdentifier || !lastVisible || !hasMore || isLoadingMore) return;
 
     set({ isLoadingMore: true });
     try {
-      const { newFriends, newLastVisible } =
-        await friendService.fetchMoreFriends(userIdentifier, lastVisible);
+      const { newRecords, newLastVisible } =
+        await recordService.fetchMoreRecords(userIdentifier, lastVisible);
       set({
-        friends: [...friends, ...newFriends],
+        records: [...records, ...newRecords],
         lastVisible: newLastVisible,
-        hasMore: newFriends.length === 20,
+        hasMore: newRecords.length === 20,
       });
     } catch (error) {
       console.error("추가 로드 실패:", error);
@@ -125,106 +123,109 @@ const createFriendSlice: StateCreator<
     }
   },
 
-  addFriend: async (friend) => {
-    const { userIdentifier, friends, totalAmount, lastAdMilestoneShown } =
-      get();
+  addRecord: async (record) => {
+    const { userIdentifier, records, totalPaid, totalReceived, lastAdMilestoneShown } = get();
     if (!userIdentifier) throw new Error("인증 필요");
 
-    const newFriend = { ...friend, createdAt: new Date().toISOString() };
-    const newCount = friends.length + 1;
+    const newRecord = { ...record, createdAt: new Date().toISOString() };
+    const newCount = records.length + 1;
 
-    // 1. 광고 마일스톤 체크 (공식 패턴: load → show → 다음 load)
+    // 광고 마일스톤 체크
     if (adService.checkIsMilestone(newCount, lastAdMilestoneShown)) {
-      console.log("[Store] 광고 표시 조건 충족");
       set({ isLoading: true });
-
-      // loadAndShowAd: 로드 → 표시 → 다음 광고 미리 로드까지 처리
       await adService.loadAndShowAd({
         onDismissed: () => {
-          console.log("[Store] 광고 닫힘 - 마일스톤 업데이트");
           set({ lastAdMilestoneShown: newCount, isAdLoaded: false });
         },
         onError: (error) => {
           console.error("[Store] 광고 에러:", error);
         },
       });
-
       set({ isLoading: false });
     }
 
-    // 2. 상태 업데이트
-    const newTotalAmount = totalAmount + newFriend.amount;
-    const sorted = [newFriend, ...friends].sort((a, b) => {
+    // 모드별 총액 업데이트
+    const newTotalPaid = record.mode === "paid" ? totalPaid + record.amount : totalPaid;
+    const newTotalReceived = record.mode === "received" ? totalReceived + record.amount : totalReceived;
+
+    const sorted = [newRecord, ...records].sort((a, b) => {
       if (a.isFavorite && !b.isFavorite) return -1;
       if (!a.isFavorite && b.isFavorite) return 1;
       return a.name.localeCompare(b.name);
     });
 
-    set({ friends: sorted, totalAmount: newTotalAmount });
+    set({ records: sorted, totalPaid: newTotalPaid, totalReceived: newTotalReceived });
 
     try {
-      await friendService.addFriend(
+      await recordService.addRecord(
         userIdentifier,
-        newFriend,
-        newTotalAmount,
+        newRecord,
+        newTotalPaid,
+        newTotalReceived,
         get().lastAdMilestoneShown,
       );
-      get().loadAd(); // 다음 광고 미리 로드
+      get().loadAd();
     } catch (error) {
-      set({ friends, totalAmount });
+      set({ records, totalPaid, totalReceived });
       throw error;
     }
   },
 
-  updateFriend: async (id, updates) => {
-    const { userIdentifier, friends, totalAmount } = get();
+  updateRecord: async (id, updates) => {
+    const { userIdentifier, records, totalPaid, totalReceived } = get();
     if (!userIdentifier) throw new Error("인증 필요");
 
-    const old = friends.find((f) => f.id === id);
+    const old = records.find((r) => r.id === id);
     if (!old) throw new Error("수정할 기록을 찾을 수 없습니다.");
 
-    let nextTotal = totalAmount;
+    let nextPaid = totalPaid;
+    let nextReceived = totalReceived;
     if (updates.amount !== undefined) {
-      nextTotal = totalAmount - old.amount + updates.amount;
+      if (old.mode === "paid") {
+        nextPaid = totalPaid - old.amount + updates.amount;
+      } else {
+        nextReceived = totalReceived - old.amount + updates.amount;
+      }
     }
 
-    const updated = friends
-      .map((f) => (f.id === id ? { ...f, ...updates } : f))
+    const updated = records
+      .map((r) => (r.id === id ? { ...r, ...updates } : r))
       .sort((a, b) => {
         if (a.isFavorite && !b.isFavorite) return -1;
         if (!a.isFavorite && b.isFavorite) return 1;
         return a.name.localeCompare(b.name);
       });
 
-    set({ friends: updated, totalAmount: nextTotal });
+    set({ records: updated, totalPaid: nextPaid, totalReceived: nextReceived });
 
     try {
-      await friendService.updateFriend(userIdentifier, id, updates, nextTotal);
+      await recordService.updateRecord(userIdentifier, id, updates, nextPaid, nextReceived);
     } catch (error) {
-      // 롤백 후 에러 전파
-      set({ friends, totalAmount });
+      set({ records, totalPaid, totalReceived });
       throw error;
     }
   },
 
-  removeFriend: async (id) => {
-    const { userIdentifier, friends, totalAmount } = get();
+  removeRecord: async (id) => {
+    const { userIdentifier, records, totalPaid, totalReceived } = get();
     if (!userIdentifier) throw new Error("인증 필요");
 
-    const target = friends.find((f) => f.id === id);
+    const target = records.find((r) => r.id === id);
     if (!target) throw new Error("삭제할 기록을 찾을 수 없습니다.");
 
-    const nextTotal = Math.max(0, totalAmount - target.amount);
+    const nextPaid = target.mode === "paid" ? Math.max(0, totalPaid - target.amount) : totalPaid;
+    const nextReceived = target.mode === "received" ? Math.max(0, totalReceived - target.amount) : totalReceived;
+
     set({
-      friends: friends.filter((f) => f.id !== id),
-      totalAmount: nextTotal,
+      records: records.filter((r) => r.id !== id),
+      totalPaid: nextPaid,
+      totalReceived: nextReceived,
     });
 
     try {
-      await friendService.removeFriend(userIdentifier, id, nextTotal);
+      await recordService.removeRecord(userIdentifier, id, nextPaid, nextReceived);
     } catch (error) {
-      // 롤백 후 에러 전파
-      set({ friends, totalAmount });
+      set({ records, totalPaid, totalReceived });
       throw error;
     }
   },
@@ -234,21 +235,23 @@ const createFriendSlice: StateCreator<
  * 2. UI 상태 슬라이스
  */
 interface UISlice {
-  selectedFriendId: string | null;
-  editingFriend: Friend | null;
+  currentMode: RecordMode;
+  selectedRecordId: string | null;
+  editingRecord: MoneyRecord | null;
   currentPage: "main" | "amountInput";
-  isFriendFormOpen: boolean;
+  isRecordFormOpen: boolean;
   isProfileImageSheetOpen: boolean;
-  filterType: "전체" | FriendType;
+  filterType: "전체" | RecordType;
   isCelebrating: boolean;
 
+  setCurrentMode: (mode: RecordMode) => void;
   setFilterType: (type: UISlice["filterType"]) => void;
   setCelebrating: (val: boolean) => void;
-  setEditingFriend: (f: Friend | null) => void;
-  setSelectedFriendId: (id: string | null) => void;
-  startAddingFriend: (initialType?: FriendType | null) => void;
-  openFriendForm: (id: string) => void;
-  closeFriendForm: () => void;
+  setEditingRecord: (r: MoneyRecord | null) => void;
+  setSelectedRecordId: (id: string | null) => void;
+  startAddingRecord: (initialType?: RecordType | null) => void;
+  openRecordForm: (id: string) => void;
+  closeRecordForm: () => void;
   openProfileImageSheet: () => void;
   closeProfileImageSheet: () => void;
   openAmountInput: () => void;
@@ -257,29 +260,32 @@ interface UISlice {
 }
 
 const createUISlice: StateCreator<
-  FriendSlice & UISlice & AdSlice,
+  RecordSlice & UISlice & AdSlice,
   [["zustand/persist", unknown]],
   [],
   UISlice
 > = (set) => ({
-  selectedFriendId: null,
-  editingFriend: null,
+  currentMode: "paid",
+  selectedRecordId: null,
+  editingRecord: null,
   currentPage: "main",
-  isFriendFormOpen: false,
+  isRecordFormOpen: false,
   isProfileImageSheetOpen: false,
   filterType: "전체",
   isCelebrating: false,
 
+  setCurrentMode: (currentMode) => set({ currentMode, filterType: "전체" }),
   setFilterType: (filterType) => set({ filterType }),
   setCelebrating: (isCelebrating) => set({ isCelebrating }),
-  setEditingFriend: (editingFriend) => set({ editingFriend }),
-  setSelectedFriendId: (selectedFriendId) => set({ selectedFriendId }),
+  setEditingRecord: (editingRecord) => set({ editingRecord }),
+  setSelectedRecordId: (selectedRecordId) => set({ selectedRecordId }),
 
-  startAddingFriend: (initialType) =>
-    set({
-      selectedFriendId: "new",
-      editingFriend: {
+  startAddingRecord: (initialType) =>
+    set((state) => ({
+      selectedRecordId: "new",
+      editingRecord: {
         id: Date.now().toString(),
+        mode: state.currentMode,
         name: "",
         profileIcon: "icon-face-cap",
         type: initialType || null,
@@ -288,36 +294,36 @@ const createUISlice: StateCreator<
         date: "",
         isFavorite: false,
       },
-      isFriendFormOpen: true,
-      currentPage: "main",
-    }),
-
-  openFriendForm: (id) =>
-    set((state) => ({
-      selectedFriendId: id,
-      editingFriend: state.friends.find((f) => f.id === id) || null,
-      isFriendFormOpen: true,
+      isRecordFormOpen: true,
       currentPage: "main",
     })),
 
-  closeFriendForm: () =>
+  openRecordForm: (id) =>
+    set((state) => ({
+      selectedRecordId: id,
+      editingRecord: state.records.find((r) => r.id === id) || null,
+      isRecordFormOpen: true,
+      currentPage: "main",
+    })),
+
+  closeRecordForm: () =>
     set({
-      isFriendFormOpen: false,
-      editingFriend: null,
-      selectedFriendId: null,
+      isRecordFormOpen: false,
+      editingRecord: null,
+      selectedRecordId: null,
     }),
 
   openProfileImageSheet: () => set({ isProfileImageSheetOpen: true }),
   closeProfileImageSheet: () => set({ isProfileImageSheetOpen: false }),
   openAmountInput: () =>
-    set({ currentPage: "amountInput", isFriendFormOpen: false }),
-  closeAmountInput: () => set({ currentPage: "main", isFriendFormOpen: true }),
+    set({ currentPage: "amountInput", isRecordFormOpen: false }),
+  closeAmountInput: () => set({ currentPage: "main", isRecordFormOpen: true }),
   resetToMain: () =>
     set({
       currentPage: "main",
-      selectedFriendId: null,
-      editingFriend: null,
-      isFriendFormOpen: false,
+      selectedRecordId: null,
+      editingRecord: null,
+      isRecordFormOpen: false,
       isProfileImageSheetOpen: false,
       isCelebrating: false,
     }),
@@ -334,7 +340,7 @@ interface AdSlice {
 }
 
 const createAdSlice: StateCreator<
-  FriendSlice & UISlice & AdSlice,
+  RecordSlice & UISlice & AdSlice,
   [["zustand/persist", unknown]],
   [],
   AdSlice
@@ -343,23 +349,12 @@ const createAdSlice: StateCreator<
   isAdLoaded: false,
   isAdLoading: false,
   loadAd: async () => {
-    if (get().isAdLoading || adService.isAdLoaded()) {
-      console.log("[Store] 광고 이미 로드 중이거나 로드됨 - 스킵");
-      return;
-    }
+    if (get().isAdLoading || adService.isAdLoaded()) return;
 
-    console.log("[Store] 광고 미리 로드 시작");
     set({ isAdLoading: true });
-
     adService.loadAd({
-      onLoaded: () => {
-        console.log("[Store] 광고 미리 로드 성공");
-        set({ isAdLoaded: true, isAdLoading: false });
-      },
-      onError: (error) => {
-        console.error("[Store] 광고 미리 로드 실패", error);
-        set({ isAdLoaded: false, isAdLoading: false });
-      },
+      onLoaded: () => set({ isAdLoaded: true, isAdLoading: false }),
+      onError: () => set({ isAdLoaded: false, isAdLoading: false }),
     });
   },
 });
@@ -367,18 +362,19 @@ const createAdSlice: StateCreator<
 /**
  * 최종 스토어 구성
  */
-export const useFriendStore = create<FriendSlice & UISlice & AdSlice>()(
+export const useRecordStore = create<RecordSlice & UISlice & AdSlice>()(
   persist(
     (...a) => ({
-      ...createFriendSlice(...a),
+      ...createRecordSlice(...a),
       ...createUISlice(...a),
       ...createAdSlice(...a),
     }),
     {
-      name: "howmuch-friends-storage-v3",
-      version: 3,
+      name: "howmuch-records-storage-v4",
+      version: 4,
       partialize: (state) => ({
         lastAdMilestoneShown: state.lastAdMilestoneShown,
+        currentMode: state.currentMode,
       }),
     },
   ),

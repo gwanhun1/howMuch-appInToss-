@@ -1,7 +1,7 @@
 import { Spacing, Skeleton } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 
-export function FriendCardSkeleton() {
+export function RecordCardSkeleton() {
   return (
     <div
       style={{

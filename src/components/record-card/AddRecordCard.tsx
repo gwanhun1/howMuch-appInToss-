@@ -3,11 +3,11 @@ import { Asset, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { motion } from "framer-motion";
 
-interface AddFriendCardProps {
+interface AddRecordCardProps {
   onClick: () => void;
 }
 
-export function AddFriendCard({ onClick }: AddFriendCardProps) {
+export function AddRecordCard({ onClick }: AddRecordCardProps) {
   const [isClicking, setIsClicking] = useState(false);
   const lastClickTime = useRef(0);
 

@@ -1,12 +1,12 @@
 import { Asset } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import type { FriendType } from "../../types/friend";
+import type { RecordType } from "../../types/record";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
 interface FormAvatarProps {
   iconName: string;
-  type: FriendType | null;
+  type: RecordType | null;
   onClick: () => void;
 }
 
@@ -14,13 +14,7 @@ export function FormAvatar({ iconName, type, onClick }: FormAvatarProps) {
   const displayIcon = iconName.startsWith("icon-") ? iconName : "icon-face-cap";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
       <div
         onClick={onClick}
         style={{
@@ -35,10 +29,7 @@ export function FormAvatar({ iconName, type, onClick }: FormAvatarProps) {
           filter: type === "조의금" ? "grayscale(1)" : "none",
         }}
       >
-        <Asset.Icon
-          name={displayIcon as IconName}
-          frameShape={Asset.frameShape.CleanW100}
-        />
+        <Asset.Icon name={displayIcon as IconName} frameShape={Asset.frameShape.CleanW100} />
         <div
           style={{
             position: "absolute",
