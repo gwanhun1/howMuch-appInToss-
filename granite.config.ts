@@ -1,4 +1,17 @@
 import { defineConfig } from "@apps-in-toss/web-framework/config";
+import { networkInterfaces } from "os";
+
+function getLocalIP() {
+  const nets = networkInterfaces();
+  for (const interfaces of Object.values(nets)) {
+    for (const net of interfaces ?? []) {
+      if (net.family === "IPv4" && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return "localhost";
+}
 
 export default defineConfig({
   appName: "howmuch-money",
@@ -12,7 +25,7 @@ export default defineConfig({
     withHomeButton: false, // 홈 버튼 불필요
   },
   web: {
-    host: "192.168.0.40",
+    host: getLocalIP(),
     port: 5173,
     commands: {
       dev: "vite --host",
