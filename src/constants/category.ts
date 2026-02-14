@@ -58,8 +58,6 @@ export const CATEGORY_THEMES: Record<string, CategoryInfo> = {
 /** 모드별 UI 텍스트 */
 export const MODE_LABELS = {
   paid: {
-    tab: "보낸 돈",
-    summaryTitle: "보낸 마음을 확인해보세요",
     amountInputTitle: "보낸 돈 입력",
     amountInputQuestion: "이번에 얼마를 전했나요?",
     lastAmountPrefix: "지난번",
@@ -70,8 +68,6 @@ export const MODE_LABELS = {
     deleteToast: "기록이 삭제되었습니다.",
   },
   received: {
-    tab: "받은 돈",
-    summaryTitle: "받은 마음을 확인해보세요",
     amountInputTitle: "받은 돈 입력",
     amountInputQuestion: "이번에 얼마를 받았나요?",
     lastAmountPrefix: "지난번",

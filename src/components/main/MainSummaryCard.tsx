@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { Text, Skeleton, Badge, Tooltip } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
+import type { RecordMode } from "../../types/record";
 import { useRecordStore } from "../../stores/useRecordStore";
-import { CATEGORY_THEMES, RECORD_CATEGORIES, MODE_LABELS } from "../../constants/category";
+import { CATEGORY_THEMES, RECORD_CATEGORIES } from "../../constants/category";
 
 interface MainSummaryCardProps {
   totalAmount: number;
@@ -12,8 +13,7 @@ interface MainSummaryCardProps {
 
 export function MainSummaryCard({ totalAmount, isLoading, recordsCount }: MainSummaryCardProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { records, currentMode } = useRecordStore();
-  const labels = MODE_LABELS[currentMode];
+  const { records, currentMode, setCurrentMode } = useRecordStore();
 
   const modeRecords = useMemo(
     () => records.filter((r) => r.mode === currentMode),
@@ -41,9 +41,39 @@ export function MainSummaryCard({ totalAmount, isLoading, recordsCount }: MainSu
           onClick={() => setIsOpen(false)} />
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px" }}>
-        <Text typography="t4" fontWeight="bold" color={adaptive.grey900}>
-          {labels.summaryTitle}
-        </Text>
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <div style={{
+            display: "inline-flex", backgroundColor: adaptive.greyOpacity50,
+            borderRadius: "8px", padding: "2px",
+          }}>
+            {(["paid", "received"] as RecordMode[]).map((mode) => {
+              const isActive = currentMode === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setCurrentMode(mode)}
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: "6px",
+                    border: "none",
+                    backgroundColor: isActive ? adaptive.blue600 : "transparent",
+                    color: isActive ? adaptive.grey50 : adaptive.grey400,
+                    fontSize: "17px",
+                    fontWeight: isActive ? 600 : 400,
+                    cursor: "pointer",
+                    transition: "all 0.25s ease",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {mode === "paid" ? "보낸" : "받은"}
+                </button>
+              );
+            })}
+          </div>
+          <Text typography="t5" fontWeight="bold" color={adaptive.grey900}>
+            마음을 확인해보세요
+          </Text>
+        </div>
         {isLoading ? (
           <Skeleton.Item style={{ width: 80, height: 24, borderRadius: 12 }} />
         ) : (

@@ -49,7 +49,7 @@ export function RecordCard({ record, onClick, onToggleFavorite }: RecordCardProp
   const cardBgColor = theme.lightColor;
   const borderColor = isUpcoming ? "rgba(0, 0, 0, 0.04)" : `${theme.color}40`;
   const shadow = isUpcoming ? `0 4px 12px ${theme.color}18` : "0 4px 12px rgba(0, 0, 0, 0.03)";
-  const amountColor = record.mode === "received" ? "#00C471" : adaptive.blue600;
+  const amountColor = adaptive.blue600;
   const badgeColor = theme.defaultBadgeColor;
   const badgeText = theme.badgeText;
 
