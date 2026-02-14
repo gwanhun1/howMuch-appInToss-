@@ -136,11 +136,9 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
           </div>
         }
       >
-        <div style={{ display: "flex", flexDirection: "column", maxHeight: "calc(90vh - 200px)", position: "relative" }}>
+        <div style={{ display: "flex", flexDirection: "column", height: "65vh", maxHeight: "90vh" }}>
           <div
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
-            style={{ flex: 1, overflowY: expanded ? "auto" : "hidden", overflowX: "hidden", WebkitOverflowScrolling: "touch" }}
+            style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}
           >
             <Spacing size={10} />
             <FormAvatar iconName={currentRecord.profileIcon} type={currentRecord.type}
@@ -194,16 +192,18 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
                   }
                 }}
               />
-              <FormAdditionalInfo expanded={expanded} relation={currentRecord.relation} date={currentRecord.date}
-                onRelationChange={(rel) => setEditingRecord({ ...currentRecord, relation: rel })}
-                onDateChange={(val) => setEditingRecord({ ...currentRecord, date: val })}
-              />
+              <div onTouchMove={expanded ? (e) => e.stopPropagation() : undefined}>
+                <FormAdditionalInfo expanded={expanded} relation={currentRecord.relation} date={currentRecord.date}
+                  onRelationChange={(rel) => setEditingRecord({ ...currentRecord, relation: rel })}
+                  onDateChange={(val) => setEditingRecord({ ...currentRecord, date: val })}
+                />
+              </div>
             </List>
           </div>
           <div style={{
-            position: "sticky", bottom: 0, left: 0, right: 0, padding: "14px 10px",
+            padding: "14px 10px",
             display: "flex", gap: "4px", backgroundColor: "#ffffff",
-            borderTop: `1px solid ${adaptive.grey100}`, boxShadow: "0 -4px 10px rgba(0,0,0,0.02)", zIndex: 10,
+            borderTop: `1px solid ${adaptive.grey100}`,
           }}>
             <Button style={{ flex: 1 }} variant="weak" size="large" onClick={handleDelete}>삭제</Button>
             <Button style={{ flex: 1 }} variant="fill" size="medium" onClick={handleSave}
