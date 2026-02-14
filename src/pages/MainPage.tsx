@@ -12,6 +12,8 @@ import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
 import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
 import { useSwipeMode } from "../hooks/useSwipeMode";
+import { useFeatureGuide } from "../hooks/useFeatureGuide";
+import { FeatureHighlight } from "../components/onboarding/FeatureHighlight";
 
 export function MainPage() {
   const { openToast } = useToast();
@@ -77,6 +79,22 @@ export function MainPage() {
     onModeChange: setCurrentMode,
   });
 
+  const guide = useFeatureGuide(isLoading, closeRecordForm);
+
+  // 메인 가이드 끝나면 자동으로 바텀시트 열어서 폼 가이드 시작
+  useEffect(() => {
+    if (guide.isWaitingForForm && !isRecordFormOpen) {
+      startAddingRecord();
+    }
+  }, [guide.isWaitingForForm, isRecordFormOpen, startAddingRecord]);
+
+  // 바텀시트가 열리면 폼 가이드 시작
+  useEffect(() => {
+    if (guide.isWaitingForForm && isRecordFormOpen) {
+      guide.startFormGuide();
+    }
+  }, [guide, isRecordFormOpen]);
+
   if (error) {
     return <GlobalErrorView description={error} onRetry={() => initializeStore()} />;
   }
@@ -109,6 +127,7 @@ export function MainPage() {
                 recordsCount={modeRecordsCount}
                 filterType={filterType}
                 onFilterChange={setFilterType}
+                guide={guide}
               />
 
               <Spacing size={16} />
@@ -130,6 +149,7 @@ export function MainPage() {
                   onAddRecord={startAddingRecord}
                   onRecordClick={openRecordForm}
                   filterType={filterType}
+                  guide={guide}
                   onToggleFavorite={async (id) => {
                     const record = records.find((r) => r.id === id);
                     if (record) {
@@ -152,7 +172,15 @@ export function MainPage() {
                 color: adaptive.grey300,
                 letterSpacing: "-0.2px",
               }}>
-                ← 스와이프하여 보낸/받은 마음을 확인해보세요 →
+                <FeatureHighlight
+                  step="swipe-hint"
+                  currentStep={guide.currentStep}
+                  onNext={guide.next}
+                  onPrev={guide.prev}
+                  onSkip={guide.skip}
+                >
+                  <span>← 스와이프하여 보낸/받은 마음을 확인해보세요 →</span>
+                </FeatureHighlight>
               </div>
               </div>
             </div>
@@ -169,6 +197,7 @@ export function MainPage() {
         onClose={closeRecordForm}
         onOpenAmountInput={openAmountInput}
         onHome={resetToMain}
+        guide={guide}
       />
 
       <RandomAmountPicker />

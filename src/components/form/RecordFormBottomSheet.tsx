@@ -10,6 +10,8 @@ import { ProfileImageBottomSheet } from "./ProfileImageBottomSheet";
 import { FormAvatar } from "./FormAvatar";
 import { FormTypeSelector } from "./FormTypeSelector";
 import { FormAdditionalInfo } from "./FormAdditionalInfo";
+import { FeatureHighlight } from "../onboarding/FeatureHighlight";
+import type { GuideProps } from "../../hooks/useFeatureGuide";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
@@ -19,9 +21,10 @@ interface Props {
   onClose: () => void;
   onOpenAmountInput: () => void;
   onHome: () => void;
+  guide: GuideProps;
 }
 
-export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput, onHome }: Props) {
+export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput, onHome, guide }: Props) {
   const updateRecord = useRecordStore((s) => s.updateRecord);
   const removeRecord = useRecordStore((s) => s.removeRecord);
   const setSelectedRecordId = useRecordStore((s) => s.setSelectedRecordId);
@@ -141,41 +144,73 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
             style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}
           >
             <Spacing size={10} />
-            <FormAvatar iconName={currentRecord.profileIcon} type={currentRecord.type}
-              onClick={() => setIsProfilePickerOpen(true)} />
+            <FeatureHighlight
+              step="form-avatar"
+              currentStep={guide.currentStep}
+              onNext={guide.next}
+              onPrev={guide.prev}
+              onSkip={guide.skip}
+            >
+              <FormAvatar iconName={currentRecord.profileIcon} type={currentRecord.type}
+                onClick={() => setIsProfilePickerOpen(true)} />
+            </FeatureHighlight>
             <Spacing size={2} />
             <List>
-              <TextField variant="line" label="이름" labelOption="sustain"
-                value={currentRecord.name}
-                onChange={(e) => {
-                  const value = e.target.value.slice(0, 20);
-                  setEditingRecord({ ...currentRecord, name: value });
-                }}
-                placeholder="누구에게?" hasError={isNameInvalid}
-                help={isNameInvalid ? "이름을 입력해주세요" : undefined} maxLength={20}
-              />
-              <FormTypeSelector value={currentRecord.type}
-                onChange={(type) => {
-                  if (showValidationError) setShowValidationError(false);
-                  setEditingRecord({ ...currentRecord, type });
-                }}
-              />
+              <FeatureHighlight
+                step="form-name"
+                currentStep={guide.currentStep}
+                onNext={guide.next}
+                onPrev={guide.prev}
+                onSkip={guide.skip}
+              >
+                <TextField variant="line" label="이름" labelOption="sustain"
+                  value={currentRecord.name}
+                  onChange={(e) => {
+                    const value = e.target.value.slice(0, 20);
+                    setEditingRecord({ ...currentRecord, name: value });
+                  }}
+                  placeholder="누구에게?" hasError={isNameInvalid}
+                  help={isNameInvalid ? "이름을 입력해주세요" : undefined} maxLength={20}
+                />
+              </FeatureHighlight>
+              <FeatureHighlight
+                step="form-category"
+                currentStep={guide.currentStep}
+                onNext={guide.next}
+                onPrev={guide.prev}
+                onSkip={guide.skip}
+              >
+                <FormTypeSelector value={currentRecord.type}
+                  onChange={(type) => {
+                    if (showValidationError) setShowValidationError(false);
+                    setEditingRecord({ ...currentRecord, type });
+                  }}
+                />
+              </FeatureHighlight>
               {isTypeInvalid && (
                 <div style={{ padding: "6px 20px 0" }}>
                   <Text typography="t7" color={adaptive.red500}>어떤 상황인지 선택해주세요</Text>
                 </div>
               )}
-              <div className="add-card-pulse">
-                <ListRow
-                  contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
-                  right={
-                    currentRecord.amount > 0
-                      ? <Text color={adaptive.grey600}>{currentRecord.amount.toLocaleString()}원</Text>
-                      : <Text color={adaptive.grey500}>입력하기</Text>
-                  }
-                  onClick={onOpenAmountInput} arrowType="right"
-                />
-              </div>
+              <FeatureHighlight
+                step="form-amount"
+                currentStep={guide.currentStep}
+                onNext={guide.next}
+                onPrev={guide.prev}
+                onSkip={guide.skip}
+              >
+                <div className="add-card-pulse">
+                  <ListRow
+                    contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
+                    right={
+                      currentRecord.amount > 0
+                        ? <Text color={adaptive.grey600}>{currentRecord.amount.toLocaleString()}원</Text>
+                        : <Text color={adaptive.grey500}>입력하기</Text>
+                    }
+                    onClick={onOpenAmountInput} arrowType="right"
+                  />
+                </div>
+              </FeatureHighlight>
               {isAmountInvalid && (
                 <div style={{ padding: "6px 20px 0" }}>
                   <Text typography="t7" color={adaptive.red500}>금액을 입력해주세요</Text>

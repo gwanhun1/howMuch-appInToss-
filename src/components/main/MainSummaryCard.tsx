@@ -4,6 +4,8 @@ import { useRecordStore } from "../../stores/useRecordStore";
 import { ModeToggle } from "./ModeToggle";
 import { CategoryFilterBadge } from "./CategoryFilterBadge";
 import { TotalAmountBadge } from "./TotalAmountBadge";
+import { FeatureHighlight } from "../onboarding/FeatureHighlight";
+import type { GuideProps } from "../../hooks/useFeatureGuide";
 
 interface MainSummaryCardProps {
   totalAmount: number;
@@ -11,9 +13,10 @@ interface MainSummaryCardProps {
   recordsCount: number;
   filterType: RecordType | "전체";
   onFilterChange: (type: RecordType | "전체") => void;
+  guide: GuideProps;
 }
 
-export function MainSummaryCard({ totalAmount, isLoading, recordsCount, filterType, onFilterChange }: MainSummaryCardProps) {
+export function MainSummaryCard({ totalAmount, isLoading, recordsCount, filterType, onFilterChange, guide }: MainSummaryCardProps) {
   const { records, currentMode, setCurrentMode } = useRecordStore();
 
   const modeRecords = useMemo(
@@ -23,10 +26,26 @@ export function MainSummaryCard({ totalAmount, isLoading, recordsCount, filterTy
 
   return (
     <div style={{ position: "relative", overflow: "visible", padding: "0 20px" }}>
-      <ModeToggle currentMode={currentMode} onModeChange={setCurrentMode} />
+      <FeatureHighlight
+        step="mode-toggle"
+        currentStep={guide.currentStep}
+        onNext={guide.next}
+        onPrev={guide.prev}
+        onSkip={guide.skip}
+      >
+        <ModeToggle currentMode={currentMode} onModeChange={setCurrentMode} />
+      </FeatureHighlight>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "12px" }}>
-        <CategoryFilterBadge filterType={filterType} onFilterChange={onFilterChange} />
+        <FeatureHighlight
+          step="category-filter"
+          currentStep={guide.currentStep}
+          onNext={guide.next}
+          onPrev={guide.prev}
+          onSkip={guide.skip}
+        >
+          <CategoryFilterBadge filterType={filterType} onFilterChange={onFilterChange} />
+        </FeatureHighlight>
         <TotalAmountBadge
           totalAmount={totalAmount}
           isLoading={isLoading}

@@ -14,7 +14,7 @@ import {
 import { signInAnonymously } from "firebase/auth";
 import { auth, db } from "@/utils/firebase";
 import { getTossUserIdentifier } from "@/utils/toss";
-import type { MoneyRecord } from "../../../types/record";
+import type { MoneyRecord } from "../types/record";
 
 const PAGE_SIZE = 20;
 const REQUEST_TIMEOUT = 15000;

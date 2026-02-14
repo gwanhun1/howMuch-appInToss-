@@ -5,7 +5,9 @@ import { RecordCard } from "./RecordCard";
 import { AddRecordCard } from "./AddRecordCard";
 import { AdCard } from "../common/AdCard";
 import { RecordCardSkeleton } from "./RecordCardSkeleton";
-import { OnboardingGuide } from "../onboarding/OnboardingGuide";
+import { EmptyState } from "../onboarding/EmptyState";
+import { FeatureHighlight } from "../onboarding/FeatureHighlight";
+import type { GuideProps } from "../../hooks/useFeatureGuide";
 
 interface RecordListProps {
   records: MoneyRecord[];
@@ -19,12 +21,13 @@ interface RecordListProps {
   onRecordClick: (recordId: string) => void;
   onToggleFavorite: (recordId: string) => void;
   filterType?: string;
+  guide: GuideProps;
 }
 
 export function RecordList({
   records, totalCount, isLoading, isLoadingMore, hasMore,
   onLoadMore, lastAdMilestoneShown, onAddRecord, onRecordClick,
-  onToggleFavorite, filterType = "전체",
+  onToggleFavorite, filterType = "전체", guide,
 }: RecordListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -49,10 +52,16 @@ export function RecordList({
       display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
       columnGap: "12px", rowGap: "16px", padding: "0 20px", marginBottom: "20px",
     }}>
-      <AddRecordCard onClick={() => onAddRecord(filterType === "전체" ? null : (filterType as RecordType))} />
-      {!isLoading && records.length === 0 && (
-        <OnboardingGuide onAddFriend={() => onAddRecord(null)} />
-      )}
+      <FeatureHighlight
+        step="add-button"
+        currentStep={guide.currentStep}
+        onNext={guide.next}
+        onPrev={guide.prev}
+        onSkip={guide.skip}
+      >
+        <AddRecordCard onClick={() => onAddRecord(filterType === "전체" ? null : (filterType as RecordType))} />
+      </FeatureHighlight>
+      {!isLoading && records.length === 0 && <EmptyState />}
       {records.map((record) => (
         <RecordCard
           key={record.id}
