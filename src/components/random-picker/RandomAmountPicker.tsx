@@ -47,7 +47,7 @@ export function RandomAmountPicker() {
         setCountUpValue(target);
         if (countUpRef.current) clearInterval(countUpRef.current);
         const text = target.toLocaleString();
-        openToastRef.current(`📋 ${text}원이 복사되었어요`);
+        openToastRef.current(`${text}원이 복사되었어요`, { icon: "icon-check-circle-blue" });
         copyToClipboard(text);
       } else {
         setCountUpValue(Math.round(current / 10000) * 10000);

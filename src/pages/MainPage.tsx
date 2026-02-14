@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect } from "react";
 import { Spacing, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useRecordStore } from "../stores/useRecordStore";
@@ -8,10 +8,10 @@ import { RecordList } from "../components/record-card/RecordList";
 import { CoinRain } from "../components/common/CoinRain";
 import { GlobalErrorView } from "../components/common/GlobalErrorView";
 import { MainSummaryCard } from "../components/main/MainSummaryCard";
-import { MainCategoryFilter } from "../components/main/MainCategoryFilter";
 import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
 import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
+import { useSwipeMode } from "../hooks/useSwipeMode";
 
 export function MainPage() {
   const { openToast } = useToast();
@@ -72,30 +72,10 @@ export function MainPage() {
   const modeRecordsCount = records.filter((r) => r.mode === currentMode).length;
   const selectedRecord = records.find((r) => r.id === selectedRecordId) || null;
 
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const swiped = useRef(false);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    swiped.current = false;
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!touchStart.current || swiped.current) return;
-    const dx = e.changedTouches[0].clientX - touchStart.current.x;
-    const dy = e.changedTouches[0].clientY - touchStart.current.y;
-
-    // 수평 이동이 수직보다 크고, 30px 이상일 때만 스와이프로 판정
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-      swiped.current = true;
-      if (dx < 0 && currentMode === "paid") {
-        setCurrentMode("received");
-      } else if (dx > 0 && currentMode === "received") {
-        setCurrentMode("paid");
-      }
-    }
-    touchStart.current = null;
-  }, [currentMode, setCurrentMode]);
+  const { dragX, handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeMode({
+    currentMode,
+    onModeChange: setCurrentMode,
+  });
 
   if (error) {
     return <GlobalErrorView description={error} onRetry={() => initializeStore()} />;
@@ -103,8 +83,8 @@ export function MainPage() {
 
   return (
     <div style={{
-      backgroundColor: adaptive.grey50, display: "flex", flexDirection: "column",
-      height: "100vh", overflow: "hidden", position: "relative",
+      backgroundColor: adaptive.grey50, minHeight: "100vh", position: "relative",
+      overflowX: "hidden",
     }}>
       {isCelebrating && <CoinRain onComplete={() => setCelebrating(false)} />}
       {currentPage === "amountInput" && editingRecord ? (
@@ -115,8 +95,9 @@ export function MainPage() {
         />
       ) : (
         <>
-          <div style={{ flex: 1, overflowY: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
+          <div style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
             <Spacing size={12} />
@@ -126,16 +107,19 @@ export function MainPage() {
                 totalAmount={currentTotal}
                 isLoading={isLoading}
                 recordsCount={modeRecordsCount}
+                filterType={filterType}
+                onFilterChange={setFilterType}
               />
 
               <Spacing size={16} />
 
-              <MainCategoryFilter filterType={filterType} onFilterChange={setFilterType} />
-
-              <Spacing size={16} />
-
-              <div style={{ minHeight: "70vh" }}>
-                <RecordList
+              <div style={{
+                transform: `translateX(${dragX}px)`,
+                transition: dragX === 0 ? "transform 0.25s ease-out" : "none",
+                opacity: 1 - Math.abs(dragX) * 0.002,
+              }}>
+                <div style={{ minHeight: "70vh" }}>
+                  <RecordList
                   records={filteredRecords}
                   totalCount={modeRecordsCount}
                   isLoading={isLoading}
@@ -160,6 +144,16 @@ export function MainPage() {
                     }
                   }}
                 />
+              </div>
+
+              <div style={{
+                textAlign: "center",
+                fontSize: '1rem',
+                color: adaptive.grey300,
+                letterSpacing: "-0.2px",
+              }}>
+                ← 스와이프하여 보낸/받은 마음을 확인해보세요 →
+              </div>
               </div>
             </div>
 

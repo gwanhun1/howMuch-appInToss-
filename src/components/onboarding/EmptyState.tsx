@@ -1,4 +1,3 @@
-import { Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { motion } from "framer-motion";
 
@@ -8,8 +7,8 @@ import { motion } from "framer-motion";
  */
 export function EmptyState() {
   const placeholders = [
-    "누구에게 얼마를\n주고받았나요?",
-    "기록하면\n한눈에 볼 수 있어요",
+    <>누구에게 얼마를<br/>주고받았나요?</>,
+    <>기록하면<br/>한눈에 볼 수 있어요</>,
   ];
 
   return (
@@ -38,13 +37,17 @@ export function EmptyState() {
             boxSizing: "border-box",
           }}
         >
-          <Text
-            typography="t7"
-            color={adaptive.grey400}
-            style={{ textAlign: "center", whiteSpace: "pre-line", lineHeight: 1.5 }}
+          <div
+            style={{
+              textAlign: "center",
+              lineHeight: 1.5,
+              width: "100%",
+              fontSize: "14px",
+              color: adaptive.grey400,
+            }}
           >
             {text}
-          </Text>
+          </div>
         </motion.div>
       ))}
     </div>
