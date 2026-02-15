@@ -52,6 +52,11 @@ export function useFeatureGuide(isLoading: boolean, onGuideEnd?: () => void): Gu
 
   useEffect(() => {
     if (isLoading) return;
+    try {
+      if (localStorage.getItem(STORAGE_KEY) === "true") return;
+    } catch {
+      // noop
+    }
     const timer = setTimeout(() => setCurrentStep("add-button"), 800);
     return () => clearTimeout(timer);
   }, [isLoading]);

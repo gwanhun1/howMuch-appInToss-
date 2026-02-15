@@ -1,6 +1,7 @@
 import { adService } from "../../apis/adService";
 import { useEffect, useRef } from "react";
 import type { MoneyRecord, RecordType } from "../../types/record";
+import { Loader } from "@toss/tds-mobile";
 import { RecordCard } from "./RecordCard";
 import { AddRecordCard } from "./AddRecordCard";
 import { AdCard } from "../common/AdCard";
@@ -69,7 +70,11 @@ export function RecordList({
         />
       ))}
       {isLoading && Array.from({ length: 5 }).map((_, i) => <RecordCardSkeleton key={i} />)}
-      {isLoadingMore && Array.from({ length: 3 }).map((_, i) => <RecordCardSkeleton key={`more-${i}`} />)}
+      {isLoadingMore && (
+        <div style={{ gridColumn: "span 3", display: "flex", justifyContent: "center", padding: "16px 0" }}>
+          <Loader />
+        </div>
+      )}
       {!isLoading && !isLoadingMore && hasMore && (
         <div ref={bottomRef} style={{ height: "20px", gridColumn: "span 3" }} />
       )}
