@@ -56,8 +56,6 @@ export function RecordList({
         step="add-button"
         currentStep={guide.currentStep}
         onNext={guide.next}
-        onPrev={guide.prev}
-        onSkip={guide.skip}
       >
         <AddRecordCard onClick={() => onAddRecord(filterType === "전체" ? null : (filterType as RecordType))} />
       </FeatureHighlight>

@@ -12,7 +12,7 @@ import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
 import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
 import { useSwipeMode } from "../hooks/useSwipeMode";
-import { useFeatureGuide } from "../hooks/useFeatureGuide";
+import { useFeatureGuide, FORM_STEPS } from "../hooks/useFeatureGuide";
 import { FeatureHighlight } from "../components/onboarding/FeatureHighlight";
 
 export function MainPage() {
@@ -176,8 +176,6 @@ export function MainPage() {
                   step="swipe-hint"
                   currentStep={guide.currentStep}
                   onNext={guide.next}
-                  onPrev={guide.prev}
-                  onSkip={guide.skip}
                 >
                   <span>← 스와이프하여 보낸/받은 마음을 확인해보세요 →</span>
                 </FeatureHighlight>
@@ -201,6 +199,11 @@ export function MainPage() {
       />
 
       <RandomAmountPicker />
+
+      {/* 가이드 활성화 시 하위 UI 터치 차단 (폼 스텝에서는 BottomSheet 조작 허용) */}
+      {guide.currentStep !== null && !FORM_STEPS.has(guide.currentStep) && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 8999 }} />
+      )}
     </div>
   );
 }

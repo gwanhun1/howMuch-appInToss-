@@ -25,6 +25,7 @@ interface Props {
 }
 
 export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput, onHome, guide }: Props) {
+  const isGuideActive = guide.currentStep !== null;
   const updateRecord = useRecordStore((s) => s.updateRecord);
   const removeRecord = useRecordStore((s) => s.removeRecord);
   const setSelectedRecordId = useRecordStore((s) => s.setSelectedRecordId);
@@ -119,7 +120,7 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
 
   return (
     <>
-      <BottomSheet open={open} onClose={handleClose} maxHeight={"90vh"}
+      <BottomSheet open={open} onClose={isGuideActive ? () => {} : handleClose} maxHeight={"90vh"}
         header={
           <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Text typography="t4" fontWeight="bold">
@@ -148,11 +149,9 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
               step="form-avatar"
               currentStep={guide.currentStep}
               onNext={guide.next}
-              onPrev={guide.prev}
-              onSkip={guide.skip}
             >
               <FormAvatar iconName={currentRecord.profileIcon} type={currentRecord.type}
-                onClick={() => setIsProfilePickerOpen(true)} />
+                onClick={() => { if (!isGuideActive) setIsProfilePickerOpen(true); }} />
             </FeatureHighlight>
             <Spacing size={2} />
             <List>
@@ -160,8 +159,6 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
                 step="form-name"
                 currentStep={guide.currentStep}
                 onNext={guide.next}
-                onPrev={guide.prev}
-                onSkip={guide.skip}
               >
                 <TextField variant="line" label="이름" labelOption="sustain"
                   value={currentRecord.name}
@@ -177,8 +174,6 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
                 step="form-category"
                 currentStep={guide.currentStep}
                 onNext={guide.next}
-                onPrev={guide.prev}
-                onSkip={guide.skip}
               >
                 <FormTypeSelector value={currentRecord.type}
                   onChange={(type) => {
@@ -196,8 +191,6 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
                 step="form-amount"
                 currentStep={guide.currentStep}
                 onNext={guide.next}
-                onPrev={guide.prev}
-                onSkip={guide.skip}
               >
                 <div className="add-card-pulse">
                   <ListRow
@@ -207,7 +200,7 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
                         ? <Text color={adaptive.grey600}>{currentRecord.amount.toLocaleString()}원</Text>
                         : <Text color={adaptive.grey500}>입력하기</Text>
                     }
-                    onClick={onOpenAmountInput} arrowType="right"
+                    onClick={isGuideActive ? undefined : onOpenAmountInput} arrowType="right"
                   />
                 </div>
               </FeatureHighlight>

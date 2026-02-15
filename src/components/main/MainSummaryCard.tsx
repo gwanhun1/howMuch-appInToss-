@@ -30,8 +30,6 @@ export function MainSummaryCard({ totalAmount, isLoading, recordsCount, filterTy
         step="mode-toggle"
         currentStep={guide.currentStep}
         onNext={guide.next}
-        onPrev={guide.prev}
-        onSkip={guide.skip}
       >
         <ModeToggle currentMode={currentMode} onModeChange={setCurrentMode} />
       </FeatureHighlight>
@@ -41,8 +39,6 @@ export function MainSummaryCard({ totalAmount, isLoading, recordsCount, filterTy
           step="category-filter"
           currentStep={guide.currentStep}
           onNext={guide.next}
-          onPrev={guide.prev}
-          onSkip={guide.skip}
         >
           <CategoryFilterBadge filterType={filterType} onFilterChange={onFilterChange} />
         </FeatureHighlight>
