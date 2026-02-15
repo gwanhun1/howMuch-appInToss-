@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Asset, BottomSheet, Button, Text, Spacing } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import { ProfileIconPreview } from "../profile/ProfileIconPreview";
-import { ProfileIconGrid } from "../profile/ProfileIconGrid";
+import { ProfileIconPreview } from "../../../../components/profile/ProfileIconPreview";
+import { ProfileIconGrid } from "../../../../components/profile/ProfileIconGrid";
 
 interface Props {
   open: boolean;

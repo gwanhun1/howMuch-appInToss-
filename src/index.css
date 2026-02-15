@@ -230,3 +230,19 @@ div[data-tds-highlight],
 div[class*="Highlight"] > div:first-child {
   z-index: 10001 !important;
 }
+
+/* 프로필 편집 배지 펄스 효과 */
+.avatar-edit-badge {
+  animation: edit-badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes edit-badge-pulse {
+  0%, 100% {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 2px 8px rgba(49, 130, 246, 0.35);
+    transform: scale(1.1);
+  }
+}

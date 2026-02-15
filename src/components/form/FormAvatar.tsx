@@ -1,5 +1,4 @@
 import { Asset } from "@toss/tds-mobile";
-import { adaptive } from "@toss/tds-colors";
 import type { RecordType } from "../../types/record";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
@@ -31,6 +30,7 @@ export function FormAvatar({ iconName, type, onClick }: FormAvatarProps) {
       >
         <Asset.Icon name={displayIcon as IconName} frameShape={Asset.frameShape.CleanW100} />
         <div
+          className="avatar-edit-badge"
           style={{
             position: "absolute",
             bottom: 0,
@@ -46,9 +46,8 @@ export function FormAvatar({ iconName, type, onClick }: FormAvatarProps) {
           }}
         >
           <Asset.Icon
-            name="icon-plus-mono"
+            name="icon-pencil-blue"
             frameShape={Asset.frameShape.CleanW16}
-            color={adaptive.grey500}
             style={{ width: 30, height: 30 }}
           />
         </div>

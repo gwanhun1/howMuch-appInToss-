@@ -6,7 +6,7 @@ import { adaptive } from "@toss/tds-colors";
 import { useRecordStore } from "../../stores/useRecordStore";
 import type { MoneyRecord } from "../../types/record";
 import { MODE_LABELS } from "../../constants/category";
-import { ProfileImageBottomSheet } from "./ProfileImageBottomSheet";
+import { ProfileImageBottomSheet } from "../../features/friend/components/form/ProfileImageBottomSheet";
 import { FormAvatar } from "./FormAvatar";
 import { FormTypeSelector } from "./FormTypeSelector";
 import { FormAdditionalInfo } from "./FormAdditionalInfo";
@@ -124,7 +124,7 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
         header={
           <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Text typography="t4" fontWeight="bold">
-              {isCreateMode ? "추가하기" : `${record?.name || "기록"} 정보 수정`}
+              {isCreateMode ? `${currentMode === "paid" ? "보낸 마음" : "받은 마음"} 추가하기` : `${record?.name || "기록"} 정보 수정`}
             </Text>
             <div
               onClick={() => {
@@ -233,7 +233,9 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
             display: "flex", gap: "4px", backgroundColor: "#ffffff",
             borderTop: `1px solid ${adaptive.grey100}`,
           }}>
-            <Button style={{ flex: 1 }} variant="weak" size="large" onClick={handleDelete}>삭제</Button>
+            {!isCreateMode && (
+              <Button style={{ flex: 1 }} variant="weak" size="large" onClick={handleDelete}>삭제</Button>
+            )}
             <Button style={{ flex: 1 }} variant="fill" size="medium" onClick={handleSave}
               loading={isSubmitting} disabled={isSubmitting}>저장</Button>
           </div>
