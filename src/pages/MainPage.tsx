@@ -12,7 +12,7 @@ import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
 import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
 import { useSwipeMode } from "../hooks/useSwipeMode";
-import { useFeatureGuide, FORM_STEPS } from "../hooks/useFeatureGuide";
+import { useFeatureGuide } from "../hooks/useFeatureGuide";
 import { FeatureHighlight } from "../components/onboarding/FeatureHighlight";
 
 export function MainPage() {
@@ -81,6 +81,12 @@ export function MainPage() {
 
   const guide = useFeatureGuide(isLoading, closeRecordForm);
 
+  // 가이드 활성화 시 스와이프 차단 (전환 대기 상태 포함)
+  const isGuiding = guide.currentStep !== null || guide.isWaitingForForm;
+  const guardedTouchStart = isGuiding ? undefined : handleTouchStart;
+  const guardedTouchMove = isGuiding ? undefined : handleTouchMove;
+  const guardedTouchEnd = isGuiding ? undefined : handleTouchEnd;
+
   // 메인 가이드 끝나면 자동으로 바텀시트 열어서 폼 가이드 시작
   useEffect(() => {
     if (guide.isWaitingForForm && !isRecordFormOpen) {
@@ -114,9 +120,9 @@ export function MainPage() {
       ) : (
         <>
           <div style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={guardedTouchStart}
+            onTouchMove={guardedTouchMove}
+            onTouchEnd={guardedTouchEnd}
           >
             <Spacing size={12} />
 
@@ -137,7 +143,7 @@ export function MainPage() {
                 transition: dragX === 0 ? "transform 0.25s ease-out" : "none",
                 opacity: 1 - Math.abs(dragX) * 0.002,
               }}>
-                <div style={{ minHeight: "70vh" }}>
+                <div style={{ minHeight: "65vh" }}>
                   <RecordList
                   records={filteredRecords}
                   totalCount={records.length}
@@ -168,16 +174,21 @@ export function MainPage() {
 
               <div style={{
                 textAlign: "center",
-                fontSize: '1rem',
-                color: adaptive.grey300,
+                fontSize: '0.95rem',
+                color: adaptive.grey400,
                 letterSpacing: "-0.2px",
+                padding: "12px 0",
               }}>
                 <FeatureHighlight
                   step="swipe-hint"
                   currentStep={guide.currentStep}
                   onNext={guide.next}
                 >
-                  <span>← 스와이프하여 보낸/받은 마음을 확인해보세요 →</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                    <span className="swipe-arrow-left">←</span>
+                    <span>스와이프하여 보낸/받은 마음을 확인해보세요</span>
+                    <span className="swipe-arrow-right">→</span>
+                  </div>
                 </FeatureHighlight>
               </div>
               </div>
@@ -200,8 +211,8 @@ export function MainPage() {
 
       <RandomAmountPicker />
 
-      {/* 가이드 활성화 시 하위 UI 터치 차단 (폼 스텝에서는 BottomSheet 조작 허용) */}
-      {guide.currentStep !== null && !FORM_STEPS.has(guide.currentStep) && (
+      {/* 가이드 활성화 시 하위 UI 터치 차단 — 모든 스텝에서 적용 */}
+      {(guide.currentStep !== null || guide.isWaitingForForm) && (
         <div style={{ position: "fixed", inset: 0, zIndex: 8999 }} />
       )}
     </div>

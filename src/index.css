@@ -246,3 +246,24 @@ div[class*="Highlight"] > div:first-child {
     transform: scale(1.1);
   }
 }
+
+/* 스와이프 힌트 화살표 애니메이션 */
+.swipe-arrow-left {
+  display: inline-block;
+  animation: swipe-nudge-left 1.5s ease-in-out infinite;
+}
+
+.swipe-arrow-right {
+  display: inline-block;
+  animation: swipe-nudge-right 1.5s ease-in-out infinite;
+}
+
+@keyframes swipe-nudge-left {
+  0%, 100% { transform: translateX(0); opacity: 0.4; }
+  50% { transform: translateX(-6px); opacity: 1; }
+}
+
+@keyframes swipe-nudge-right {
+  0%, 100% { transform: translateX(0); opacity: 0.4; }
+  50% { transform: translateX(6px); opacity: 1; }
+}

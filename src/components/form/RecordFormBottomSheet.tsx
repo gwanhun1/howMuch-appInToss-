@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Asset, BottomSheet, List, ListRow, Text, Button, Spacing, TextField, useToast,
 } from "@toss/tds-mobile";
@@ -26,6 +26,26 @@ interface Props {
 
 export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput, onHome, guide }: Props) {
   const isGuideActive = guide.currentStep !== null;
+
+  // 가이드 활성화 시 바텀시트 드래그를 캡처 단계에서 차단
+  const isGuideActiveRef = useRef(isGuideActive);
+  isGuideActiveRef.current = isGuideActive;
+  const isOpenRef = useRef(open);
+  isOpenRef.current = open;
+
+  useEffect(() => {
+    // touchmove만 차단하면 드래그는 막히고 탭(클릭)은 허용됨
+    const blockDrag = (e: TouchEvent) => {
+      if (!isGuideActiveRef.current || !isOpenRef.current) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    document.addEventListener("touchmove", blockDrag, { capture: true, passive: false });
+    return () => {
+      document.removeEventListener("touchmove", blockDrag, { capture: true });
+    };
+  }, []);
+
   const updateRecord = useRecordStore((s) => s.updateRecord);
   const removeRecord = useRecordStore((s) => s.removeRecord);
   const setSelectedRecordId = useRecordStore((s) => s.setSelectedRecordId);
@@ -122,12 +142,14 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
     <>
       <BottomSheet open={open} onClose={isGuideActive ? () => {} : handleClose} maxHeight={"90vh"}
         header={
-          <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Text typography="t4" fontWeight="bold">
               {isCreateMode ? `${currentMode === "paid" ? "보낸 마음" : "받은 마음"} 추가하기` : `${record?.name || "기록"} 정보 수정`}
             </Text>
             <div
               onClick={() => {
+                if (isGuideActive) return;
                 const newStatus = !currentRecord.isFavorite;
                 setEditingRecord({ ...currentRecord, isFavorite: newStatus });
                 if (!isCreateMode && record) updateRecord(record.id, { isFavorite: newStatus });
@@ -142,7 +164,11 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
       >
         <div style={{ display: "flex", flexDirection: "column", height: "65vh", maxHeight: "90vh" }}>
           <div
-            style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}
+            style={{
+              flex: 1,
+              overflowY: isGuideActive ? "hidden" : "auto",
+              WebkitOverflowScrolling: isGuideActive ? undefined : "touch",
+            }}
           >
             <Spacing size={10} />
             <FeatureHighlight
@@ -212,7 +238,7 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
               <ListRow
                 contents={<Text typography="t7" color={adaptive.grey600}>추가 정보 (선택)</Text>}
                 verticalPadding="small" arrowType={expanded ? "down" : "right"}
-                onClick={() => {
+                onClick={isGuideActive ? undefined : () => {
                   const nextExpanded = !expanded;
                   setExpanded(nextExpanded);
                   if (nextExpanded && !currentRecord.date) {
@@ -232,6 +258,7 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
             padding: "14px 10px",
             display: "flex", gap: "4px", backgroundColor: "#ffffff",
             borderTop: `1px solid ${adaptive.grey100}`,
+            ...(isGuideActive ? { pointerEvents: "none" as const, opacity: 0.4 } : {}),
           }}>
             {!isCreateMode && (
               <Button style={{ flex: 1 }} variant="weak" size="large" onClick={handleDelete}>삭제</Button>
