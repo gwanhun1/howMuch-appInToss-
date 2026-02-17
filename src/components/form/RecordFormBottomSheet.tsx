@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  Asset, BottomSheet, List, ListRow, Text, Button, Spacing, TextField, useToast,
+  Asset,
+  BottomSheet,
+  List,
+  ListRow,
+  Text,
+  Button,
+  Spacing,
+  TextField,
+  useToast,
 } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useRecordStore } from "../../stores/useRecordStore";
@@ -24,7 +32,14 @@ interface Props {
   guide: GuideProps;
 }
 
-export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput, onHome, guide }: Props) {
+export function RecordFormBottomSheet({
+  open,
+  record,
+  onClose,
+  onOpenAmountInput,
+  onHome,
+  guide,
+}: Props) {
   const isGuideActive = guide.currentStep !== null;
 
   // 가이드 활성화 시 바텀시트 드래그를 캡처 단계에서 차단
@@ -40,7 +55,10 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
       e.preventDefault();
       e.stopPropagation();
     };
-    document.addEventListener("touchmove", blockDrag, { capture: true, passive: false });
+    document.addEventListener("touchmove", blockDrag, {
+      capture: true,
+      passive: false,
+    });
     return () => {
       document.removeEventListener("touchmove", blockDrag, { capture: true });
     };
@@ -96,7 +114,10 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const isValid = currentRecord.name.trim() !== "" && currentRecord.type != null && currentRecord.amount > 0;
+    const isValid =
+      currentRecord.name.trim() !== "" &&
+      currentRecord.type != null &&
+      currentRecord.amount > 0;
     if (!isValid) {
       setShowValidationError(true);
       setIsSubmitting(false);
@@ -117,14 +138,19 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
       handleClose();
     } catch (error) {
       console.error("저장 실패:", error);
-      openToast(error instanceof Error ? error.message : "저장에 실패했습니다.");
+      openToast(
+        error instanceof Error ? error.message : "저장에 실패했습니다.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (isCreateMode) { handleClose(); return; }
+    if (isCreateMode) {
+      handleClose();
+      return;
+    }
     if (record) {
       try {
         await removeRecord(record.id);
@@ -133,36 +159,65 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
         handleClose();
       } catch (error) {
         console.error("삭제 실패:", error);
-        openToast(error instanceof Error ? error.message : "삭제에 실패했습니다.");
+        openToast(
+          error instanceof Error ? error.message : "삭제에 실패했습니다.",
+        );
       }
     }
   };
 
   return (
     <>
-      <BottomSheet open={open} onClose={isGuideActive ? () => {} : handleClose} maxHeight={"90vh"}
+      <BottomSheet
+        open={open}
+        onClose={isGuideActive ? () => {} : handleClose}
+        maxHeight={"90vh"}
         header={
           <div
-            style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            style={{
+              padding: "16px 20px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Text typography="t4" fontWeight="bold">
-              {isCreateMode ? `${currentMode === "paid" ? "보낸 마음" : "받은 마음"} 추가하기` : `${record?.name || "기록"} 정보 수정`}
+              {isCreateMode
+                ? `${currentMode === "paid" ? "보낸 마음" : "받은 마음"} 추가하기`
+                : `${record?.name || "기록"} 정보 수정`}
             </Text>
             <div
               onClick={() => {
                 if (isGuideActive) return;
                 const newStatus = !currentRecord.isFavorite;
                 setEditingRecord({ ...currentRecord, isFavorite: newStatus });
-                if (!isCreateMode && record) updateRecord(record.id, { isFavorite: newStatus });
+                if (!isCreateMode && record)
+                  updateRecord(record.id, { isFavorite: newStatus });
               }}
-              style={{ cursor: "pointer", padding: "4px", display: "flex", alignItems: "center" }}
+              style={{
+                cursor: "pointer",
+                padding: "4px",
+                display: "flex",
+                alignItems: "center",
+              }}
             >
-              <Asset.Icon name="icon-star-blue" size={24}
-                color={currentRecord.isFavorite ? undefined : adaptive.grey300} />
+              <Asset.Icon
+                name="icon-star-blue"
+                size={24}
+                color={currentRecord.isFavorite ? undefined : adaptive.grey300}
+              />
             </div>
           </div>
         }
       >
-        <div style={{ display: "flex", flexDirection: "column", height: "65vh", maxHeight: "90vh" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height: "65vh",
+            maxHeight: "90vh",
+          }}
+        >
           <div
             style={{
               flex: 1,
@@ -176,8 +231,13 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
               currentStep={guide.currentStep}
               onNext={guide.next}
             >
-              <FormAvatar iconName={currentRecord.profileIcon} type={currentRecord.type}
-                onClick={() => { if (!isGuideActive) setIsProfilePickerOpen(true); }} />
+              <FormAvatar
+                iconName={currentRecord.profileIcon}
+                type={currentRecord.type}
+                onClick={() => {
+                  if (!isGuideActive) setIsProfilePickerOpen(true);
+                }}
+              />
             </FeatureHighlight>
             <Spacing size={2} />
             <List>
@@ -186,14 +246,19 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
                 currentStep={guide.currentStep}
                 onNext={guide.next}
               >
-                <TextField variant="line" label="이름" labelOption="sustain"
+                <TextField
+                  variant="line"
+                  label="이름"
+                  labelOption="sustain"
                   value={currentRecord.name}
                   onChange={(e) => {
                     const value = e.target.value.slice(0, 20);
                     setEditingRecord({ ...currentRecord, name: value });
                   }}
-                  placeholder="누구에게?" hasError={isNameInvalid}
-                  help={isNameInvalid ? "이름을 입력해주세요" : undefined} maxLength={20}
+                  placeholder="누구에게?"
+                  hasError={isNameInvalid}
+                  help={isNameInvalid ? "이름을 입력해주세요" : undefined}
+                  maxLength={20}
                 />
               </FeatureHighlight>
               <FeatureHighlight
@@ -201,7 +266,8 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
                 currentStep={guide.currentStep}
                 onNext={guide.next}
               >
-                <FormTypeSelector value={currentRecord.type}
+                <FormTypeSelector
+                  value={currentRecord.type}
                   onChange={(type) => {
                     if (showValidationError) setShowValidationError(false);
                     setEditingRecord({ ...currentRecord, type });
@@ -210,7 +276,9 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
               </FeatureHighlight>
               {isTypeInvalid && (
                 <div style={{ padding: "6px 20px 0" }}>
-                  <Text typography="t7" color={adaptive.red500}>어떤 상황인지 선택해주세요</Text>
+                  <Text typography="t7" color={adaptive.red500}>
+                    어떤 상황인지 선택해주세요
+                  </Text>
                 </div>
               )}
               <FeatureHighlight
@@ -222,58 +290,116 @@ export function RecordFormBottomSheet({ open, record, onClose, onOpenAmountInput
                   <ListRow
                     contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
                     right={
-                      currentRecord.amount > 0
-                        ? <Text color={adaptive.grey600}>{currentRecord.amount.toLocaleString()}원</Text>
-                        : <Text color={adaptive.grey500}>입력하기</Text>
+                      currentRecord.amount > 0 ? (
+                        <Text color={adaptive.grey600}>
+                          {currentRecord.amount.toLocaleString()}원
+                        </Text>
+                      ) : (
+                        <Text color={adaptive.grey500}>입력하기</Text>
+                      )
                     }
-                    onClick={isGuideActive ? undefined : onOpenAmountInput} arrowType="right"
+                    onClick={isGuideActive ? undefined : onOpenAmountInput}
+                    arrowType="right"
                   />
                 </div>
               </FeatureHighlight>
               {isAmountInvalid && (
                 <div style={{ padding: "6px 20px 0" }}>
-                  <Text typography="t7" color={adaptive.red500}>금액을 입력해주세요</Text>
+                  <Text typography="t7" color={adaptive.red500}>
+                    금액을 입력해주세요
+                  </Text>
                 </div>
               )}
               <ListRow
-                contents={<Text typography="t7" color={adaptive.grey600}>추가 정보 (선택)</Text>}
-                verticalPadding="small" arrowType={expanded ? "down" : "right"}
-                onClick={isGuideActive ? undefined : () => {
-                  const nextExpanded = !expanded;
-                  setExpanded(nextExpanded);
-                  if (nextExpanded && !currentRecord.date) {
-                    setEditingRecord({ ...currentRecord, date: new Date().toISOString().split("T")[0] });
-                  }
-                }}
+                contents={
+                  <Text typography="t7" color={adaptive.grey600}>
+                    추가 정보 (선택)
+                  </Text>
+                }
+                verticalPadding="small"
+                arrowType={expanded ? "down" : "right"}
+                onClick={
+                  isGuideActive
+                    ? undefined
+                    : () => {
+                        const nextExpanded = !expanded;
+                        setExpanded(nextExpanded);
+                        if (nextExpanded && !currentRecord.date) {
+                          setEditingRecord({
+                            ...currentRecord,
+                            date: new Date().toISOString().split("T")[0],
+                          });
+                        }
+                      }
+                }
               />
-              <div onTouchMove={expanded ? (e) => e.stopPropagation() : undefined}>
-                <FormAdditionalInfo expanded={expanded} relation={currentRecord.relation} date={currentRecord.date}
-                  onRelationChange={(rel) => setEditingRecord({ ...currentRecord, relation: rel })}
-                  onDateChange={(val) => setEditingRecord({ ...currentRecord, date: val })}
+              <div
+                onTouchMove={expanded ? (e) => e.stopPropagation() : undefined}
+              >
+                <FormAdditionalInfo
+                  expanded={expanded}
+                  relation={currentRecord.relation}
+                  date={currentRecord.date}
+                  onRelationChange={(rel) =>
+                    setEditingRecord({ ...currentRecord, relation: rel })
+                  }
+                  onDateChange={(val) =>
+                    setEditingRecord({ ...currentRecord, date: val })
+                  }
                 />
               </div>
             </List>
           </div>
-          <div style={{
-            padding: "14px 10px",
-            display: "flex", gap: "4px", backgroundColor: "#ffffff",
-            borderTop: `1px solid ${adaptive.grey100}`,
-            ...(isGuideActive ? { pointerEvents: "none" as const, opacity: 0.4 } : {}),
-          }}>
+          <div
+            style={{
+              padding: "14px 10px",
+              display: "flex",
+              gap: "4px",
+              backgroundColor: "#ffffff",
+              borderTop: `1px solid ${adaptive.grey100}`,
+              ...(isGuideActive
+                ? { pointerEvents: "none" as const, opacity: 0.4 }
+                : {}),
+            }}
+          >
             {!isCreateMode && (
-              <Button style={{ flex: 1 }} variant="weak" size="large" onClick={handleDelete}>삭제</Button>
+              <Button
+                style={{ flex: 1 }}
+                variant="weak"
+                size="large"
+                onClick={handleDelete}
+              >
+                삭제
+              </Button>
             )}
-            <Button style={{ flex: 1 }} variant="fill" size="medium" onClick={handleSave}
-              loading={isSubmitting} disabled={isSubmitting}>저장</Button>
+            <Button
+              style={{ flex: 1 }}
+              variant="fill"
+              size="medium"
+              onClick={handleSave}
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              저장
+            </Button>
           </div>
         </div>
       </BottomSheet>
-      <ProfileImageBottomSheet open={isProfilePickerOpen}
+      <ProfileImageBottomSheet
+        open={isProfilePickerOpen}
         onClose={() => setIsProfilePickerOpen(false)}
-        onHome={() => { setIsProfilePickerOpen(false); onHome(); }}
-        currentIcon={(currentRecord?.profileIcon?.startsWith("icon-") ? currentRecord.profileIcon : "icon-face-cap") as IconName}
+        onHome={() => {
+          setIsProfilePickerOpen(false);
+          onHome();
+        }}
+        currentIcon={
+          (currentRecord?.profileIcon?.startsWith("icon-")
+            ? currentRecord.profileIcon
+            : "icon-face-cap") as IconName
+        }
         onSelect={(icon: string) => {
-          if (currentRecord) setEditingRecord({ ...currentRecord, profileIcon: icon });
+          if (currentRecord)
+            setEditingRecord({ ...currentRecord, profileIcon: icon });
           setIsProfilePickerOpen(false);
         }}
       />

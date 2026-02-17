@@ -64,7 +64,7 @@ export default StyleSheet.create({
     'width': [{ 'unit': 'vw', 'value': 100 }],
     'height': [{ 'unit': 'vh', 'value': 100 }],
     'pointerEvents': 'none',
-    'zIndex': '9999',
+    'zIndex': '250',
     'overflow': 'hidden',
     'perspective': '1000px',
     // 3D 효과를 위한 원근감 추가
@@ -91,7 +91,7 @@ export default StyleSheet.create({
     'position': 'absolute',
     'inset': '0',
     'borderRadius': '24px',
-    'boxShadow': [{ 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 15 }, { 'unit': 'px', 'value': 2 }, { 'unit': 'string', 'value': 'rgba(49, 130, 246, 0.25)' }],
+    'boxShadow': [{ 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 0 }, { 'unit': 'px', 'value': 15 }, { 'unit': 'px', 'value': 2 }, { 'unit': 'string', 'value': 'var(--aura-color, rgba(49, 130, 246, 0.25))' }],
     'animation': 'upcoming-glow 3s ease-in-out infinite',
     'zIndex': '-1',
     'pointerEvents': 'none'
@@ -148,5 +148,87 @@ export default StyleSheet.create({
   'tds-toast div': {
     'color': '#3182f6 !important',
     'fontWeight': '500 !important'
+  },
+  // Highlight 가이드가 BottomSheet 위에 표시되도록 z-index 강제
+  'highlight-above-bottomsheet': {
+    'zIndex': '11000 !important',
+    'pointerEvents': 'auto !important'
+  },
+  'highlight-above-bottomsheet ~ div': {
+    'zIndex': '11000 !important',
+    'pointerEvents': 'auto !important'
+  },
+  'highlight-above-bottomsheet ~ *': {
+    'zIndex': '11000 !important',
+    'pointerEvents': 'auto !important'
+  },
+  // Highlight 오버레이(어두운 배경)가 BottomSheet 위에 오도록
+  'div[data-tds-highlight]': {
+    'zIndex': '11000 !important',
+    'pointerEvents': 'auto !important'
+  },
+  'div[class*="Highlight"] > div:first-child': {
+    'zIndex': '11000 !important',
+    'pointerEvents': 'auto !important'
+  },
+  // Highlight 하이라이트된 요소는 클릭 가능하도록
+  'div[data-tds-highlight] > div:last-child': {
+    'pointerEvents': 'auto !important',
+    'zIndex': '11010 !important'
+  },
+  // 프로필 편집 배지 펄스 효과
+  'avatar-edit-badge': {
+    'animation': 'edit-badge-pulse 2s ease-in-out infinite'
+  },
+  // 스와이프 힌트 화살표 애니메이션
+  'swipe-arrow-left': {
+    'display': 'inline-block',
+    'animation': 'swipe-nudge-left 1.5s ease-in-out infinite'
+  },
+  'swipe-arrow-right': {
+    'display': 'inline-block',
+    'animation': 'swipe-nudge-right 1.5s ease-in-out infinite'
+  },
+  // BottomSheet와 관련된 모든 요소를 Highlight보다 아래로 강제
+  'body > div[class*="BottomSheet"]': {
+    'zIndex': '205 !important'
+  },
+  'body > div[data-tds-bottom-sheet]': {
+    'zIndex': '205 !important'
+  },
+  '#root ~ div[class*="BottomSheet"]': {
+    'zIndex': '205 !important'
+  },
+  '[data-overlay-container] > div[class*="BottomSheet"]': {
+    'zIndex': '205 !important'
+  },
+  // BottomSheet의 backdrop(어두운 배경)을 더 아래로
+  'body > div[role="presentation"]': {
+    'zIndex': '204 !important'
+  },
+  'body > div[class*="Backdrop"]': {
+    'zIndex': '204 !important'
+  },
+  'body > div[style*="position: fixed"]': {
+    'zIndex': '204 !important'
+  },
+  '#root ~ div[role="presentation"]': {
+    'zIndex': '204 !important'
+  },
+  '[data-overlay-container] > div[role="presentation"]': {
+    'zIndex': '204 !important'
+  },
+  // BottomSheet 내부의 모든 요소는 기본적으로 낮은 z-index
+  'div[class*="BottomSheet"] > *:not([data-tds-highlight])': {
+    'zIndex': 'auto !important'
+  },
+  // Highlight 메시지 영역도 클릭 가능하도록
+  'div[data-tds-highlight] button': {
+    'pointerEvents': 'auto !important',
+    'zIndex': '11020 !important'
+  },
+  'div[data-tds-highlight] [role="button"]': {
+    'pointerEvents': 'auto !important',
+    'zIndex': '11020 !important'
   }
 });

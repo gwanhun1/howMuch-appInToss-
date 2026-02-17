@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
 export type GuideStep =
+  | "example-cards"
   | "add-button"
   | "mode-toggle"
+  | "data-backup"
   | "category-filter"
   | "swipe-hint"
   | "form-avatar"
@@ -12,8 +14,10 @@ export type GuideStep =
   | null;
 
 export const STEP_ORDER: Exclude<GuideStep, null>[] = [
+  "example-cards",
   "add-button",
   "mode-toggle",
+  "data-backup",
   "category-filter",
   "swipe-hint",
   "form-avatar",
@@ -35,7 +39,10 @@ function markGuideDone(): void {
 }
 
 export const FORM_STEPS: Set<Exclude<GuideStep, null>> = new Set([
-  "form-avatar", "form-name", "form-category", "form-amount",
+  "form-avatar",
+  "form-name",
+  "form-category",
+  "form-amount",
 ]);
 
 export interface GuideProps {
@@ -44,22 +51,30 @@ export interface GuideProps {
   /** swipe-hint 끝난 뒤 바텀시트를 열고 폼 가이드로 전환 */
   isWaitingForForm: boolean;
   startFormGuide: () => void;
+  /** 가이드 준비 중 (데이터 로딩 전) */
+  isPreparingGuide: boolean;
 }
 
-export function useFeatureGuide(isLoading: boolean, onGuideEnd?: () => void): GuideProps {
+export function useFeatureGuide(onGuideEnd?: () => void): GuideProps {
   const [currentStep, setCurrentStep] = useState<GuideStep>(null);
   const [isWaitingForForm, setIsWaitingForForm] = useState(false);
+  const [isPreparingGuide, setIsPreparingGuide] = useState(true);
 
   useEffect(() => {
-    if (isLoading) return;
     try {
-      if (localStorage.getItem(STORAGE_KEY) === "true") return;
+      if (localStorage.getItem(STORAGE_KEY) === "true") {
+        setIsPreparingGuide(false);
+        return;
+      }
     } catch {
       // noop
     }
-    const timer = setTimeout(() => setCurrentStep("add-button"), 800);
+    const timer = setTimeout(() => {
+      setCurrentStep("example-cards");
+      setIsPreparingGuide(false);
+    }, 50);
     return () => clearTimeout(timer);
-  }, [isLoading]);
+  }, []);
 
   const next = useCallback(() => {
     setCurrentStep((prev) => {
@@ -84,5 +99,11 @@ export function useFeatureGuide(isLoading: boolean, onGuideEnd?: () => void): Gu
     setTimeout(() => setCurrentStep("form-avatar"), 400);
   }, [isWaitingForForm]);
 
-  return { currentStep, next, isWaitingForForm, startFormGuide };
+  return {
+    currentStep,
+    next,
+    isWaitingForForm,
+    startFormGuide,
+    isPreparingGuide,
+  };
 }

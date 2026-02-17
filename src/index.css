@@ -97,7 +97,7 @@ body {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 250;
   overflow: hidden;
   perspective: 1000px; /* 3D 효과를 위한 원근감 추가 */
 }
@@ -222,13 +222,21 @@ div[role="alert"] div,
 .highlight-above-bottomsheet,
 .highlight-above-bottomsheet ~ div,
 .highlight-above-bottomsheet ~ * {
-  z-index: 10001 !important;
+  z-index: 11000 !important;
+  pointer-events: auto !important;
 }
 
 /* Highlight 오버레이(어두운 배경)가 BottomSheet 위에 오도록 */
 div[data-tds-highlight],
 div[class*="Highlight"] > div:first-child {
-  z-index: 10001 !important;
+  z-index: 11000 !important;
+  pointer-events: auto !important;
+}
+
+/* Highlight 하이라이트된 요소는 클릭 가능하도록 */
+div[data-tds-highlight] > div:last-child {
+  pointer-events: auto !important;
+  z-index: 11010 !important;
 }
 
 /* 프로필 편집 배지 펄스 효과 */
@@ -237,8 +245,9 @@ div[class*="Highlight"] > div:first-child {
 }
 
 @keyframes edit-badge-pulse {
-  0%, 100% {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  0%,
+  100% {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transform: scale(1);
   }
   50% {
@@ -259,11 +268,54 @@ div[class*="Highlight"] > div:first-child {
 }
 
 @keyframes swipe-nudge-left {
-  0%, 100% { transform: translateX(0); opacity: 0.4; }
-  50% { transform: translateX(-6px); opacity: 1; }
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateX(-6px);
+    opacity: 1;
+  }
 }
 
 @keyframes swipe-nudge-right {
-  0%, 100% { transform: translateX(0); opacity: 0.4; }
-  50% { transform: translateX(6px); opacity: 1; }
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateX(6px);
+    opacity: 1;
+  }
+}
+
+/* BottomSheet와 관련된 모든 요소를 Highlight보다 아래로 강제 */
+body > div[class*="BottomSheet"],
+body > div[data-tds-bottom-sheet],
+#root ~ div[class*="BottomSheet"],
+[data-overlay-container] > div[class*="BottomSheet"] {
+  z-index: 205 !important;
+}
+
+/* BottomSheet의 backdrop(어두운 배경)을 더 아래로 */
+body > div[role="presentation"],
+body > div[class*="Backdrop"],
+body > div[style*="position: fixed"],
+#root ~ div[role="presentation"],
+[data-overlay-container] > div[role="presentation"] {
+  z-index: 204 !important;
+}
+
+/* BottomSheet 내부의 모든 요소는 기본적으로 낮은 z-index */
+div[class*="BottomSheet"] > *:not([data-tds-highlight]) {
+  z-index: auto !important;
+}
+
+/* Highlight 메시지 영역도 클릭 가능하도록 */
+div[data-tds-highlight] button,
+div[data-tds-highlight] [role="button"] {
+  pointer-events: auto !important;
+  z-index: 11020 !important;
 }

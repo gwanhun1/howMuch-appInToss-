@@ -74,27 +74,28 @@ export function MainPage() {
   const modeRecordsCount = records.filter((r) => r.mode === currentMode).length;
   const selectedRecord = records.find((r) => r.id === selectedRecordId) || null;
 
-  const { dragX, handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipeMode({
-    currentMode,
-    onModeChange: setCurrentMode,
-  });
+  const { dragX, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    useSwipeMode({
+      currentMode,
+      onModeChange: setCurrentMode,
+    });
 
-  const guide = useFeatureGuide(isLoading, closeRecordForm);
+  const guide = useFeatureGuide(closeRecordForm);
 
-  // 가이드 활성화 시 스와이프 차단 (전환 대기 상태 포함)
-  const isGuiding = guide.currentStep !== null || guide.isWaitingForForm;
+  const isGuiding =
+    guide.currentStep !== null ||
+    guide.isWaitingForForm ||
+    guide.isPreparingGuide;
   const guardedTouchStart = isGuiding ? undefined : handleTouchStart;
   const guardedTouchMove = isGuiding ? undefined : handleTouchMove;
   const guardedTouchEnd = isGuiding ? undefined : handleTouchEnd;
 
-  // 메인 가이드 끝나면 자동으로 바텀시트 열어서 폼 가이드 시작
   useEffect(() => {
     if (guide.isWaitingForForm && !isRecordFormOpen) {
       startAddingRecord();
     }
   }, [guide.isWaitingForForm, isRecordFormOpen, startAddingRecord]);
 
-  // 바텀시트가 열리면 폼 가이드 시작
   useEffect(() => {
     if (guide.isWaitingForForm && isRecordFormOpen) {
       guide.startFormGuide();
@@ -102,24 +103,34 @@ export function MainPage() {
   }, [guide, isRecordFormOpen]);
 
   if (error) {
-    return <GlobalErrorView description={error} onRetry={() => initializeStore()} />;
+    return (
+      <GlobalErrorView description={error} onRetry={() => initializeStore()} />
+    );
   }
 
   return (
-    <div style={{
-      backgroundColor: adaptive.grey50, minHeight: "100vh", position: "relative",
-      overflowX: "hidden",
-    }}>
+    <div
+      style={{
+        backgroundColor: adaptive.grey50,
+        minHeight: "100vh",
+        position: "relative",
+        overflowX: "hidden",
+      }}
+    >
       {isCelebrating && <CoinRain onComplete={() => setCelebrating(false)} />}
       {currentPage === "amountInput" && editingRecord ? (
         <AmountInputPage
           value={editingRecord.amount}
           onBack={closeAmountInput}
-          onSave={(val) => { setEditingRecord({ ...editingRecord, amount: val }); closeAmountInput(); }}
+          onSave={(val) => {
+            setEditingRecord({ ...editingRecord, amount: val });
+            closeAmountInput();
+          }}
         />
       ) : (
         <>
-          <div style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          <div
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             onTouchStart={guardedTouchStart}
             onTouchMove={guardedTouchMove}
             onTouchEnd={guardedTouchEnd}
@@ -138,59 +149,80 @@ export function MainPage() {
 
               <Spacing size={16} />
 
-              <div style={{
-                transform: `translateX(${dragX}px)`,
-                transition: dragX === 0 ? "transform 0.25s ease-out" : "none",
-                opacity: 1 - Math.abs(dragX) * 0.002,
-              }}>
+              <div
+                style={{
+                  transform: `translateX(${dragX}px)`,
+                  transition: dragX === 0 ? "transform 0.25s ease-out" : "none",
+                  opacity: 1 - Math.abs(dragX) * 0.002,
+                }}
+              >
                 <div style={{ minHeight: "65vh" }}>
                   <RecordList
-                  records={filteredRecords}
-                  totalCount={records.length}
-                  isLoading={isLoading}
-                  isLoadingMore={isLoadingMore}
-                  hasMore={hasMore}
-                  onLoadMore={fetchMoreRecords}
-                  lastAdMilestoneShown={lastAdMilestoneShown}
-                  onAddRecord={startAddingRecord}
-                  onRecordClick={openRecordForm}
-                  filterType={filterType}
-                  guide={guide}
-                  onToggleFavorite={async (id) => {
-                    const record = records.find((r) => r.id === id);
-                    if (record) {
-                      const willBeFavorite = !record.isFavorite;
-                      try {
-                        await updateRecord(id, { isFavorite: willBeFavorite });
-                        openToast(willBeFavorite ? "⭐ 중요 표시되었습니다" : "중요 표시가 해제되었습니다");
-                      } catch (error) {
-                        console.error("즐겨찾기 토글 실패:", error);
-                        openToast(error instanceof Error ? error.message : "중요 표시 변경에 실패했습니다.");
+                    records={filteredRecords}
+                    totalCount={records.length}
+                    isLoading={isLoading}
+                    isLoadingMore={isLoadingMore}
+                    hasMore={hasMore}
+                    onLoadMore={fetchMoreRecords}
+                    lastAdMilestoneShown={lastAdMilestoneShown}
+                    onAddRecord={startAddingRecord}
+                    onRecordClick={openRecordForm}
+                    filterType={filterType}
+                    guide={guide}
+                    onToggleFavorite={async (id) => {
+                      const record = records.find((r) => r.id === id);
+                      if (record) {
+                        const willBeFavorite = !record.isFavorite;
+                        try {
+                          await updateRecord(id, {
+                            isFavorite: willBeFavorite,
+                          });
+                          openToast(
+                            willBeFavorite
+                              ? "⭐ 중요 표시되었습니다"
+                              : "중요 표시가 해제되었습니다",
+                          );
+                        } catch (error) {
+                          console.error("즐겨찾기 토글 실패:", error);
+                          openToast(
+                            error instanceof Error
+                              ? error.message
+                              : "중요 표시 변경에 실패했습니다.",
+                          );
+                        }
                       }
-                    }
-                  }}
-                />
-              </div>
+                    }}
+                  />
+                </div>
 
-              <div style={{
-                textAlign: "center",
-                fontSize: '0.95rem',
-                color: adaptive.grey400,
-                letterSpacing: "-0.2px",
-                padding: "12px 0",
-              }}>
-                <FeatureHighlight
-                  step="swipe-hint"
-                  currentStep={guide.currentStep}
-                  onNext={guide.next}
+                <div
+                  style={{
+                    textAlign: "center",
+                    fontSize: "0.95rem",
+                    color: adaptive.grey400,
+                    letterSpacing: "-0.2px",
+                    padding: "12px 0",
+                  }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                    <span className="swipe-arrow-left">←</span>
-                    <span>스와이프하여 보낸/받은 마음을 확인해보세요</span>
-                    <span className="swipe-arrow-right">→</span>
-                  </div>
-                </FeatureHighlight>
-              </div>
+                  <FeatureHighlight
+                    step="swipe-hint"
+                    currentStep={guide.currentStep}
+                    onNext={guide.next}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <span className="swipe-arrow-left">←</span>
+                      <span>스와이프하여 보낸/받은 마음을 확인해보세요</span>
+                      <span className="swipe-arrow-right">→</span>
+                    </div>
+                  </FeatureHighlight>
+                </div>
               </div>
             </div>
 
@@ -211,9 +243,33 @@ export function MainPage() {
 
       <RandomAmountPicker />
 
-      {/* 가이드 활성화 시 하위 UI 터치 차단 — 모든 스텝에서 적용 */}
-      {(guide.currentStep !== null || guide.isWaitingForForm) && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 8999 }} />
+      {(guide.currentStep !== null ||
+        guide.isWaitingForForm ||
+        guide.isPreparingGuide) && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            pointerEvents: "auto",
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        />
       )}
     </div>
   );

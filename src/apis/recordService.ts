@@ -4,7 +4,9 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  updateDoc,
   query,
+  where,
   orderBy,
   limit,
   startAfter,
@@ -20,26 +22,31 @@ const PAGE_SIZE = 20;
 const REQUEST_TIMEOUT = 15000;
 
 const ERROR_MESSAGES: Record<string, string> = {
-  "unavailable": "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
+  unavailable: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
   "network-request-failed": "네트워크 연결에 실패했습니다.",
   "permission-denied": "접근 권한이 없습니다.",
-  "unauthenticated": "로그인이 필요합니다.",
+  unauthenticated: "로그인이 필요합니다.",
   "not-found": "데이터를 찾을 수 없습니다.",
   "already-exists": "이미 존재하는 데이터입니다.",
   "resource-exhausted": "요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.",
-  "cancelled": "요청이 취소되었습니다.",
-  "internal": "서버 오류가 발생했습니다.",
+  cancelled: "요청이 취소되었습니다.",
+  internal: "서버 오류가 발생했습니다.",
   "invalid-argument": "잘못된 요청입니다.",
 };
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
-    if (error.message.includes("인터넷") || error.message.includes("시간이 초과")) {
+    if (
+      error.message.includes("인터넷") ||
+      error.message.includes("시간이 초과")
+    ) {
       return error.message;
     }
     const firebaseError = error as { code?: string };
     if (firebaseError.code) {
-      const code = firebaseError.code.replace("auth/", "").replace("firestore/", "");
+      const code = firebaseError.code
+        .replace("auth/", "")
+        .replace("firestore/", "");
       return ERROR_MESSAGES[code] || "오류가 발생했습니다. 다시 시도해주세요.";
     }
     return error.message;
@@ -47,11 +54,22 @@ function getErrorMessage(error: unknown): string {
   return "알 수 없는 오류가 발생했습니다.";
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number = REQUEST_TIMEOUT): Promise<T> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number = REQUEST_TIMEOUT,
+): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error("요청 시간이 초과되었습니다. 네트워크 상태를 확인해주세요.")), ms)
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              "요청 시간이 초과되었습니다. 네트워크 상태를 확인해주세요.",
+            ),
+          ),
+        ms,
+      ),
     ),
   ]);
 }
@@ -231,7 +249,12 @@ export const recordService = {
     }
   },
 
-  async removeRecord(uid: string, recordId: string, totalPaid: number, totalReceived: number) {
+  async removeRecord(
+    uid: string,
+    recordId: string,
+    totalPaid: number,
+    totalReceived: number,
+  ) {
     try {
       checkOnline();
       const recordRef = doc(db, "users", uid, "records", recordId);
@@ -272,6 +295,44 @@ export const recordService = {
       });
 
       await withTimeout(batch.commit());
+    } catch (error) {
+      throwUserFriendlyError(error);
+    }
+  },
+
+  /**
+   * 토스 유저 키로 기존 유저 문서를 찾습니다.
+   */
+  async findUserByTossId(
+    tossId: string,
+  ): Promise<{ uid: string; data: UserMetadata } | null> {
+    try {
+      checkOnline();
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("tossId", "==", tossId), limit(1));
+      const snapshot = await withTimeout(getDocs(q));
+
+      if (snapshot.empty) return null;
+
+      const userDoc = snapshot.docs[0];
+      return {
+        uid: userDoc.id,
+        data: userDoc.data() as UserMetadata,
+      };
+    } catch (error) {
+      console.error("findUserByTossId failed:", error);
+      return null;
+    }
+  },
+
+  /**
+   * 유저 문서의 tossId 필드를 업데이트합니다.
+   */
+  async updateUserTossId(uid: string, tossId: string) {
+    try {
+      checkOnline();
+      const userDocRef = doc(db, "users", uid);
+      await withTimeout(updateDoc(userDocRef, { tossId }));
     } catch (error) {
       throwUserFriendlyError(error);
     }

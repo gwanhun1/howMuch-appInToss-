@@ -1,3 +1,7 @@
+import {
+  tossAuthService,
+  type TossUserMeResponse,
+} from "../apis/tossAuthService";
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DocumentSnapshot } from "firebase/firestore";
@@ -48,7 +52,7 @@ interface RecordSlice {
 }
 
 const createRecordSlice: StateCreator<
-  RecordSlice & UISlice & AdSlice,
+  RecordSlice & UISlice & AdSlice & AuthSlice,
   [["zustand/persist", unknown]],
   [],
   RecordSlice
@@ -68,10 +72,27 @@ const createRecordSlice: StateCreator<
   initializeStore: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { uid, tossId } = await recordService.authenticate();
+      const { uid, tossId: initialTossId } = await recordService.authenticate();
       set({ userIdentifier: uid });
 
-      const userData = (await recordService.getOrCreateUser(uid, tossId)) as UserMetadata;
+      const userData = (await recordService.getOrCreateUser(
+        uid,
+        initialTossId,
+      )) as UserMetadata;
+
+      // DB의 최신 상태에 따라 tossUser 객체 존재 여부 결정
+      if (!userData?.tossId) {
+        set({ tossUser: null });
+      } else if (!get().tossUser) {
+        // DB에는 연동되어 있으나 스토어에는 정보가 없는 경우 최소 정보로 복구
+        set({
+          tossUser: {
+            userKey: Number(userData.tossId),
+            scope: "",
+            agreedTerms: [],
+          },
+        });
+      }
 
       if (userData?.friends) {
         const { totalAmount } = await recordService.migrateLegacyData(
@@ -88,7 +109,8 @@ const createRecordSlice: StateCreator<
         });
       }
 
-      const { fetchedRecords, lastVisible } = await recordService.fetchRecordsPage(uid);
+      const { fetchedRecords, lastVisible } =
+        await recordService.fetchRecordsPage(uid);
       set({
         records: fetchedRecords,
         lastVisible,
@@ -104,7 +126,8 @@ const createRecordSlice: StateCreator<
   },
 
   fetchMoreRecords: async () => {
-    const { userIdentifier, lastVisible, records, hasMore, isLoadingMore } = get();
+    const { userIdentifier, lastVisible, records, hasMore, isLoadingMore } =
+      get();
     if (!userIdentifier || !lastVisible || !hasMore || isLoadingMore) return;
 
     set({ isLoadingMore: true });
@@ -124,7 +147,13 @@ const createRecordSlice: StateCreator<
   },
 
   addRecord: async (record) => {
-    const { userIdentifier, records, totalPaid, totalReceived, lastAdMilestoneShown } = get();
+    const {
+      userIdentifier,
+      records,
+      totalPaid,
+      totalReceived,
+      lastAdMilestoneShown,
+    } = get();
     if (!userIdentifier) throw new Error("인증 필요");
 
     const newRecord = { ...record, createdAt: new Date().toISOString() };
@@ -145,8 +174,12 @@ const createRecordSlice: StateCreator<
     }
 
     // 모드별 총액 업데이트
-    const newTotalPaid = record.mode === "paid" ? totalPaid + record.amount : totalPaid;
-    const newTotalReceived = record.mode === "received" ? totalReceived + record.amount : totalReceived;
+    const newTotalPaid =
+      record.mode === "paid" ? totalPaid + record.amount : totalPaid;
+    const newTotalReceived =
+      record.mode === "received"
+        ? totalReceived + record.amount
+        : totalReceived;
 
     const sorted = [newRecord, ...records].sort((a, b) => {
       if (a.isFavorite && !b.isFavorite) return -1;
@@ -154,7 +187,11 @@ const createRecordSlice: StateCreator<
       return a.name.localeCompare(b.name);
     });
 
-    set({ records: sorted, totalPaid: newTotalPaid, totalReceived: newTotalReceived });
+    set({
+      records: sorted,
+      totalPaid: newTotalPaid,
+      totalReceived: newTotalReceived,
+    });
 
     try {
       await recordService.addRecord(
@@ -199,7 +236,13 @@ const createRecordSlice: StateCreator<
     set({ records: updated, totalPaid: nextPaid, totalReceived: nextReceived });
 
     try {
-      await recordService.updateRecord(userIdentifier, id, updates, nextPaid, nextReceived);
+      await recordService.updateRecord(
+        userIdentifier,
+        id,
+        updates,
+        nextPaid,
+        nextReceived,
+      );
     } catch (error) {
       set({ records, totalPaid, totalReceived });
       throw error;
@@ -213,8 +256,14 @@ const createRecordSlice: StateCreator<
     const target = records.find((r) => r.id === id);
     if (!target) throw new Error("삭제할 기록을 찾을 수 없습니다.");
 
-    const nextPaid = target.mode === "paid" ? Math.max(0, totalPaid - target.amount) : totalPaid;
-    const nextReceived = target.mode === "received" ? Math.max(0, totalReceived - target.amount) : totalReceived;
+    const nextPaid =
+      target.mode === "paid"
+        ? Math.max(0, totalPaid - target.amount)
+        : totalPaid;
+    const nextReceived =
+      target.mode === "received"
+        ? Math.max(0, totalReceived - target.amount)
+        : totalReceived;
 
     set({
       records: records.filter((r) => r.id !== id),
@@ -223,7 +272,12 @@ const createRecordSlice: StateCreator<
     });
 
     try {
-      await recordService.removeRecord(userIdentifier, id, nextPaid, nextReceived);
+      await recordService.removeRecord(
+        userIdentifier,
+        id,
+        nextPaid,
+        nextReceived,
+      );
     } catch (error) {
       set({ records, totalPaid, totalReceived });
       throw error;
@@ -260,7 +314,7 @@ interface UISlice {
 }
 
 const createUISlice: StateCreator<
-  RecordSlice & UISlice & AdSlice,
+  RecordSlice & UISlice & AdSlice & AuthSlice,
   [["zustand/persist", unknown]],
   [],
   UISlice
@@ -340,7 +394,7 @@ interface AdSlice {
 }
 
 const createAdSlice: StateCreator<
-  RecordSlice & UISlice & AdSlice,
+  RecordSlice & UISlice & AdSlice & AuthSlice,
   [["zustand/persist", unknown]],
   [],
   AdSlice
@@ -360,14 +414,86 @@ const createAdSlice: StateCreator<
 });
 
 /**
+ * 4. 인증 상태 슬라이스
+ */
+interface AuthSlice {
+  tossUser: TossUserMeResponse | null;
+  isLoggingIn: boolean;
+  login: () => Promise<void>;
+}
+
+const createAuthSlice: StateCreator<
+  RecordSlice & UISlice & AdSlice & AuthSlice,
+  [["zustand/persist", unknown]],
+  [],
+  AuthSlice
+> = (set, get) => ({
+  tossUser: null,
+  isLoggingIn: false,
+  login: async () => {
+    set({ isLoggingIn: true });
+    try {
+      const user = await tossAuthService.executeFullLogin();
+      const userKeyStr = user.userKey.toString();
+      set({ tossUser: user });
+
+      // 1. 해당 tossId(userKey)를 가진 기존 유저가 있는지 확인
+      const existingUser = await recordService.findUserByTossId(userKeyStr);
+
+      if (existingUser) {
+        // 기존 유저가 있다면 해당 UID로 전환하고 데이터 새로고침
+        set({
+          userIdentifier: existingUser.uid,
+          totalPaid:
+            existingUser.data.totalPaid || existingUser.data.totalAmount || 0,
+          totalReceived: existingUser.data.totalReceived || 0,
+          lastAdMilestoneShown: existingUser.data.lastAdMilestoneShown || 0,
+        });
+
+        // 레코드 다시 불러오기
+        const { fetchedRecords, lastVisible } =
+          await recordService.fetchRecordsPage(existingUser.uid);
+        set({
+          records: fetchedRecords,
+          lastVisible,
+          hasMore: fetchedRecords.length === 20,
+        });
+      } else {
+        // 2. 기존 유저가 없다면 현재 익명 유저 문서를 토스 계정으로 연결
+        const userIdentifier = get().userIdentifier;
+        console.log(
+          "[AuthStore] Connecting new toss account to UID:",
+          userIdentifier,
+        );
+        if (userIdentifier) {
+          await recordService.updateUserTossId(userIdentifier, userKeyStr);
+          console.log("[AuthStore] Successfully updated tossId in Firebase");
+        } else {
+          console.warn("[AuthStore] No userIdentifier found to update tossId");
+        }
+      }
+    } catch (error) {
+      console.error("[AuthStore] Login failed:", error);
+      set({ tossUser: null });
+      throw error;
+    } finally {
+      set({ isLoggingIn: false });
+    }
+  },
+});
+
+/**
  * 최종 스토어 구성
  */
-export const useRecordStore = create<RecordSlice & UISlice & AdSlice>()(
+export const useRecordStore = create<
+  RecordSlice & UISlice & AdSlice & AuthSlice
+>()(
   persist(
     (...a) => ({
       ...createRecordSlice(...a),
       ...createUISlice(...a),
       ...createAdSlice(...a),
+      ...createAuthSlice(...a),
     }),
     {
       name: "howmuch-records-storage-v4",
@@ -375,6 +501,7 @@ export const useRecordStore = create<RecordSlice & UISlice & AdSlice>()(
       partialize: (state) => ({
         lastAdMilestoneShown: state.lastAdMilestoneShown,
         currentMode: state.currentMode,
+        tossUser: state.tossUser,
       }),
     },
   ),
