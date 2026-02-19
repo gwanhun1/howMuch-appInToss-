@@ -322,14 +322,7 @@ export function RecordFormBottomSheet({
                   isGuideActive
                     ? undefined
                     : () => {
-                        const nextExpanded = !expanded;
-                        setExpanded(nextExpanded);
-                        if (nextExpanded && !currentRecord.date) {
-                          setEditingRecord({
-                            ...currentRecord,
-                            date: new Date().toISOString().split("T")[0],
-                          });
-                        }
+                        setExpanded(!expanded);
                       }
                 }
               />

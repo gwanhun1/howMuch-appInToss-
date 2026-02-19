@@ -12,4 +12,5 @@ export interface MoneyRecord {
   relation: string;
   date: string;
   isFavorite?: boolean;
+  createdAt?: string;
 }

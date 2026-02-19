@@ -68,7 +68,13 @@ export function MainPage() {
     .sort((a, b) => {
       if (a.isFavorite && !b.isFavorite) return -1;
       if (!a.isFavorite && b.isFavorite) return 1;
-      return (b.date ?? "").localeCompare(a.date ?? "");
+
+      // 1차 정렬: 날짜(YYYY-MM-DD)
+      const dateCompare = (b.date ?? "").localeCompare(a.date ?? "");
+      if (dateCompare !== 0) return dateCompare;
+
+      // 2차 정렬: 생성 시각(ISO string, 분/초 포함)
+      return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
     });
 
   const modeRecordsCount = records.filter((r) => r.mode === currentMode).length;
