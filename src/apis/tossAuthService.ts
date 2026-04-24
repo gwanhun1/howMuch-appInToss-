@@ -62,7 +62,6 @@ export const tossAuthService = {
       });
 
       const data = await response.json();
-      console.log("[TossAuth] Token generation response:", data);
 
       if (data.resultType === "SUCCESS") {
         return data.success;
@@ -74,7 +73,10 @@ export const tossAuthService = {
         throw new Error(errorMsg);
       }
     } catch (error) {
-      console.error("[TossAuth] generateToken failed:", error);
+      console.error(
+        "[TossAuth] generateToken failed:",
+        error instanceof Error ? error.message : "unknown",
+      );
       throw error;
     }
   },
@@ -93,7 +95,6 @@ export const tossAuthService = {
       });
 
       const data = await response.json();
-      console.log("[TossAuth] GetUserMe response:", data);
 
       if (data.resultType === "SUCCESS") {
         return data.success;
@@ -105,7 +106,10 @@ export const tossAuthService = {
         throw new Error(errorMsg);
       }
     } catch (error) {
-      console.error("[TossAuth] getUserMe failed:", error);
+      console.error(
+        "[TossAuth] getUserMe failed:",
+        error instanceof Error ? error.message : "unknown",
+      );
       throw error;
     }
   },

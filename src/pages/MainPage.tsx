@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Spacing, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useRecordStore } from "../stores/useRecordStore";
@@ -13,7 +13,6 @@ import { ServiceFooter } from "../components/common/ServiceFooter";
 import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
 import { useSwipeMode } from "../hooks/useSwipeMode";
 import { useFeatureGuide } from "../hooks/useFeatureGuide";
-import { FeatureHighlight } from "../components/onboarding/FeatureHighlight";
 
 export function MainPage() {
   const { openToast } = useToast();
@@ -59,26 +58,56 @@ export function MainPage() {
 
   const currentTotal = currentMode === "paid" ? totalPaid : totalReceived;
 
-  const filteredRecords = records
-    .filter((r) => r.mode === currentMode)
-    .filter((r) => {
-      if (filterType === RECORD_CATEGORIES.ALL) return true;
-      return r.type === filterType;
-    })
-    .sort((a, b) => {
-      if (a.isFavorite && !b.isFavorite) return -1;
-      if (!a.isFavorite && b.isFavorite) return 1;
+  const filteredRecords = useMemo(
+    () =>
+      records
+        .filter((r) => r.mode === currentMode)
+        .filter((r) => {
+          if (filterType === RECORD_CATEGORIES.ALL) return true;
+          return r.type === filterType;
+        })
+        .sort((a, b) => {
+          if (a.isFavorite && !b.isFavorite) return -1;
+          if (!a.isFavorite && b.isFavorite) return 1;
+          const dateCompare = (b.date ?? "").localeCompare(a.date ?? "");
+          if (dateCompare !== 0) return dateCompare;
+          return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+        }),
+    [records, currentMode, filterType],
+  );
 
-      // 1차 정렬: 날짜(YYYY-MM-DD)
-      const dateCompare = (b.date ?? "").localeCompare(a.date ?? "");
-      if (dateCompare !== 0) return dateCompare;
+  const modeRecordsCount = useMemo(
+    () => records.filter((r) => r.mode === currentMode).length,
+    [records, currentMode],
+  );
+  const selectedRecord = useMemo(
+    () => records.find((r) => r.id === selectedRecordId) || null,
+    [records, selectedRecordId],
+  );
 
-      // 2차 정렬: 생성 시각(ISO string, 분/초 포함)
-      return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
-    });
-
-  const modeRecordsCount = records.filter((r) => r.mode === currentMode).length;
-  const selectedRecord = records.find((r) => r.id === selectedRecordId) || null;
+  const handleToggleFavorite = useCallback(
+    async (id: string) => {
+      const record = records.find((r) => r.id === id);
+      if (!record) return;
+      const willBeFavorite = !record.isFavorite;
+      try {
+        await updateRecord(id, { isFavorite: willBeFavorite });
+        openToast(
+          willBeFavorite
+            ? "⭐ 중요 표시되었습니다"
+            : "중요 표시가 해제되었습니다",
+        );
+      } catch (error) {
+        console.error("즐겨찾기 토글 실패:", error);
+        openToast(
+          error instanceof Error
+            ? error.message
+            : "중요 표시 변경에 실패했습니다.",
+        );
+      }
+    },
+    [records, updateRecord, openToast],
+  );
 
   const { dragX, handleTouchStart, handleTouchMove, handleTouchEnd } =
     useSwipeMode({
@@ -123,7 +152,17 @@ export function MainPage() {
         overflowX: "hidden",
       }}
     >
-      {isCelebrating && <CoinRain onComplete={() => setCelebrating(false)} />}
+      {isCelebrating && (
+        <CoinRain
+          onComplete={() => setCelebrating(false)}
+          headline={records.length === 1 ? "첫 기록이 쌓였어요" : undefined}
+          subhead={
+            records.length === 1
+              ? "앞으로의 마음도 기록해볼까요?"
+              : undefined
+          }
+        />
+      )}
       {currentPage === "amountInput" && editingRecord ? (
         <AmountInputPage
           value={editingRecord.amount}
@@ -175,29 +214,7 @@ export function MainPage() {
                     onRecordClick={openRecordForm}
                     filterType={filterType}
                     guide={guide}
-                    onToggleFavorite={async (id) => {
-                      const record = records.find((r) => r.id === id);
-                      if (record) {
-                        const willBeFavorite = !record.isFavorite;
-                        try {
-                          await updateRecord(id, {
-                            isFavorite: willBeFavorite,
-                          });
-                          openToast(
-                            willBeFavorite
-                              ? "⭐ 중요 표시되었습니다"
-                              : "중요 표시가 해제되었습니다",
-                          );
-                        } catch (error) {
-                          console.error("즐겨찾기 토글 실패:", error);
-                          openToast(
-                            error instanceof Error
-                              ? error.message
-                              : "중요 표시 변경에 실패했습니다.",
-                          );
-                        }
-                      }
-                    }}
+                    onToggleFavorite={handleToggleFavorite}
                   />
                 </div>
 
@@ -210,24 +227,18 @@ export function MainPage() {
                     padding: "12px 0",
                   }}
                 >
-                  <FeatureHighlight
-                    step="swipe-hint"
-                    currentStep={guide.currentStep}
-                    onNext={guide.next}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                    }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 6,
-                      }}
-                    >
-                      <span className="swipe-arrow-left">←</span>
-                      <span>스와이프하여 보낸/받은 마음을 확인해보세요</span>
-                      <span className="swipe-arrow-right">→</span>
-                    </div>
-                  </FeatureHighlight>
+                    <span className="swipe-arrow-left">←</span>
+                    <span>스와이프하여 보낸/받은 마음을 확인해보세요</span>
+                    <span className="swipe-arrow-right">→</span>
+                  </div>
                 </div>
               </div>
             </div>

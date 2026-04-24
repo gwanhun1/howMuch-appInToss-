@@ -118,20 +118,34 @@ export function RandomAmountPicker() {
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOnMain || isOpen) { setBubblePhase(null); return; }
-    let showT: ReturnType<typeof setTimeout>;
-    let hideT: ReturnType<typeof setTimeout>;
-    let removeT: ReturnType<typeof setTimeout>;
-    const cycle = () => {
-      showT = setTimeout(() => setBubblePhase("in"), 1500);
-      hideT = setTimeout(() => setBubblePhase("out"), 5500);
-      removeT = setTimeout(() => setBubblePhase(null), 6000);
+    if (!isOnMain || isOpen) {
+      setBubblePhase(null);
+      return;
+    }
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    const clearTimers = () => {
+      while (timers.length > 0) {
+        const t = timers.pop();
+        if (t !== undefined) clearTimeout(t);
+      }
     };
+
+    const cycle = () => {
+      // 이전 사이클의 잔여 타이머가 있다면 먼저 정리
+      clearTimers();
+      timers.push(setTimeout(() => setBubblePhase("in"), 1500));
+      timers.push(setTimeout(() => setBubblePhase("out"), 5500));
+      timers.push(setTimeout(() => setBubblePhase(null), 6000));
+    };
+
     cycle();
     const intervalId = setInterval(cycle, 10000);
+
     return () => {
-      clearTimeout(showT); clearTimeout(hideT); clearTimeout(removeT);
-      clearInterval(intervalId); setBubblePhase(null);
+      clearTimers();
+      clearInterval(intervalId);
+      setBubblePhase(null);
     };
   }, [isOnMain, isOpen]);
 

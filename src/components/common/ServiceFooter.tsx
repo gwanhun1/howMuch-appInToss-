@@ -7,6 +7,15 @@ export function ServiceFooter() {
     null,
   );
 
+  const handleReplayGuide = () => {
+    try {
+      localStorage.removeItem("howmuch_feature_guide_done");
+    } catch {
+      // noop
+    }
+    window.location.reload();
+  };
+
   return (
     <>
       <div
@@ -56,6 +65,18 @@ export function ServiceFooter() {
             onClick={() => setActivePolicy("privacy")}
           >
             개인정보처리방침
+          </Text>
+          <Text
+            typography="t7"
+            color={adaptive.grey400}
+            style={{
+              fontSize: "11px",
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+            onClick={handleReplayGuide}
+          >
+            앱 가이드 다시 보기
           </Text>
         </div>
       </div>

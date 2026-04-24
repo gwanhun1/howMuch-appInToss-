@@ -3,32 +3,20 @@ import {
   type GuideStep,
   STEP_ORDER,
   TOTAL_STEPS,
+  FORM_STEPS,
 } from "../../hooks/useFeatureGuide";
 
 const STEP_MESSAGES: Record<Exclude<GuideStep, null>, string> = {
-  "example-cards": "이렇게 카드로 기록이 쌓여요! 탭하여 계속",
-  "add-button": "여기를 눌러 경조사비를 기록해보세요",
-  "mode-toggle": "보낸 돈 · 받은 돈을 전환할 수 있어요",
-  "data-backup": "로그인 한 번으로 데이터를 안전하게 보관하세요",
-  "category-filter": "축의금·조의금·돌잔치·용돈별로 필터링해요",
-  "swipe-hint": "좌우 스와이프로도 보낸/받은을 전환할 수 있어요",
-  "form-avatar": "프로필 사진을 눌러 아이콘을 바꿀 수 있어요",
-  "form-name": "이름을 입력해서 누구인지 기록해요",
-  "form-category": "축의금·조의금·돌잔치·용돈 중 선택해요",
-  "form-amount": "금액을 입력하면 기록 완료!",
+  "add-button": "여기를 눌러 첫 기록을 만들어보세요",
+  "form-all": "이름 · 카테고리 · 금액을 차례로 입력하면 완료!",
+  "mode-toggle": "보낸 마음 · 받은 마음은 여기서 전환할 수 있어요",
 };
-
-const FORM_STEPS: Set<string> = new Set([
-  "form-avatar",
-  "form-name",
-  "form-category",
-  "form-amount",
-]);
 
 interface FeatureHighlightProps {
   step: Exclude<GuideStep, null>;
   currentStep: GuideStep;
   onNext: () => void;
+  onSkip?: () => void;
   children: React.ReactNode;
 }
 
@@ -36,6 +24,7 @@ export function FeatureHighlight({
   step,
   currentStep,
   onNext,
+  onSkip,
   children,
 }: FeatureHighlightProps) {
   const isOpen = currentStep === step;
@@ -43,7 +32,6 @@ export function FeatureHighlight({
   const currentIndex = STEP_ORDER.indexOf(step);
   const isLast = currentIndex === TOTAL_STEPS - 1;
 
-  // 가이드가 완전히 끝났으면 Highlight 없이 children만 렌더링
   if (currentStep === null) {
     return <>{children}</>;
   }
@@ -109,6 +97,35 @@ export function FeatureHighlight({
                 {isLast ? "완료" : "다음"}
               </Text>
             </div>
+            {onSkip && !isLast && (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onSkip();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onSkip();
+                }}
+                style={{
+                  padding: "6px 10px",
+                  cursor: "pointer",
+                  pointerEvents: "auto",
+                }}
+              >
+                <Text
+                  typography="t7"
+                  color="rgba(255,255,255,0.55)"
+                  fontWeight="medium"
+                >
+                  건너뛰기
+                </Text>
+              </div>
+            )}
           </div>
         </div>
       )}

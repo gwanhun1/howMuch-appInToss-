@@ -73,6 +73,8 @@ export function RecordFormBottomSheet({
   const selectedRecordId = useRecordStore((s) => s.selectedRecordId);
   const setCelebrating = useRecordStore((s) => s.setCelebrating);
   const currentMode = useRecordStore((s) => s.currentMode);
+  const recordsCount = useRecordStore((s) => s.records.length);
+  const tossUser = useRecordStore((s) => s.tossUser);
 
   const labels = MODE_LABELS[currentMode];
   const { openToast } = useToast();
@@ -81,8 +83,20 @@ export function RecordFormBottomSheet({
   const [showValidationError, setShowValidationError] = useState(false);
   const [isProfilePickerOpen, setIsProfilePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  // 검증 실패 시 첫 번째 오류 필드로 스크롤/포커스하기 위한 ref
+  const nameFieldRef = useRef<HTMLDivElement>(null);
+  const typeFieldRef = useRef<HTMLDivElement>(null);
+  const amountFieldRef = useRef<HTMLDivElement>(null);
 
   const isCreateMode = selectedRecordId === "new";
+
+  useEffect(() => {
+    if (!confirmingDelete) return;
+    const t = setTimeout(() => setConfirmingDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmingDelete]);
 
   useEffect(() => {
     if (open && record && !editingRecord) {
@@ -100,6 +114,10 @@ export function RecordFormBottomSheet({
     setShowValidationError(false);
     setIsSubmitting(false);
     setEditingRecord(null);
+    setConfirmingDelete(false);
+    if (guide.currentStep !== null || guide.isWaitingForForm) {
+      guide.skip();
+    }
     onClose();
   };
 
@@ -121,16 +139,63 @@ export function RecordFormBottomSheet({
     if (!isValid) {
       setShowValidationError(true);
       setIsSubmitting(false);
+
+      // 첫 번째 오류 필드로 부드럽게 스크롤 + 이름 필드면 포커스
+      requestAnimationFrame(() => {
+        let target: HTMLDivElement | null = null;
+        let focusInput = false;
+        if (currentRecord.name.trim() === "") {
+          target = nameFieldRef.current;
+          focusInput = true;
+        } else if (currentRecord.type == null) {
+          target = typeFieldRef.current;
+        } else if (currentRecord.amount <= 0) {
+          target = amountFieldRef.current;
+        }
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (focusInput) {
+            const input = target.querySelector("input");
+            input?.focus();
+          }
+        }
+      });
       return;
     }
 
     const recordToSave = { ...currentRecord, name: currentRecord.name.trim() };
+    const wasFirst = isCreateMode && recordsCount === 0;
+    const countAfterSave = isCreateMode ? recordsCount + 1 : recordsCount;
 
     try {
       if (isCreateMode) {
         await addRecord(recordToSave);
-        openToast(labels.addToast);
+        openToast(
+          wasFirst
+            ? `${recordToSave.name}님을 기억해둘게요 ✨`
+            : labels.addToast,
+        );
         setCelebrating(true);
+
+        if (countAfterSave === 3 && !tossUser) {
+          const BACKUP_PROMPT_KEY = "howmuch_backup_prompt_shown";
+          let alreadyShown = false;
+          try {
+            alreadyShown = localStorage.getItem(BACKUP_PROMPT_KEY) === "true";
+          } catch {
+            // noop
+          }
+          if (!alreadyShown) {
+            try {
+              localStorage.setItem(BACKUP_PROMPT_KEY, "true");
+            } catch {
+              // noop
+            }
+            setTimeout(() => {
+              openToast("기록이 쌓이고 있어요. 지금 백업해두면 안전해요 🔒");
+            }, 2200);
+          }
+        }
       } else if (record) {
         await updateRecord(record.id, recordToSave);
         openToast(labels.editToast);
@@ -138,9 +203,7 @@ export function RecordFormBottomSheet({
       handleClose();
     } catch (error) {
       console.error("저장 실패:", error);
-      openToast(
-        error instanceof Error ? error.message : "저장에 실패했습니다.",
-      );
+      openToast("저장에 실패했어요. 잠시 후 다시 시도해주세요");
     } finally {
       setIsSubmitting(false);
     }
@@ -151,18 +214,23 @@ export function RecordFormBottomSheet({
       handleClose();
       return;
     }
-    if (record) {
-      try {
-        await removeRecord(record.id);
-        setSelectedRecordId(null);
-        openToast(labels.deleteToast);
-        handleClose();
-      } catch (error) {
-        console.error("삭제 실패:", error);
-        openToast(
-          error instanceof Error ? error.message : "삭제에 실패했습니다.",
-        );
-      }
+    if (!record) return;
+
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      openToast("한 번 더 탭하면 삭제돼요");
+      return;
+    }
+
+    try {
+      await removeRecord(record.id);
+      setSelectedRecordId(null);
+      openToast(labels.deleteToast);
+      handleClose();
+    } catch (error) {
+      console.error("삭제 실패:", error);
+      openToast("삭제에 실패했어요. 잠시 후 다시 시도해주세요");
+      setConfirmingDelete(false);
     }
   };
 
@@ -170,7 +238,7 @@ export function RecordFormBottomSheet({
     <>
       <BottomSheet
         open={open}
-        onClose={isGuideActive ? () => {} : handleClose}
+        onClose={handleClose}
         maxHeight={"90vh"}
         header={
           <div
@@ -187,6 +255,10 @@ export function RecordFormBottomSheet({
                 : `${record?.name || "기록"} 정보 수정`}
             </Text>
             <div
+              role="button"
+              aria-label={
+                currentRecord.isFavorite ? "중요 표시 해제" : "중요 표시"
+              }
               onClick={() => {
                 if (isGuideActive) return;
                 const newStatus = !currentRecord.isFavorite;
@@ -196,9 +268,12 @@ export function RecordFormBottomSheet({
               }}
               style={{
                 cursor: "pointer",
-                padding: "4px",
+                minWidth: 44,
+                minHeight: 44,
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
+                margin: "-10px",
               }}
             >
               <Asset.Icon
@@ -226,46 +301,39 @@ export function RecordFormBottomSheet({
             }}
           >
             <Spacing size={10} />
-            <FeatureHighlight
-              step="form-avatar"
-              currentStep={guide.currentStep}
-              onNext={guide.next}
-            >
-              <FormAvatar
-                iconName={currentRecord.profileIcon}
-                type={currentRecord.type}
-                onClick={() => {
-                  if (!isGuideActive) setIsProfilePickerOpen(true);
-                }}
-              />
-            </FeatureHighlight>
+            <FormAvatar
+              iconName={currentRecord.profileIcon}
+              type={currentRecord.type}
+              onClick={() => {
+                if (!isGuideActive) setIsProfilePickerOpen(true);
+              }}
+            />
             <Spacing size={2} />
             <List>
-              <FeatureHighlight
-                step="form-name"
-                currentStep={guide.currentStep}
-                onNext={guide.next}
-              >
-                <TextField
-                  variant="line"
-                  label="이름"
-                  labelOption="sustain"
-                  value={currentRecord.name}
-                  onChange={(e) => {
-                    const value = e.target.value.slice(0, 20);
-                    setEditingRecord({ ...currentRecord, name: value });
-                  }}
-                  placeholder="누구에게?"
-                  hasError={isNameInvalid}
-                  help={isNameInvalid ? "이름을 입력해주세요" : undefined}
-                  maxLength={20}
-                />
-              </FeatureHighlight>
-              <FeatureHighlight
-                step="form-category"
-                currentStep={guide.currentStep}
-                onNext={guide.next}
-              >
+              <div ref={nameFieldRef}>
+                <FeatureHighlight
+                  step="form-all"
+                  currentStep={guide.currentStep}
+                  onNext={guide.next}
+                  onSkip={guide.skip}
+                >
+                  <TextField
+                    variant="line"
+                    label="이름"
+                    labelOption="sustain"
+                    value={currentRecord.name}
+                    onChange={(e) => {
+                      const value = e.target.value.slice(0, 20);
+                      setEditingRecord({ ...currentRecord, name: value });
+                    }}
+                    placeholder="누구에게?"
+                    hasError={isNameInvalid}
+                    help={isNameInvalid ? "이름을 입력해주세요" : undefined}
+                    maxLength={20}
+                  />
+                </FeatureHighlight>
+              </div>
+              <div ref={typeFieldRef}>
                 <FormTypeSelector
                   value={currentRecord.type}
                   onChange={(type) => {
@@ -273,36 +341,30 @@ export function RecordFormBottomSheet({
                     setEditingRecord({ ...currentRecord, type });
                   }}
                 />
-              </FeatureHighlight>
-              {isTypeInvalid && (
-                <div style={{ padding: "6px 20px 0" }}>
-                  <Text typography="t7" color={adaptive.red500}>
-                    어떤 상황인지 선택해주세요
-                  </Text>
-                </div>
-              )}
-              <FeatureHighlight
-                step="form-amount"
-                currentStep={guide.currentStep}
-                onNext={guide.next}
-              >
-                <div className="add-card-pulse">
-                  <ListRow
-                    contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
-                    right={
-                      currentRecord.amount > 0 ? (
-                        <Text color={adaptive.grey600}>
-                          {currentRecord.amount.toLocaleString()}원
-                        </Text>
-                      ) : (
-                        <Text color={adaptive.grey500}>입력하기</Text>
-                      )
-                    }
-                    onClick={isGuideActive ? undefined : onOpenAmountInput}
-                    arrowType="right"
-                  />
-                </div>
-              </FeatureHighlight>
+                {isTypeInvalid && (
+                  <div style={{ padding: "6px 20px 0" }}>
+                    <Text typography="t7" color={adaptive.red500}>
+                      어떤 상황인지 선택해주세요
+                    </Text>
+                  </div>
+                )}
+              </div>
+              <div ref={amountFieldRef} className="add-card-pulse">
+                <ListRow
+                  contents={<ListRow.Texts type="1RowTypeA" top="금액" />}
+                  right={
+                    currentRecord.amount > 0 ? (
+                      <Text color={adaptive.grey600}>
+                        {currentRecord.amount.toLocaleString()}원
+                      </Text>
+                    ) : (
+                      <Text color={adaptive.grey500}>입력하기</Text>
+                    )
+                  }
+                  onClick={isGuideActive ? undefined : onOpenAmountInput}
+                  arrowType="right"
+                />
+              </div>
               {isAmountInvalid && (
                 <div style={{ padding: "6px 20px 0" }}>
                   <Text typography="t7" color={adaptive.red500}>
@@ -362,7 +424,7 @@ export function RecordFormBottomSheet({
                 size="large"
                 onClick={handleDelete}
               >
-                삭제
+                {confirmingDelete ? "정말 삭제하기" : "삭제"}
               </Button>
             )}
             <Button

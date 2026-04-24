@@ -17,6 +17,7 @@ export function ModeToggle({ currentMode, onModeChange }: ModeToggleProps) {
           <motion.button
             key={mode}
             onClick={() => onModeChange(mode)}
+            aria-pressed={isActive}
             animate={{
               fontSize: isActive ? "24px" : "16px",
               color: isActive ? adaptive.blue600 : adaptive.grey400,
@@ -24,14 +25,13 @@ export function ModeToggle({ currentMode, onModeChange }: ModeToggleProps) {
             }}
             transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
             style={{
-              padding: "0",
+              padding: "4px 8px",
               border: "none",
               background: "none",
               cursor: "pointer",
-              lineHeight: "32px",
-              height: "32px",
+              lineHeight: "36px",
+              minHeight: "44px",
               borderBottom: isActive ? `2px solid ${adaptive.blue600}` : "2px solid transparent",
-              paddingBottom: "1px",
             }}
           >
             {mode === "paid" ? "보낸" : "받은"}

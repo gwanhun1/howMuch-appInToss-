@@ -1,5 +1,6 @@
-import { useMemo } from "react";
-import { Asset, useToast } from "@toss/tds-mobile";
+import { useMemo, useState } from "react";
+import { Asset, Text, useToast } from "@toss/tds-mobile";
+import { adaptive } from "@toss/tds-colors";
 import { motion } from "framer-motion";
 import type { RecordType } from "../../types/record";
 import { useRecordStore } from "../../stores/useRecordStore";
@@ -28,8 +29,15 @@ export function MainSummaryCard({
   onFilterChange,
   guide,
 }: MainSummaryCardProps) {
-  const { records, currentMode, setCurrentMode, tossUser, login, isLoggingIn } =
-    useRecordStore();
+  const {
+    records,
+    currentMode,
+    setCurrentMode,
+    tossUser,
+    login,
+    isLoggingIn,
+    modeTogglePulse,
+  } = useRecordStore();
   const { openToast } = useToast();
 
   const handleTossLogin = async () => {
@@ -38,7 +46,16 @@ export function MainSummaryCard({
       openToast("데이터가 안전하게 연동되었습니다.");
     } catch (error) {
       console.error("Login failed:", error);
-      openToast("로그인에 실패했습니다.");
+      const msg = error instanceof Error ? error.message : String(error);
+      if (/cancel|취소|dismiss/i.test(msg)) {
+        // 사용자가 의도적으로 취소한 경우는 조용히 무시
+        return;
+      }
+      if (/network|fetch|timeout|offline/i.test(msg)) {
+        openToast("네트워크 연결을 확인해주세요");
+      } else {
+        openToast("로그인에 실패했어요. 잠시 후 다시 시도해주세요");
+      }
     }
   };
 
@@ -46,6 +63,16 @@ export function MainSummaryCard({
     () => records.filter((r) => r.mode === currentMode),
     [records, currentMode],
   );
+
+  // 첫 기록 직후(1~2개) · 미로그인 · 세션 내 닫기 전에만 노출되는 보관 유도 배너.
+  // 3개 도달 시엔 handleSave의 백업 토스트(A2)와 겹치지 않도록 자동 사라짐.
+  const [backupCardDismissed, setBackupCardDismissed] = useState(false);
+  const showBackupCard =
+    !tossUser &&
+    !isLoggingIn &&
+    records.length >= 1 &&
+    records.length < 3 &&
+    !backupCardDismissed;
 
   return (
     <div
@@ -62,91 +89,77 @@ export function MainSummaryCard({
           step="mode-toggle"
           currentStep={guide.currentStep}
           onNext={guide.next}
+          onSkip={guide.skip}
         >
-          <div style={{ display: "inline-block" }}>
+          <motion.div
+            style={{ display: "inline-block" }}
+            animate={
+              modeTogglePulse
+                ? { scale: [1, 1.03, 1] }
+                : { scale: 1 }
+            }
+            transition={
+              modeTogglePulse
+                ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
+                : { duration: 0.2 }
+            }
+          >
             <ModeToggle
               currentMode={currentMode}
               onModeChange={setCurrentMode}
             />
-          </div>
+          </motion.div>
         </FeatureHighlight>
 
-        {/* 토스 로그인/백업 버튼 - 후광 및 애니메이션 효과 적용 */}
-        <div style={{ position: "relative" }}>
-          <FeatureHighlight
-            step="data-backup"
-            currentStep={guide.currentStep}
-            onNext={guide.next}
+        {/* 토스 연결(로그인) pill - 아이콘+"토스 연결" 라벨로 의미 명확화 */}
+        <motion.button
+          onClick={handleTossLogin}
+          disabled={isLoggingIn || !!tossUser}
+          aria-label={tossUser ? "토스 연결됨" : "토스에 연결하기"}
+          animate={
+            !tossUser && !isLoggingIn
+              ? { scale: [1, 1.04, 1] }
+              : { scale: 1 }
+          }
+          transition={
+            !tossUser && !isLoggingIn
+              ? { duration: 2, repeat: Infinity, ease: "easeInOut" }
+              : { duration: 0.2 }
+          }
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "0 12px 0 10px",
+            height: 36,
+            minWidth: 44,
+            marginTop: 4,
+            border: `1px solid ${
+              tossUser ? adaptive.grey200 : adaptive.blue200
+            }`,
+            borderRadius: 18,
+            backgroundColor: tossUser ? adaptive.grey50 : adaptive.blue50,
+            color: tossUser ? adaptive.grey600 : adaptive.blue600,
+            cursor: isLoggingIn || !!tossUser ? "default" : "pointer",
+          }}
+        >
+          <Asset.Icon
+            name={
+              (tossUser
+                ? "icon-check-mono"
+                : "icon-safe-box-deepblue") as IconName
+            }
+            size={16}
+          />
+          <Text
+            typography="t7"
+            fontWeight="bold"
+            color={tossUser ? adaptive.grey600 : adaptive.blue600}
+            style={{ fontSize: 13, lineHeight: 1 }}
           >
-            <motion.button
-              onClick={handleTossLogin}
-              disabled={isLoggingIn || !!tossUser}
-              animate={
-                !tossUser && !isLoggingIn
-                  ? {
-                      scale: [1, 1.05, 1],
-                    }
-                  : {}
-              }
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              style={{
-                padding: 0,
-                border: "none",
-                background: "none",
-                cursor: isLoggingIn || !!tossUser ? "default" : "pointer",
-                position: "relative",
-                width: "32px",
-                height: "32px",
-                marginTop: "4px",
-                borderRadius: "50%",
-              }}
-            >
-              <div
-                style={{
-                  position: "relative",
-                  width: "32px",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {/* 메인 금고 아이콘 */}
-                <Asset.Icon
-                  name={"icon-safe-box-deepblue" as IconName}
-                  frameShape={Asset.frameShape.CleanW24}
-                />
-
-                {/* 백업되지 않은 상태일 때만 열쇠 아이콘을 우측 하단에 배치 */}
-                {!tossUser && !isLoggingIn && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "0px",
-                      right: "0px",
-                      zIndex: 1,
-                      transform: "scale(0.55)",
-                      width: "24px",
-                      height: "24px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Asset.Icon
-                      name={"icon-key" as IconName}
-                      frameShape={Asset.frameShape.CleanW24}
-                    />
-                  </div>
-                )}
-              </div>
-            </motion.button>
-          </FeatureHighlight>
-        </div>
+            {tossUser ? "연결됨" : "토스 연결"}
+          </Text>
+        </motion.button>
       </div>
 
       <div
@@ -157,16 +170,14 @@ export function MainSummaryCard({
           marginTop: "12px",
         }}
       >
-        <FeatureHighlight
-          step="category-filter"
-          currentStep={guide.currentStep}
-          onNext={guide.next}
-        >
+        {modeRecords.length >= 5 ? (
           <CategoryFilterBadge
             filterType={filterType}
             onFilterChange={onFilterChange}
           />
-        </FeatureHighlight>
+        ) : (
+          <span />
+        )}
         <TotalAmountBadge
           totalAmount={totalAmount}
           isLoading={isLoading}
@@ -174,6 +185,97 @@ export function MainSummaryCard({
           modeRecords={modeRecords}
         />
       </div>
+
+      {showBackupCard && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "14px 12px 14px 14px",
+            borderRadius: 14,
+            backgroundColor: adaptive.blue50,
+            border: `1px solid ${adaptive.blue100}`,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: adaptive.blue100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Asset.Icon
+              name={"icon-safe-box-deepblue" as IconName}
+              size={20}
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Text
+              typography="t7"
+              fontWeight="bold"
+              color={adaptive.grey900}
+              style={{ display: "block", fontSize: 14 }}
+            >
+              토스에 연결하면 더 안전해요
+            </Text>
+            <Text
+              typography="t7"
+              color={adaptive.grey700}
+              style={{ display: "block", fontSize: 13, marginTop: 2 }}
+            >
+              기기를 바꿔도 기록이 그대로 유지돼요
+            </Text>
+          </div>
+          <button
+            type="button"
+            onClick={handleTossLogin}
+            disabled={isLoggingIn}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 20,
+              border: "none",
+              backgroundColor: adaptive.blue600,
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              minHeight: 40,
+              whiteSpace: "nowrap",
+              marginRight: 4,
+            }}
+          >
+            연결하기
+          </button>
+          <button
+            type="button"
+            onClick={() => setBackupCardDismissed(true)}
+            aria-label="닫기"
+            style={{
+              width: 44,
+              height: 44,
+              border: "none",
+              background: "transparent",
+              color: adaptive.grey500,
+              cursor: "pointer",
+              fontSize: 18,
+              lineHeight: 1,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { adService } from "../../apis/adService";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { MoneyRecord, RecordType } from "../../types/record";
 import { Loader } from "@toss/tds-mobile";
 import { RecordCard } from "./RecordCard";
@@ -63,10 +63,14 @@ export function RecordList({
     };
   }, [hasMore, isLoading, isLoadingMore, onLoadMore]);
 
-  const nextTarget = totalCount + 1;
-  const shouldShowNextAdBadge =
-    nextTarget > 0 &&
-    adService.checkIsMilestone(nextTarget, lastAdMilestoneShown);
+  // 광고는 "전체 기록 수" 기준으로 5개마다 노출되므로,
+  // 배지도 전체 count 기반으로 판단해야 실제 트리거와 일치한다.
+  const shouldShowNextAdBadge = useMemo(
+    () =>
+      totalCount + 1 > 0 &&
+      adService.checkIsMilestone(totalCount + 1, lastAdMilestoneShown),
+    [totalCount, lastAdMilestoneShown],
+  );
 
   return (
     <div
@@ -83,6 +87,7 @@ export function RecordList({
         step="add-button"
         currentStep={guide.currentStep}
         onNext={guide.next}
+        onSkip={guide.skip}
       >
         <AddRecordCard
           onClick={() =>
@@ -92,21 +97,12 @@ export function RecordList({
           }
         />
       </FeatureHighlight>
-      {!isLoading && records.length === 0 && !isGuiding && <EmptyState />}
+      {!isLoading && records.length === 0 && !isGuiding && (
+        <EmptyState onQuickAdd={(type) => onAddRecord(type)} />
+      )}
       {isGuiding && !guide.isPreparingGuide && (
         <>
-          <FeatureHighlight
-            step="example-cards"
-            currentStep={guide.currentStep}
-            onNext={guide.next}
-          >
-            <RecordCard
-              record={EXAMPLE_RECORDS[0]}
-              onClick={() => {}}
-              onToggleFavorite={() => {}}
-            />
-          </FeatureHighlight>
-          {EXAMPLE_RECORDS.slice(1).map((record) => (
+          {EXAMPLE_RECORDS.map((record) => (
             <RecordCard
               key={record.id}
               record={record}
@@ -121,7 +117,7 @@ export function RecordList({
           <RecordCard
             key={record.id}
             record={record}
-            onClick={() => onRecordClick(record.id)}
+            onClick={onRecordClick}
             onToggleFavorite={onToggleFavorite}
           />
         ))}

@@ -1,16 +1,21 @@
 import { adaptive } from "@toss/tds-colors";
 import { motion } from "framer-motion";
+import type { RecordType } from "../../types/record";
+import {
+  CATEGORY_THEMES,
+  RECORD_CATEGORIES,
+} from "../../constants/category";
 
-/**
- * 빈 리스트일 때 빈 카드 슬롯 2개를 보여줌
- * 점선 테두리 + 안내 문구로 채워질 자리임을 암시
- */
-export function EmptyState() {
-  const placeholders = [
-    <>누구에게 얼마를<br/>주고받았나요?</>,
-    <>기록하면<br/>한눈에 볼 수 있어요</>,
-  ];
+interface EmptyStateProps {
+  onQuickAdd?: (type: RecordType) => void;
+}
 
+const QUICK_PICKS: RecordType[] = [
+  RECORD_CATEGORIES.WEDDING,
+  RECORD_CATEGORIES.FUNERAL,
+];
+
+export function EmptyState({ onQuickAdd }: EmptyStateProps) {
   return (
     <div
       style={{
@@ -20,36 +25,61 @@ export function EmptyState() {
         gap: 12,
       }}
     >
-      {placeholders.map((text, i) => (
-        <motion.div
-          key={i}
-          initial={false}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.2 + i * 0.15 }}
-          style={{
-            height: 160,
-            borderRadius: 24,
-            border: `1.5px dashed ${adaptive.grey200}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "0 12px",
-            boxSizing: "border-box",
-          }}
-        >
-          <div
+      {QUICK_PICKS.map((type, i) => {
+        const theme = CATEGORY_THEMES[type];
+        return (
+          <motion.button
+            key={type}
+            initial={false}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.2 + i * 0.15 }}
+            onClick={() => onQuickAdd?.(type)}
             style={{
-              textAlign: "center",
-              lineHeight: 1.5,
-              width: "100%",
-              fontSize: "14px",
-              color: adaptive.grey400,
+              height: 160,
+              borderRadius: 24,
+              border: `1.5px dashed ${theme.color}55`,
+              backgroundColor: theme.lightColor,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0 12px",
+              boxSizing: "border-box",
+              cursor: "pointer",
+              gap: 8,
             }}
           >
-            {text}
-          </div>
-        </motion.div>
-      ))}
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                backgroundColor: theme.color,
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                fontSize: 16,
+              }}
+            >
+              {theme.badgeText}
+            </div>
+            <div
+              style={{
+                fontSize: 13,
+                color: adaptive.grey700,
+                fontWeight: 600,
+              }}
+            >
+              {theme.label} 기록하기
+            </div>
+            <div style={{ fontSize: 11, color: adaptive.grey400 }}>
+              탭해서 바로 입력
+            </div>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }

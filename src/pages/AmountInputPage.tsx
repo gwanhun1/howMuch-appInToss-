@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { FixedBottomCTA, Spacing, TextField, Text } from "@toss/tds-mobile";
+import { FixedBottomCTA, Spacing, TextField, Text, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { AppHeader } from "../components/common/AppHeader";
 import { useRecordStore } from "../stores/useRecordStore";
@@ -24,6 +24,7 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
   const [amount, setAmount] = useState(value === 0 ? "" : value.toString());
   const { records, editingRecord, currentMode } = useRecordStore();
   const labels = MODE_LABELS[currentMode];
+  const { openToast } = useToast();
 
   const categoryStats = useMemo(() => {
     if (!editingRecord?.type) return null;
@@ -44,11 +45,19 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
   }, [records, editingRecord, currentMode]);
 
   const MAX_AMOUNT = 100000000;
+  const MAX_AMOUNT_DIGITS = MAX_AMOUNT.toString().length;
 
   const handleChangeAmount = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.replace(/[^0-9]/g, "");
     if (val.length > 1 && val.startsWith("0")) val = val.replace(/^0+/, "");
-    if (val !== "" && Number(val) > MAX_AMOUNT) val = MAX_AMOUNT.toString();
+    // 자릿수로 1차 컷 → Number 변환 전 오버플로우 방지
+    if (val.length > MAX_AMOUNT_DIGITS) {
+      val = MAX_AMOUNT.toString();
+    } else if (val !== "") {
+      // 길이가 같거나 짧으면 안전하게 Number 비교 가능
+      const num = Number(val);
+      if (Number.isFinite(num) && num > MAX_AMOUNT) val = MAX_AMOUNT.toString();
+    }
     setAmount(val);
   };
 
@@ -56,7 +65,15 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
 
   const handleSave = () => {
     const num = amount === "" ? 0 : Number(amount);
-    if (!isNaN(num)) onSave(num);
+    if (!Number.isFinite(num) || num <= 0) {
+      openToast("0원보다 큰 금액을 입력해주세요");
+      return;
+    }
+    if (num > MAX_AMOUNT) {
+      openToast(`${MAX_AMOUNT.toLocaleString()}원을 넘을 수 없어요`);
+      return;
+    }
+    onSave(num);
   };
 
   return (
@@ -85,6 +102,50 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
                 {(categoryStats.modeAmount / 10000).toLocaleString()}만원이에요.
               </Text>
             )}
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginTop: 10,
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => handleQuickSelect(categoryStats.lastAmount)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 20,
+                  border: `1px solid ${adaptive.blue200}`,
+                  backgroundColor: adaptive.blue50,
+                  color: adaptive.blue700,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                지난 {categoryStats.type}{" "}
+                {categoryStats.lastAmount.toLocaleString()}원
+              </button>
+              {!categoryStats.isSame && (
+                <button
+                  type="button"
+                  onClick={() => handleQuickSelect(categoryStats.modeAmount)}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 20,
+                    border: `1px solid ${adaptive.grey200}`,
+                    backgroundColor: "#fff",
+                    color: adaptive.grey700,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  자주 쓴 {categoryStats.modeAmount.toLocaleString()}원
+                </button>
+              )}
+            </div>
           </div>
         )}
         <Spacing size={32} />

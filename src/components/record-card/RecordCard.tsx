@@ -1,7 +1,6 @@
 import { Asset, Spacing, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
-import { motion, useAnimation } from "framer-motion";
-import { useCallback, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import type { MoneyRecord } from "../../types/record";
 import { CATEGORY_THEMES, RECORD_CATEGORIES } from "../../constants/category";
 
@@ -9,41 +8,52 @@ type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
 interface RecordCardProps {
   record: MoneyRecord;
-  onClick: () => void;
+  onClick: (id: string) => void;
   onToggleFavorite: (id: string) => void;
 }
 
-export function RecordCard({ record, onClick, onToggleFavorite }: RecordCardProps) {
-  const controls = useAnimation();
-  const [isClicking, setIsClicking] = useState(false);
+function RecordCardComponent({
+  record,
+  onClick,
+  onToggleFavorite,
+}: RecordCardProps) {
   const lastClickTime = useRef(0);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  const handleTap = useCallback(async () => {
+  // CSS transition으로 scale 처리 (framer-motion useAnimation 제거)
+  const handlePointerDown = useCallback(() => {
+    if (cardRef.current) cardRef.current.style.transform = "scale(0.96)";
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    if (cardRef.current) cardRef.current.style.transform = "scale(1)";
+  }, []);
+
+  const handleTap = useCallback(() => {
     const now = Date.now();
-    if (now - lastClickTime.current < 300 || isClicking) return;
+    if (now - lastClickTime.current < 300) return;
     lastClickTime.current = now;
-    setIsClicking(true);
-    await controls.start({ scale: 0.96, transition: { duration: 0.08 } });
-    controls.start({ scale: 1, transition: { duration: 0.1 } });
-    onClick();
-    setTimeout(() => setIsClicking(false), 300);
-  }, [controls, onClick, isClicking]);
+    onClick(record.id);
+  }, [onClick, record.id]);
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  const isUpcoming = record.date && record.date >= todayStr;
-
-  const getDdayText = () => {
-    if (!record.date || !isUpcoming) return null;
+  const { isUpcoming, ddayText } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const targetDate = new Date(record.date);
-    targetDate.setHours(0, 0, 0, 0);
-    const diffTime = targetDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return "D-Day";
-    return `D-${diffDays}`;
-  };
-  const ddayText = getDdayText();
+    const todayStr = today.toISOString().split("T")[0];
+    const upcoming = !!record.date && record.date >= todayStr;
+    if (!record.date || !upcoming) {
+      return { isUpcoming: upcoming, ddayText: null as string | null };
+    }
+    const target = new Date(record.date);
+    target.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil(
+      (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    return {
+      isUpcoming: upcoming,
+      ddayText: diffDays === 0 ? "D-Day" : `D-${diffDays}`,
+    };
+  }, [record.date]);
 
   const theme = CATEGORY_THEMES[record.type || "전체"];
   const cardBgColor = theme.lightColor;
@@ -54,12 +64,14 @@ export function RecordCard({ record, onClick, onToggleFavorite }: RecordCardProp
   const badgeText = theme.badgeText;
 
   return (
-    <motion.div
+    <div
+      ref={cardRef}
       onClick={handleTap}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onPointerLeave={handlePointerUp}
       className={isUpcoming ? "upcoming-aura" : ""}
-      animate={controls}
-      initial={{ scale: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -75,6 +87,8 @@ export function RecordCard({ record, onClick, onToggleFavorite }: RecordCardProp
         height: "160px",
         boxSizing: "border-box",
         overflow: "visible",
+        transform: "scale(1)",
+        transition: "transform 0.12s ease-out",
         ...(isUpcoming ? { "--aura-color": `${theme.color}40` } as React.CSSProperties : {}),
       }}
     >
@@ -132,6 +146,8 @@ export function RecordCard({ record, onClick, onToggleFavorite }: RecordCardProp
           {record.amount.toLocaleString()}원
         </Text>
       )}
-    </motion.div>
+    </div>
   );
 }
+
+export const RecordCard = memo(RecordCardComponent);

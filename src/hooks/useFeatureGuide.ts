@@ -1,29 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
 
-export type GuideStep =
-  | "example-cards"
-  | "add-button"
-  | "mode-toggle"
-  | "data-backup"
-  | "category-filter"
-  | "swipe-hint"
-  | "form-avatar"
-  | "form-name"
-  | "form-category"
-  | "form-amount"
-  | null;
+export type GuideStep = "add-button" | "form-all" | "mode-toggle" | null;
 
 export const STEP_ORDER: Exclude<GuideStep, null>[] = [
-  "example-cards",
   "add-button",
+  "form-all",
   "mode-toggle",
-  "data-backup",
-  "category-filter",
-  "swipe-hint",
-  "form-avatar",
-  "form-name",
-  "form-category",
-  "form-amount",
 ];
 
 export const TOTAL_STEPS = STEP_ORDER.length;
@@ -38,17 +20,13 @@ function markGuideDone(): void {
   }
 }
 
-export const FORM_STEPS: Set<Exclude<GuideStep, null>> = new Set([
-  "form-avatar",
-  "form-name",
-  "form-category",
-  "form-amount",
-]);
+export const FORM_STEPS: Set<Exclude<GuideStep, null>> = new Set(["form-all"]);
 
 export interface GuideProps {
   currentStep: GuideStep;
   next: () => void;
-  /** swipe-hint 끝난 뒤 바텀시트를 열고 폼 가이드로 전환 */
+  skip: () => void;
+  /** add-button 끝난 뒤 바텀시트를 열고 폼 가이드로 전환 */
   isWaitingForForm: boolean;
   startFormGuide: () => void;
   /** 가이드 준비 중 (데이터 로딩 전) */
@@ -70,7 +48,7 @@ export function useFeatureGuide(onGuideEnd?: () => void): GuideProps {
       // noop
     }
     const timer = setTimeout(() => {
-      setCurrentStep("example-cards");
+      setCurrentStep("add-button");
       setIsPreparingGuide(false);
     }, 50);
     return () => clearTimeout(timer);
@@ -85,23 +63,36 @@ export function useFeatureGuide(onGuideEnd?: () => void): GuideProps {
         return null;
       }
       const nextStep = STEP_ORDER[idx + 1];
-      if (prev === "swipe-hint" && nextStep === "form-avatar") {
+      if (prev === "add-button" && nextStep === "form-all") {
         setIsWaitingForForm(true);
         return null;
+      }
+      const wasForm = FORM_STEPS.has(prev as Exclude<GuideStep, null>);
+      const isForm = FORM_STEPS.has(nextStep);
+      if (wasForm && !isForm) {
+        onGuideEnd?.();
       }
       return nextStep;
     });
   }, [onGuideEnd]);
 
+  const skip = useCallback(() => {
+    markGuideDone();
+    onGuideEnd?.();
+    setIsWaitingForForm(false);
+    setCurrentStep(null);
+  }, [onGuideEnd]);
+
   const startFormGuide = useCallback(() => {
     if (!isWaitingForForm) return;
     setIsWaitingForForm(false);
-    setTimeout(() => setCurrentStep("form-avatar"), 400);
+    setTimeout(() => setCurrentStep("form-all"), 400);
   }, [isWaitingForForm]);
 
   return {
     currentStep,
     next,
+    skip,
     isWaitingForForm,
     startFormGuide,
     isPreparingGuide,

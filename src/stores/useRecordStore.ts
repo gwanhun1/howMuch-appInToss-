@@ -9,6 +9,13 @@ import type { MoneyRecord, RecordMode, RecordType } from "../types/record";
 import { recordService, type UserMetadata } from "../apis/recordService";
 import { adService } from "../apis/adService";
 
+/** 첫 N개 기록까지는 광고를 차단하여 초기 사용자 경험을 보호 */
+const INITIAL_AD_FREE_COUNT = 5;
+/** 저장 완료 토스트가 보인 뒤 광고가 뜨기까지의 지연(ms) */
+const AD_AFTER_SAVE_DELAY_MS = 2000;
+/** 첫 기록 저장 후 mode-toggle을 강조하는 시간(ms) */
+const MODE_TOGGLE_PULSE_DURATION_MS = 4000;
+
 /**
  * 토스 인앱 SDK 타입 정의
  */
@@ -147,33 +154,25 @@ const createRecordSlice: StateCreator<
   },
 
   addRecord: async (record) => {
+    const snapshot = get();
     const {
       userIdentifier,
       records,
       totalPaid,
       totalReceived,
       lastAdMilestoneShown,
-    } = get();
+      modeTogglePulse,
+    } = snapshot;
     if (!userIdentifier) throw new Error("인증 필요");
 
+    const isFirstRecord = records.length === 0;
     const newRecord = { ...record, createdAt: new Date().toISOString() };
     const newCount = records.length + 1;
 
-    // 광고 마일스톤 체크
-    if (adService.checkIsMilestone(newCount, lastAdMilestoneShown)) {
-      set({ isLoading: true });
-      await adService.loadAndShowAd({
-        onDismissed: () => {
-          set({ lastAdMilestoneShown: newCount, isAdLoaded: false });
-        },
-        onError: (error) => {
-          console.error("[Store] 광고 에러:", error);
-        },
-      });
-      set({ isLoading: false });
-    }
+    const shouldShowAd =
+      newCount > INITIAL_AD_FREE_COUNT &&
+      adService.checkIsMilestone(newCount, lastAdMilestoneShown);
 
-    // 모드별 총액 업데이트
     const newTotalPaid =
       record.mode === "paid" ? totalPaid + record.amount : totalPaid;
     const newTotalReceived =
@@ -181,14 +180,9 @@ const createRecordSlice: StateCreator<
         ? totalReceived + record.amount
         : totalReceived;
 
-    const sorted = [newRecord, ...records].sort((a, b) => {
-      if (a.isFavorite && !b.isFavorite) return -1;
-      if (!a.isFavorite && b.isFavorite) return 1;
-      return a.name.localeCompare(b.name);
-    });
-
+    // UI에서 isFavorite/date/createdAt 기준으로 재정렬하므로 스토어는 단순 prepend.
     set({
-      records: sorted,
+      records: [newRecord, ...records],
       totalPaid: newTotalPaid,
       totalReceived: newTotalReceived,
     });
@@ -199,12 +193,40 @@ const createRecordSlice: StateCreator<
         newRecord,
         newTotalPaid,
         newTotalReceived,
-        get().lastAdMilestoneShown,
+        lastAdMilestoneShown,
       );
-      get().loadAd();
     } catch (error) {
-      set({ records, totalPaid, totalReceived });
+      set({
+        records,
+        totalPaid,
+        totalReceived,
+        lastAdMilestoneShown,
+        modeTogglePulse,
+      });
       throw error;
+    }
+
+    if (isFirstRecord) {
+      set({ modeTogglePulse: true });
+      setTimeout(
+        () => set({ modeTogglePulse: false }),
+        MODE_TOGGLE_PULSE_DURATION_MS,
+      );
+    }
+
+    if (shouldShowAd) {
+      setTimeout(() => {
+        adService.loadAndShowAd({
+          onDismissed: () => {
+            set({ lastAdMilestoneShown: newCount, isAdLoaded: false });
+          },
+          onError: (error) => {
+            console.error("[Store] 광고 에러:", error);
+          },
+        });
+      }, AD_AFTER_SAVE_DELAY_MS);
+    } else {
+      get().loadAd();
     }
   },
 
@@ -297,6 +319,7 @@ interface UISlice {
   isProfileImageSheetOpen: boolean;
   filterType: "전체" | RecordType;
   isCelebrating: boolean;
+  modeTogglePulse: boolean;
 
   setCurrentMode: (mode: RecordMode) => void;
   setFilterType: (type: UISlice["filterType"]) => void;
@@ -327,6 +350,7 @@ const createUISlice: StateCreator<
   isProfileImageSheetOpen: false,
   filterType: "전체",
   isCelebrating: false,
+  modeTogglePulse: false,
 
   setCurrentMode: (currentMode) => set({ currentMode, filterType: "전체" }),
   setFilterType: (filterType) => set({ filterType }),
@@ -461,19 +485,17 @@ const createAuthSlice: StateCreator<
       } else {
         // 2. 기존 유저가 없다면 현재 익명 유저 문서를 토스 계정으로 연결
         const userIdentifier = get().userIdentifier;
-        console.log(
-          "[AuthStore] Connecting new toss account to UID:",
-          userIdentifier,
-        );
         if (userIdentifier) {
           await recordService.updateUserTossId(userIdentifier, userKeyStr);
-          console.log("[AuthStore] Successfully updated tossId in Firebase");
         } else {
           console.warn("[AuthStore] No userIdentifier found to update tossId");
         }
       }
     } catch (error) {
-      console.error("[AuthStore] Login failed:", error);
+      console.error(
+        "[AuthStore] Login failed:",
+        error instanceof Error ? error.message : "unknown",
+      );
       set({ tossUser: null });
       throw error;
     } finally {
@@ -503,6 +525,16 @@ export const useRecordStore = create<
         currentMode: state.currentMode,
         tossUser: state.tossUser,
       }),
+      onRehydrateStorage: () => (state) => {
+        // persist된 lastAdMilestoneShown은 0으로 초기화.
+        // initializeStore가 서버에서 실제 값을 가져오면 덮어씀.
+        // records가 복원되지 않는 상태에서 이전 마일스톤을 유지하면
+        // 광고 마일스톤 계산이 영구히 꼬일 수 있어 런타임 초기화가 안전함.
+        if (state) {
+          state.lastAdMilestoneShown = 0;
+          state.modeTogglePulse = false;
+        }
+      },
     },
   ),
 );

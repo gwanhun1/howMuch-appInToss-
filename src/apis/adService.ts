@@ -19,13 +19,29 @@ interface AdState {
   isLoaded: boolean;
   isLoading: boolean;
   cleanup: (() => void) | null;
+  /** 진행 중인 로드 요청을 대기 중인 콜백 큐 */
+  pendingCallbacks: Array<{
+    onLoaded?: () => void;
+    onError?: (error: unknown) => void;
+  }>;
 }
 
 const adState: AdState = {
   isLoaded: false,
   isLoading: false,
   cleanup: null,
+  pendingCallbacks: [],
 };
+
+/** 로드 중 쌓인 콜백 일괄 해소 */
+function flushPendingCallbacks(result: "loaded" | "error", error?: unknown) {
+  const queued = adState.pendingCallbacks;
+  adState.pendingCallbacks = [];
+  for (const cb of queued) {
+    if (result === "loaded") cb.onLoaded?.();
+    else cb.onError?.(error);
+  }
+}
 
 export const adService = {
   /**
@@ -61,47 +77,42 @@ export const adService = {
     onLoaded?: () => void;
     onError?: (error: unknown) => void;
   }): (() => void) | undefined => {
-    // 이미 로드 중이거나 로드된 상태면 스킵
-    if (adState.isLoading) {
-      console.log("[AdService] 이미 광고 로드 중 - 스킵");
-      return undefined;
-    }
-
     if (adState.isLoaded) {
-      console.log("[AdService] 이미 광고 로드됨 - 스킵");
       callbacks?.onLoaded?.();
       return undefined;
     }
 
-    // 지원 여부 확인
+    // 이미 로드 중이면 콜백을 큐에 등록 (무시하지 않음)
+    if (adState.isLoading) {
+      if (callbacks) adState.pendingCallbacks.push(callbacks);
+      return undefined;
+    }
+
     if (!adService.isSupported()) {
       console.warn("[AdService] 광고 기능 미지원 환경");
       callbacks?.onError?.(new Error("NOT_SUPPORTED"));
       return undefined;
     }
 
-    console.log(`[AdService] 광고 로드 시작: ${AD_GROUP_ID}`);
     adState.isLoading = true;
+    if (callbacks) adState.pendingCallbacks.push(callbacks);
 
     const cleanup = GoogleAdMob.loadAppsInTossAdMob({
       options: {
         adGroupId: AD_GROUP_ID,
       },
       onEvent: (event) => {
-        console.log(`[AdService] 로드 이벤트: ${event.type}`);
-
         if (event.type === "loaded") {
-          console.log("[AdService] 광고 로드 완료");
           adState.isLoaded = true;
           adState.isLoading = false;
-          callbacks?.onLoaded?.();
+          flushPendingCallbacks("loaded");
         }
       },
       onError: (error) => {
         console.error("[AdService] 광고 로드 실패:", error);
         adState.isLoaded = false;
         adState.isLoading = false;
-        callbacks?.onError?.(error);
+        flushPendingCallbacks("error", error);
       },
     });
 
@@ -213,7 +224,8 @@ export const adService = {
           console.warn("[AdService] 광고 로드 타임아웃 - 계속 진행");
           adState.cleanup?.();
           adState.isLoading = false;
-          adState.isLoaded = false; // 상태 명확히 초기화
+          adState.isLoaded = false;
+          flushPendingCallbacks("error", new Error("LOAD_TIMEOUT"));
           callbacks.onDismissed();
           resolve();
         }
@@ -249,11 +261,11 @@ export const adService = {
    * 광고 상태 초기화 (cleanup)
    */
   reset: (): void => {
-    console.log("[AdService] 상태 초기화");
     adState.cleanup?.();
     adState.isLoaded = false;
     adState.isLoading = false;
     adState.cleanup = null;
+    flushPendingCallbacks("error", new Error("RESET"));
   },
 
   /**
