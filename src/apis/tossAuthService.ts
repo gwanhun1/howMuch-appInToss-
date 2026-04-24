@@ -28,11 +28,25 @@ export interface TossUserMeResponse {
   email?: string;
 }
 
+/** 토스 앱 WebView 밖(브라우저 등)에서는 appLogin이 동작하지 않음을 나타내는 마커 */
+export const TOSS_APP_ONLY_ERROR = "TOSS_APP_ONLY";
+
 export const tossAuthService = {
   /**
    * 1. 인가 코드 받기 (appLogin)
    */
   async login(): Promise<{ authorizationCode: string; referrer: string }> {
+    // appLogin SDK는 토스 앱 WebView에서만 실제 브릿지를 제공.
+    // 개발 서버·일반 브라우저에서는 isSupported()가 false를 반환하므로 명시적으로 분기.
+    const isSupported =
+      typeof (appLogin as unknown as { isSupported?: () => boolean })
+        .isSupported === "function"
+        ? (appLogin as unknown as { isSupported: () => boolean }).isSupported()
+        : true;
+    if (!isSupported) {
+      throw new Error(TOSS_APP_ONLY_ERROR);
+    }
+
     try {
       const response = await appLogin();
       return response;

@@ -87,14 +87,23 @@ const createRecordSlice: StateCreator<
         initialTossId,
       )) as UserMetadata;
 
-      // DB의 최신 상태에 따라 tossUser 객체 존재 여부 결정
-      if (!userData?.tossId) {
+      // 토스 연결 여부 판별.
+      // authenticate()는 익명 유저에게도 deviceId/anon-UUID를 tossId 필드로 저장하므로,
+      // "실제 토스 userKey"는 순수 숫자 문자열이어야 한다는 규칙으로 구분한다.
+      const rawTossId = userData?.tossId;
+      const isVerifiedTossUser =
+        typeof rawTossId === "string" &&
+        rawTossId.length > 0 &&
+        /^\d+$/.test(rawTossId);
+
+      if (!isVerifiedTossUser) {
+        // 익명 유저이거나 tossId가 진짜 userKey가 아님 → 연결 안 된 상태로 표시
         set({ tossUser: null });
       } else if (!get().tossUser) {
-        // DB에는 연동되어 있으나 스토어에는 정보가 없는 경우 최소 정보로 복구
+        // DB에 진짜 tossId가 저장돼 있지만 스토어엔 유저 정보 없음 → 복구
         set({
           tossUser: {
-            userKey: Number(userData.tossId),
+            userKey: Number(rawTossId),
             scope: "",
             agreedTerms: [],
           },
@@ -459,25 +468,24 @@ const createAuthSlice: StateCreator<
     try {
       const user = await tossAuthService.executeFullLogin();
       const userKeyStr = user.userKey.toString();
-      set({ tossUser: user });
+
+      // DB 쓰기가 성공한 후에만 tossUser를 커밋.
+      // 중간 실패 시 "연결됨" UI가 잠깐 노출되는 flicker 방지.
 
       // 1. 해당 tossId(userKey)를 가진 기존 유저가 있는지 확인
       const existingUser = await recordService.findUserByTossId(userKeyStr);
 
       if (existingUser) {
-        // 기존 유저가 있다면 해당 UID로 전환하고 데이터 새로고침
+        // 레코드 재조회 후 한 번에 커밋
+        const { fetchedRecords, lastVisible } =
+          await recordService.fetchRecordsPage(existingUser.uid);
         set({
+          tossUser: user,
           userIdentifier: existingUser.uid,
           totalPaid:
             existingUser.data.totalPaid || existingUser.data.totalAmount || 0,
           totalReceived: existingUser.data.totalReceived || 0,
           lastAdMilestoneShown: existingUser.data.lastAdMilestoneShown || 0,
-        });
-
-        // 레코드 다시 불러오기
-        const { fetchedRecords, lastVisible } =
-          await recordService.fetchRecordsPage(existingUser.uid);
-        set({
           records: fetchedRecords,
           lastVisible,
           hasMore: fetchedRecords.length === 20,
@@ -485,17 +493,19 @@ const createAuthSlice: StateCreator<
       } else {
         // 2. 기존 유저가 없다면 현재 익명 유저 문서를 토스 계정으로 연결
         const userIdentifier = get().userIdentifier;
-        if (userIdentifier) {
-          await recordService.updateUserTossId(userIdentifier, userKeyStr);
-        } else {
-          console.warn("[AuthStore] No userIdentifier found to update tossId");
+        if (!userIdentifier) {
+          throw new Error("인증 정보가 없어 연결할 수 없습니다.");
         }
+        await recordService.updateUserTossId(userIdentifier, userKeyStr);
+        set({ tossUser: user });
       }
     } catch (error) {
       console.error(
         "[AuthStore] Login failed:",
         error instanceof Error ? error.message : "unknown",
       );
+      // 성공 경로에 도달하지 못했으므로 tossUser는 이미 null 유지 중.
+      // 안전 장치로 한 번 더 명시.
       set({ tossUser: null });
       throw error;
     } finally {
@@ -533,6 +543,15 @@ export const useRecordStore = create<
         if (state) {
           state.lastAdMilestoneShown = 0;
           state.modeTogglePulse = false;
+
+          // 레거시 버전에서 손상된 tossUser (userKey: NaN 등)가 복원되면
+          // pill이 가짜 "연결됨"으로 표시될 수 있어 런타임에 정리.
+          const key = state.tossUser?.userKey;
+          const isValidKey =
+            typeof key === "number" && Number.isFinite(key) && key > 0;
+          if (state.tossUser && !isValidKey) {
+            state.tossUser = null;
+          }
         }
       },
     },

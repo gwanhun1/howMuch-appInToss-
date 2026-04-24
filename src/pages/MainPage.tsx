@@ -157,9 +157,7 @@ export function MainPage() {
           onComplete={() => setCelebrating(false)}
           headline={records.length === 1 ? "첫 기록이 쌓였어요" : undefined}
           subhead={
-            records.length === 1
-              ? "앞으로의 마음도 기록해볼까요?"
-              : undefined
+            records.length === 1 ? "앞으로의 마음도 기록해볼까요?" : undefined
           }
         />
       )}

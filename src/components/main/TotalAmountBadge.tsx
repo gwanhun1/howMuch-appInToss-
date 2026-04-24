@@ -11,6 +11,13 @@ const CATEGORIES = [
   { label: "용돈", key: RECORD_CATEGORIES.ALLOWANCE },
 ] as const;
 
+/** 경조사비는 만원 단위가 기본 → 천원 단위는 버리고 "N만원"으로 표시. */
+function formatManWon(amount: number): string {
+  if (amount < 10000) return `${amount.toLocaleString()}원`;
+  const man = Math.floor(amount / 10000);
+  return `${man.toLocaleString()}만원`;
+}
+
 interface TotalAmountBadgeProps {
   totalAmount: number;
   isLoading: boolean;
@@ -112,7 +119,7 @@ export function TotalAmountBadge({
             size="small"
             className="premium-amount-badge"
             style={{
-              maxWidth: "140px",
+              maxWidth: "100px",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -122,7 +129,7 @@ export function TotalAmountBadge({
             }}
             onClick={() => setIsOpen(!isOpen)}
           >
-            총 {totalAmount.toLocaleString()}원
+            총 {formatManWon(totalAmount)}
           </Badge>
         </Tooltip>
       </div>

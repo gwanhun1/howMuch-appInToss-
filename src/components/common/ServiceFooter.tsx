@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Text, Spacing, BottomSheet, Button } from "@toss/tds-mobile";
+import { Text, Spacing, BottomSheet, Button, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
+import { useRecordStore } from "../../stores/useRecordStore";
 
 export function ServiceFooter() {
   const [activePolicy, setActivePolicy] = useState<"terms" | "privacy" | null>(
     null,
   );
+  const tossUser = useRecordStore((s) => s.tossUser);
+  const isLoggingIn = useRecordStore((s) => s.isLoggingIn);
+  const login = useRecordStore((s) => s.login);
+  const { openToast } = useToast();
 
   const handleReplayGuide = () => {
     try {
@@ -14,6 +19,36 @@ export function ServiceFooter() {
       // noop
     }
     window.location.reload();
+  };
+
+  const handleTossLogin = async () => {
+    if (isLoggingIn || tossUser) return;
+    try {
+      await login();
+      openToast("✓ 연결 완료! 새 폰에서도 이 기록을 볼 수 있어요");
+    } catch (error) {
+      console.error("Login failed:", error);
+      const msg = error instanceof Error ? error.message : String(error);
+
+      if (/cancel|취소|dismiss|denied/i.test(msg)) return;
+      if (/TOSS_APP_ONLY/.test(msg)) {
+        openToast("토스 앱 안에서만 로그인할 수 있어요");
+        return;
+      }
+      if (
+        /network|fetch|timeout|offline|인터넷|시간이 초과|네트워크|서버에 연결/i.test(
+          msg,
+        )
+      ) {
+        openToast("네트워크 연결을 확인해주세요");
+        return;
+      }
+      if (msg && /^[가-힣]/.test(msg) && msg.length <= 60) {
+        openToast(msg);
+        return;
+      }
+      openToast("로그인에 실패했어요. 잠시 후 다시 시도해주세요");
+    }
   };
 
   return (
@@ -78,6 +113,22 @@ export function ServiceFooter() {
           >
             앱 가이드 다시 보기
           </Text>
+          {!tossUser && (
+            <Text
+              typography="t7"
+              color={adaptive.blue600}
+              style={{
+                fontSize: "11px",
+                textDecoration: "underline",
+                cursor: "pointer",
+                fontWeight: "bold",
+                opacity: isLoggingIn ? 0.5 : 1,
+              }}
+              onClick={handleTossLogin}
+            >
+              토스 연결
+            </Text>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Asset, Text, useToast } from "@toss/tds-mobile";
+import { Text, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { motion } from "framer-motion";
 import type { RecordType } from "../../types/record";
@@ -9,8 +9,6 @@ import { CategoryFilterBadge } from "./CategoryFilterBadge";
 import { TotalAmountBadge } from "./TotalAmountBadge";
 import { FeatureHighlight } from "../onboarding/FeatureHighlight";
 import type { GuideProps } from "../../hooks/useFeatureGuide";
-
-type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
 interface MainSummaryCardProps {
   totalAmount: number;
@@ -43,19 +41,37 @@ export function MainSummaryCard({
   const handleTossLogin = async () => {
     try {
       await login();
-      openToast("데이터가 안전하게 연동되었습니다.");
+      openToast("✓ 연결 완료! 새 폰에서도 이 기록을 볼 수 있어요");
     } catch (error) {
       console.error("Login failed:", error);
       const msg = error instanceof Error ? error.message : String(error);
-      if (/cancel|취소|dismiss/i.test(msg)) {
-        // 사용자가 의도적으로 취소한 경우는 조용히 무시
+
+      // 사용자가 의도적으로 취소
+      if (/cancel|취소|dismiss|denied/i.test(msg)) return;
+
+      // 토스 앱 WebView 밖 (개발 서버, 일반 브라우저)
+      if (/TOSS_APP_ONLY/.test(msg)) {
+        openToast("토스 앱 안에서만 로그인할 수 있어요");
         return;
       }
-      if (/network|fetch|timeout|offline/i.test(msg)) {
+
+      // 네트워크 (영문·한글 둘 다)
+      if (
+        /network|fetch|timeout|offline|인터넷|시간이 초과|네트워크|서버에 연결/i.test(
+          msg,
+        )
+      ) {
         openToast("네트워크 연결을 확인해주세요");
-      } else {
-        openToast("로그인에 실패했어요. 잠시 후 다시 시도해주세요");
+        return;
       }
+
+      // recordService의 한글 친화 메시지면 그대로 노출
+      if (msg && /^[가-힣]/.test(msg) && msg.length <= 60) {
+        openToast(msg);
+        return;
+      }
+
+      openToast("로그인에 실패했어요. 잠시 후 다시 시도해주세요");
     }
   };
 
@@ -64,25 +80,33 @@ export function MainSummaryCard({
     [records, currentMode],
   );
 
-  // 첫 기록 직후(1~2개) · 미로그인 · 세션 내 닫기 전에만 노출되는 보관 유도 배너.
-  // 3개 도달 시엔 handleSave의 백업 토스트(A2)와 겹치지 않도록 자동 사라짐.
+  const isGuiding =
+    guide.currentStep !== null ||
+    guide.isWaitingForForm ||
+    guide.isPreparingGuide;
+
+  // 가이드 중에는 배너를 숨김 (사용자 요청)
   const [backupCardDismissed, setBackupCardDismissed] = useState(false);
   const showBackupCard =
+    !isGuiding &&
+    !isLoading &&
     !tossUser &&
     !isLoggingIn &&
     records.length >= 1 &&
-    records.length < 3 &&
     !backupCardDismissed;
 
   return (
     <div
       style={{ position: "relative", overflow: "visible", padding: "0 20px" }}
     >
+      {/* ModeToggle + 총액 한 라인. 좁은 너비 대응 위해 만원 단위로 표시. */}
       <div
         style={{
           display: "flex",
+          alignItems: "center",
           justifyContent: "space-between",
-          alignItems: "flex-start",
+          gap: 8,
+          minHeight: 44,
         }}
       >
         <FeatureHighlight
@@ -93,11 +117,7 @@ export function MainSummaryCard({
         >
           <motion.div
             style={{ display: "inline-block" }}
-            animate={
-              modeTogglePulse
-                ? { scale: [1, 1.03, 1] }
-                : { scale: 1 }
-            }
+            animate={modeTogglePulse ? { scale: [1, 1.03, 1] } : { scale: 1 }}
             transition={
               modeTogglePulse
                 ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
@@ -111,162 +131,73 @@ export function MainSummaryCard({
           </motion.div>
         </FeatureHighlight>
 
-        {/* 토스 연결(로그인) pill - 아이콘+"토스 연결" 라벨로 의미 명확화 */}
-        <motion.button
-          onClick={handleTossLogin}
-          disabled={isLoggingIn || !!tossUser}
-          aria-label={tossUser ? "토스 연결됨" : "토스에 연결하기"}
-          animate={
-            !tossUser && !isLoggingIn
-              ? { scale: [1, 1.04, 1] }
-              : { scale: 1 }
-          }
-          transition={
-            !tossUser && !isLoggingIn
-              ? { duration: 2, repeat: Infinity, ease: "easeInOut" }
-              : { duration: 0.2 }
-          }
+        <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            padding: "0 12px 0 10px",
-            height: 36,
-            minWidth: 44,
-            marginTop: 4,
-            border: `1px solid ${
-              tossUser ? adaptive.grey200 : adaptive.blue200
-            }`,
-            borderRadius: 18,
-            backgroundColor: tossUser ? adaptive.grey50 : adaptive.blue50,
-            color: tossUser ? adaptive.grey600 : adaptive.blue600,
-            cursor: isLoggingIn || !!tossUser ? "default" : "pointer",
+            flexShrink: 0,
+            visibility: isLoading || isGuiding ? "hidden" : "visible",
           }}
         >
-          <Asset.Icon
-            name={
-              (tossUser
-                ? "icon-check-mono"
-                : "icon-safe-box-deepblue") as IconName
-            }
-            size={16}
+          <TotalAmountBadge
+            totalAmount={totalAmount}
+            isLoading={isLoading}
+            recordsCount={recordsCount}
+            modeRecords={modeRecords}
           />
-          <Text
-            typography="t7"
-            fontWeight="bold"
-            color={tossUser ? adaptive.grey600 : adaptive.blue600}
-            style={{ fontSize: 13, lineHeight: 1 }}
-          >
-            {tossUser ? "연결됨" : "토스 연결"}
-          </Text>
-        </motion.button>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginTop: "12px",
-        }}
-      >
-        {modeRecords.length >= 5 ? (
-          <CategoryFilterBadge
-            filterType={filterType}
-            onFilterChange={onFilterChange}
-          />
-        ) : (
-          <span />
-        )}
-        <TotalAmountBadge
-          totalAmount={totalAmount}
-          isLoading={isLoading}
-          recordsCount={recordsCount}
-          modeRecords={modeRecords}
-        />
+        </div>
       </div>
 
       {showBackupCard && (
         <div
           style={{
             marginTop: 12,
-            padding: "14px 12px 14px 14px",
-            borderRadius: 14,
+            position: "relative",
             backgroundColor: adaptive.blue50,
             border: `1px solid ${adaptive.blue100}`,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
+            borderRadius: 10,
           }}
         >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              backgroundColor: adaptive.blue100,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Asset.Icon
-              name={"icon-safe-box-deepblue" as IconName}
-              size={20}
-            />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Text
-              typography="t7"
-              fontWeight="bold"
-              color={adaptive.grey900}
-              style={{ display: "block", fontSize: 14 }}
-            >
-              토스에 연결하면 더 안전해요
-            </Text>
-            <Text
-              typography="t7"
-              color={adaptive.grey700}
-              style={{ display: "block", fontSize: 13, marginTop: 2 }}
-            >
-              기기를 바꿔도 기록이 그대로 유지돼요
-            </Text>
-          </div>
           <button
             type="button"
             onClick={handleTossLogin}
             disabled={isLoggingIn}
             style={{
-              padding: "10px 14px",
-              borderRadius: 20,
+              width: "100%",
+              padding: "12px 40px 12px 14px",
               border: "none",
-              backgroundColor: adaptive.blue600,
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
+              background: "transparent",
+              textAlign: "left",
               cursor: "pointer",
-              minHeight: 40,
-              whiteSpace: "nowrap",
-              marginRight: 4,
+              minHeight: 44,
             }}
           >
-            연결하기
+            <Text
+              typography="t7"
+              color={adaptive.grey800}
+              style={{ fontSize: 13, lineHeight: 1.4 }}
+            >
+              기록 {records.length}개 · 새 폰에서도 보려면{" "}
+              <span style={{ color: adaptive.blue600, fontWeight: 700 }}>
+                토스 연결 →
+              </span>
+            </Text>
           </button>
           <button
             type="button"
             onClick={() => setBackupCardDismissed(true)}
             aria-label="닫기"
             style={{
-              width: 44,
-              height: 44,
+              position: "absolute",
+              top: "50%",
+              right: 4,
+              transform: "translateY(-50%)",
+              width: 32,
+              height: 32,
               border: "none",
               background: "transparent",
-              color: adaptive.grey500,
+              color: adaptive.grey400,
               cursor: "pointer",
-              fontSize: 18,
+              fontSize: 14,
               lineHeight: 1,
-              flexShrink: 0,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -274,6 +205,16 @@ export function MainSummaryCard({
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* 카테고리 필터 - 기록이 5개 이상일 때만 별도 줄에 노출 */}
+      {modeRecords.length >= 5 && !isGuiding && !isLoading && (
+        <div style={{ marginTop: 8 }}>
+          <CategoryFilterBadge
+            filterType={filterType}
+            onFilterChange={onFilterChange}
+          />
         </div>
       )}
     </div>
