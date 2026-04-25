@@ -88,22 +88,20 @@ const createRecordSlice: StateCreator<
       )) as UserMetadata;
 
       // 토스 연결 여부 판별.
-      // authenticate()는 익명 유저에게도 deviceId/anon-UUID를 tossId 필드로 저장하므로,
-      // "실제 토스 userKey"는 순수 숫자 문자열이어야 한다는 규칙으로 구분한다.
+      // authenticate()는 익명 유저에게도 anon-UUID 또는 deviceId를 tossId 필드로 저장하므로,
+      // "anon-" 접두사가 없는 값은 토스 연결로 간주한다.
       const rawTossId = userData?.tossId;
       const isVerifiedTossUser =
         typeof rawTossId === "string" &&
         rawTossId.length > 0 &&
-        /^\d+$/.test(rawTossId);
+        !rawTossId.startsWith("anon-");
 
       if (!isVerifiedTossUser) {
-        // 익명 유저이거나 tossId가 진짜 userKey가 아님 → 연결 안 된 상태로 표시
         set({ tossUser: null });
       } else if (!get().tossUser) {
-        // DB에 진짜 tossId가 저장돼 있지만 스토어엔 유저 정보 없음 → 복구
         set({
           tossUser: {
-            userKey: Number(rawTossId),
+            userKey: rawTossId,
             scope: "",
             agreedTerms: [],
           },
@@ -467,7 +465,7 @@ const createAuthSlice: StateCreator<
     set({ isLoggingIn: true });
     try {
       const user = await tossAuthService.executeFullLogin();
-      const userKeyStr = user.userKey.toString();
+      const userKeyStr = user.userKey;
 
       // DB 쓰기가 성공한 후에만 tossUser를 커밋.
       // 중간 실패 시 "연결됨" UI가 잠깐 노출되는 flicker 방지.
@@ -544,11 +542,9 @@ export const useRecordStore = create<
           state.lastAdMilestoneShown = 0;
           state.modeTogglePulse = false;
 
-          // 레거시 버전에서 손상된 tossUser (userKey: NaN 등)가 복원되면
-          // pill이 가짜 "연결됨"으로 표시될 수 있어 런타임에 정리.
+          // 레거시 버전에서 저장된 숫자 형태의 userKey는 현재 스키마와 호환되지 않으므로 정리.
           const key = state.tossUser?.userKey;
-          const isValidKey =
-            typeof key === "number" && Number.isFinite(key) && key > 0;
+          const isValidKey = typeof key === "string" && key.length > 0;
           if (state.tossUser && !isValidKey) {
             state.tossUser = null;
           }

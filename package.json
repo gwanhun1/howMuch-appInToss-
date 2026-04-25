@@ -1,14 +1,16 @@
 {
   "name": "homuch",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.1",
   "type": "module",
   "scripts": {
     "dev": "granite dev",
-    "build": "granite build",
+    "build": "ait build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "ait deploy"
+    "deploy": "ait deploy",
+    "clean": "rm -rf dist howmuch-money.ait",
+    "deploy:fresh": "npm run clean && npm run build && npm run deploy"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^2.4.7",

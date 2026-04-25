@@ -170,9 +170,9 @@ export const adService = {
             break;
 
           case "failedToShow":
-            console.error("[AdService] 광고 표시 실패:", event.data);
+            console.error("[AdService] 광고 표시 실패");
             adState.isLoaded = false;
-            callbacks.onError?.(event.data);
+            callbacks.onError?.(new Error("AD_FAILED_TO_SHOW"));
             callbacks.onDismissed();
             break;
         }
