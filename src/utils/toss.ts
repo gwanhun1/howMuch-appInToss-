@@ -1,5 +1,16 @@
 import { getDeviceId } from "@apps-in-toss/web-framework";
 
+interface QaPersonaInjection {
+  tossId?: string;
+  userKey?: string;
+}
+
+function readQaPersona(): QaPersonaInjection | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as { __QA_PERSONA__?: QaPersonaInjection };
+  return w.__QA_PERSONA__ ?? null;
+}
+
 /**
  * 토스 앱 내에서 사용자를 식별하기 위한 고유 ID를 가져옵니다.
  * AIT 환경에 따라 getDeviceId를 활용할 수 있습니다.
@@ -9,6 +20,9 @@ import { getDeviceId } from "@apps-in-toss/web-framework";
  * 이 규칙은 `useRecordStore.initializeStore`에서 연결 상태를 판별할 때 사용됩니다.
  */
 export const getTossUserIdentifier = async (): Promise<string> => {
+  const qa = readQaPersona();
+  if (qa?.tossId) return qa.tossId;
+
   try {
     // 1. 기기 고유 ID 시도 (prefix로 익명 식별자임을 명시)
     const deviceId = getDeviceId();

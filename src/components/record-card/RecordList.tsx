@@ -1,10 +1,8 @@
-import { adService } from "../../apis/adService";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { MoneyRecord, RecordType } from "../../types/record";
 import { Loader } from "@toss/tds-mobile";
 import { RecordCard } from "./RecordCard";
 import { AddRecordCard } from "./AddRecordCard";
-import { AdCard } from "../common/AdCard";
 import { RecordCardSkeleton } from "./RecordCardSkeleton";
 import { EmptyState } from "../onboarding/EmptyState";
 import { FeatureHighlight } from "../onboarding/FeatureHighlight";
@@ -18,7 +16,6 @@ interface RecordListProps {
   isLoadingMore: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
-  lastAdMilestoneShown: number;
   onAddRecord: (initialType?: RecordType | null) => void;
   onRecordClick: (recordId: string) => void;
   onToggleFavorite: (recordId: string) => void;
@@ -28,12 +25,10 @@ interface RecordListProps {
 
 export function RecordList({
   records,
-  totalCount,
   isLoading,
   isLoadingMore,
   hasMore,
   onLoadMore,
-  lastAdMilestoneShown,
   onAddRecord,
   onRecordClick,
   onToggleFavorite,
@@ -62,15 +57,6 @@ export function RecordList({
       observer.disconnect();
     };
   }, [hasMore, isLoading, isLoadingMore, onLoadMore]);
-
-  // 광고는 "전체 기록 수" 기준으로 5개마다 노출되므로,
-  // 배지도 전체 count 기반으로 판단해야 실제 트리거와 일치한다.
-  const shouldShowNextAdBadge = useMemo(
-    () =>
-      totalCount + 1 > 0 &&
-      adService.checkIsMilestone(totalCount + 1, lastAdMilestoneShown),
-    [totalCount, lastAdMilestoneShown],
-  );
 
   return (
     <div
@@ -139,10 +125,6 @@ export function RecordList({
       {!isGuiding && !isLoading && !isLoadingMore && hasMore && (
         <div ref={bottomRef} style={{ height: "20px", gridColumn: "span 3" }} />
       )}
-      {!isGuiding &&
-        !isLoading &&
-        filterType === "전체" &&
-        shouldShowNextAdBadge && <AdCard />}
     </div>
   );
 }

@@ -29,3 +29,13 @@ dist-ssr
 .env
 .env.production
 .env.local
+
+# Firebase Emulator
+.firebase/
+firestore-debug.log
+firebase-debug.log
+ui-debug.log
+*-debug.log
+
+# QA harness artifacts
+qa-reports/

@@ -32,7 +32,6 @@ export function MainPage() {
     closeAmountInput,
     resetToMain,
     startAddingRecord,
-    lastAdMilestoneShown,
     initializeStore,
     filterType,
     setFilterType,
@@ -46,12 +45,10 @@ export function MainPage() {
     hasMore,
     isLoadingMore,
     updateRecord,
-    loadAd,
   } = useRecordStore();
 
   useEffect(() => {
     initializeStore();
-    loadAd();
     if (currentPage !== "main") resetToMain();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -207,7 +204,6 @@ export function MainPage() {
                     isLoadingMore={isLoadingMore}
                     hasMore={hasMore}
                     onLoadMore={fetchMoreRecords}
-                    lastAdMilestoneShown={lastAdMilestoneShown}
                     onAddRecord={startAddingRecord}
                     onRecordClick={openRecordForm}
                     filterType={filterType}

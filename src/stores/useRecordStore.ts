@@ -7,34 +7,9 @@ import { persist } from "zustand/middleware";
 import type { DocumentSnapshot } from "firebase/firestore";
 import type { MoneyRecord, RecordMode, RecordType } from "../types/record";
 import { recordService, type UserMetadata } from "../apis/recordService";
-import { adService } from "../apis/adService";
 
-/** 첫 N개 기록까지는 광고를 차단하여 초기 사용자 경험을 보호 */
-const INITIAL_AD_FREE_COUNT = 5;
-/** 저장 완료 토스트가 보인 뒤 광고가 뜨기까지의 지연(ms) */
-const AD_AFTER_SAVE_DELAY_MS = 2000;
 /** 첫 기록 저장 후 mode-toggle을 강조하는 시간(ms) */
 const MODE_TOGGLE_PULSE_DURATION_MS = 4000;
-
-/**
- * 토스 인앱 SDK 타입 정의
- */
-declare global {
-  interface Window {
-    toss?: {
-      loadAppsInTossAdMob: (params: {
-        options: { adGroupId: string };
-        onEvent?: (event: { type: string; data?: unknown }) => void;
-        onError?: (error: unknown) => void;
-      }) => () => void;
-      showAppsInTossAdMob: (params: {
-        options: { adGroupId: string };
-        onEvent?: (event: { type: string; data?: unknown }) => void;
-        onError?: (error: unknown) => void;
-      }) => void;
-    };
-  }
-}
 
 /**
  * 1. 레코드 데이터 슬라이스
@@ -174,11 +149,6 @@ const createRecordSlice: StateCreator<
 
     const isFirstRecord = records.length === 0;
     const newRecord = { ...record, createdAt: new Date().toISOString() };
-    const newCount = records.length + 1;
-
-    const shouldShowAd =
-      newCount > INITIAL_AD_FREE_COUNT &&
-      adService.checkIsMilestone(newCount, lastAdMilestoneShown);
 
     const newTotalPaid =
       record.mode === "paid" ? totalPaid + record.amount : totalPaid;
@@ -219,21 +189,6 @@ const createRecordSlice: StateCreator<
         () => set({ modeTogglePulse: false }),
         MODE_TOGGLE_PULSE_DURATION_MS,
       );
-    }
-
-    if (shouldShowAd) {
-      setTimeout(() => {
-        adService.loadAndShowAd({
-          onDismissed: () => {
-            set({ lastAdMilestoneShown: newCount, isAdLoaded: false });
-          },
-          onError: (error) => {
-            console.error("[Store] 광고 에러:", error);
-          },
-        });
-      }, AD_AFTER_SAVE_DELAY_MS);
-    } else {
-      get().loadAd();
     }
   },
 
@@ -415,13 +370,10 @@ const createUISlice: StateCreator<
 });
 
 /**
- * 3. 광고 상태 슬라이스
+ * 3. 광고 상태 슬라이스 (광고 기능 비활성화 — DB 호환을 위해 필드만 유지)
  */
 interface AdSlice {
   lastAdMilestoneShown: number;
-  isAdLoaded: boolean;
-  isAdLoading: boolean;
-  loadAd: () => Promise<void>;
 }
 
 const createAdSlice: StateCreator<
@@ -429,19 +381,8 @@ const createAdSlice: StateCreator<
   [["zustand/persist", unknown]],
   [],
   AdSlice
-> = (set, get) => ({
+> = () => ({
   lastAdMilestoneShown: 0,
-  isAdLoaded: false,
-  isAdLoading: false,
-  loadAd: async () => {
-    if (get().isAdLoading || adService.isAdLoaded()) return;
-
-    set({ isAdLoading: true });
-    adService.loadAd({
-      onLoaded: () => set({ isAdLoaded: true, isAdLoading: false }),
-      onError: () => set({ isAdLoaded: false, isAdLoading: false }),
-    });
-  },
 });
 
 /**

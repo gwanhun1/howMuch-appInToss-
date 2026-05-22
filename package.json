@@ -8,9 +8,12 @@
     "build": "ait build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "ait deploy",
+    "deploy:auth": "set -a && . ./.env.local && set +a && ait token add --api-key \"$AIT_API_KEY\" default",
+    "deploy": "ait deploy --profile default",
     "clean": "rm -rf dist howmuch-money.ait",
-    "deploy:fresh": "npm run clean && npm run build && npm run deploy"
+    "deploy:fresh": "npm run clean && npm run build && npm run deploy",
+    "qa:emulator": "firebase emulators:start --only firestore,auth",
+    "qa:dev": "vite --mode qa --host"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^2.4.7",
