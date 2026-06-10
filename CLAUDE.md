@@ -159,13 +159,30 @@ npm run deploy        # Toss AIT 배포
 
 ## 루프 기법 스킬
 
+- `/ralph [기능명]` — Ralph Loop: spec의 PASS/FAIL 기준 충족까지 Execute→Evaluate→Fix 반복
 - `/score [기능 설명]` — 3개 에이전트가 각자 구현 → Judge 채점
 - `/new-page [페이지명]` — 4계층 페이지 자동 생성
 - `/worktree [브랜치명]` — 격리 개발 환경 (포트 자동 분배)
 
 예시:
 ```bash
+/ralph settlement              # ralph/specs/settlement.md 기준으로 루프
 /score "경조사 카테고리 필터링 추가"
 /new-page "statistics"
 /worktree feat/new-feature
 ```
+
+### Ralph Loop 디렉토리
+
+```
+AI_LOOP_GUIDE.md               # 감독관 문서: 3-Gate 검증 기준 + 증거 보고서 양식 + 인간 개입 경계선
+ralph/
+  ├── PROMPT.md                # 헤드리스 루프용 빌드 프롬프트
+  ├── IMPLEMENTATION_PLAN.md   # 루프 간 상태 공유 파일
+  └── specs/
+      ├── _TEMPLATE.md         # spec 템플릿
+      └── settlement.md        # 예시: 친구 간 정산 기능 spec
+scripts/ralph.sh               # 터미널 자율 루프 (최대 5회)
+```
+
+**모든 기능 작업 완료 선언 전 `AI_LOOP_GUIDE.md`의 3-Gate 자가 검증 + 증거 보고서 출력은 필수다.**
