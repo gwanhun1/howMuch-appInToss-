@@ -8,6 +8,7 @@ import { RecordList } from "../components/record-card/RecordList";
 import { CoinRain } from "../components/common/CoinRain";
 import { GlobalErrorView } from "../components/common/GlobalErrorView";
 import { MainSummaryCard } from "../components/main/MainSummaryCard";
+import { ViewModeToggle } from "../components/main/ViewModeToggle";
 import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
 import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
@@ -25,6 +26,8 @@ export function MainPage() {
     currentPage,
     currentMode,
     setCurrentMode,
+    viewMode,
+    setViewMode,
     isRecordFormOpen,
     openRecordForm,
     closeRecordForm,
@@ -191,6 +194,20 @@ export function MainPage() {
 
               <div
                 style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  padding: "0 20px",
+                  marginBottom: 12,
+                }}
+              >
+                <ViewModeToggle
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                />
+              </div>
+
+              <div
+                style={{
                   transform: `translateX(${dragX}px)`,
                   transition: dragX === 0 ? "transform 0.25s ease-out" : "none",
                   opacity: 1 - Math.abs(dragX) * 0.002,
@@ -207,6 +224,7 @@ export function MainPage() {
                     onAddRecord={startAddingRecord}
                     onRecordClick={openRecordForm}
                     filterType={filterType}
+                    viewMode={viewMode}
                     guide={guide}
                     onToggleFavorite={handleToggleFavorite}
                   />

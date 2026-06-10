@@ -3,6 +3,7 @@ import { adaptive } from "@toss/tds-colors";
 import { memo, useCallback, useMemo, useRef } from "react";
 import type { MoneyRecord } from "../../types/record";
 import { CATEGORY_THEMES, RECORD_CATEGORIES } from "../../constants/category";
+import { getRecordDday } from "../../utils/recordDisplay";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
@@ -36,24 +37,10 @@ function RecordCardComponent({
     onClick(record.id);
   }, [onClick, record.id]);
 
-  const { isUpcoming, ddayText } = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split("T")[0];
-    const upcoming = !!record.date && record.date >= todayStr;
-    if (!record.date || !upcoming) {
-      return { isUpcoming: upcoming, ddayText: null as string | null };
-    }
-    const target = new Date(record.date);
-    target.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil(
-      (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-    );
-    return {
-      isUpcoming: upcoming,
-      ddayText: diffDays === 0 ? "D-Day" : `D-${diffDays}`,
-    };
-  }, [record.date]);
+  const { isUpcoming, ddayText } = useMemo(
+    () => getRecordDday(record.date),
+    [record.date],
+  );
 
   const theme = CATEGORY_THEMES[record.type || "전체"];
   const cardBgColor = theme.lightColor;

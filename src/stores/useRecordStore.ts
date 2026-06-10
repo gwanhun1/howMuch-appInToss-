@@ -282,8 +282,10 @@ interface UISlice {
   filterType: "전체" | RecordType;
   isCelebrating: boolean;
   modeTogglePulse: boolean;
+  viewMode: "card" | "list";
 
   setCurrentMode: (mode: RecordMode) => void;
+  setViewMode: (mode: UISlice["viewMode"]) => void;
   setFilterType: (type: UISlice["filterType"]) => void;
   setCelebrating: (val: boolean) => void;
   setEditingRecord: (r: MoneyRecord | null) => void;
@@ -313,8 +315,10 @@ const createUISlice: StateCreator<
   filterType: "전체",
   isCelebrating: false,
   modeTogglePulse: false,
+  viewMode: "card",
 
   setCurrentMode: (currentMode) => set({ currentMode, filterType: "전체" }),
+  setViewMode: (viewMode) => set({ viewMode }),
   setFilterType: (filterType) => set({ filterType }),
   setCelebrating: (isCelebrating) => set({ isCelebrating }),
   setEditingRecord: (editingRecord) => set({ editingRecord }),
@@ -472,6 +476,7 @@ export const useRecordStore = create<
       partialize: (state) => ({
         lastAdMilestoneShown: state.lastAdMilestoneShown,
         currentMode: state.currentMode,
+        viewMode: state.viewMode,
         tossUser: state.tossUser,
       }),
       onRehydrateStorage: () => (state) => {
