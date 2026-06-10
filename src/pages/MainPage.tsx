@@ -8,7 +8,6 @@ import { RecordList } from "../components/record-card/RecordList";
 import { CoinRain } from "../components/common/CoinRain";
 import { GlobalErrorView } from "../components/common/GlobalErrorView";
 import { MainSummaryCard } from "../components/main/MainSummaryCard";
-import { ViewModeToggle } from "../components/main/ViewModeToggle";
 import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
 import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
@@ -187,24 +186,12 @@ export function MainPage() {
                 recordsCount={modeRecordsCount}
                 filterType={filterType}
                 onFilterChange={setFilterType}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
                 guide={guide}
               />
 
               <Spacing size={16} />
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  padding: "0 20px",
-                  marginBottom: 12,
-                }}
-              >
-                <ViewModeToggle
-                  viewMode={viewMode}
-                  onViewModeChange={setViewMode}
-                />
-              </div>
 
               <div
                 style={{

@@ -7,8 +7,11 @@ import { useRecordStore } from "../../stores/useRecordStore";
 import { ModeToggle } from "./ModeToggle";
 import { CategoryFilterBadge } from "./CategoryFilterBadge";
 import { TotalAmountBadge } from "./TotalAmountBadge";
+import { ViewModeToggle } from "./ViewModeToggle";
 import { FeatureHighlight } from "../onboarding/FeatureHighlight";
 import type { GuideProps } from "../../hooks/useFeatureGuide";
+
+type ViewMode = "card" | "list";
 
 interface MainSummaryCardProps {
   totalAmount: number;
@@ -16,6 +19,8 @@ interface MainSummaryCardProps {
   recordsCount: number;
   filterType: RecordType | "전체";
   onFilterChange: (type: RecordType | "전체") => void;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
   guide: GuideProps;
 }
 
@@ -25,6 +30,8 @@ export function MainSummaryCard({
   recordsCount,
   filterType,
   onFilterChange,
+  viewMode,
+  onViewModeChange,
   guide,
 }: MainSummaryCardProps) {
   const {
@@ -208,12 +215,24 @@ export function MainSummaryCard({
         </div>
       )}
 
-      {/* 카테고리 필터 - 기록이 5개 이상일 때만 별도 줄에 노출 */}
+      {/* 카테고리 필터 + 보기 모드 토글 */}
       {modeRecords.length >= 5 && !isGuiding && !isLoading && (
-        <div style={{ marginTop: 8 }}>
+        <div
+          style={{
+            marginTop: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+          }}
+        >
           <CategoryFilterBadge
             filterType={filterType}
             onFilterChange={onFilterChange}
+          />
+          <ViewModeToggle
+            viewMode={viewMode}
+            onViewModeChange={onViewModeChange}
           />
         </div>
       )}
