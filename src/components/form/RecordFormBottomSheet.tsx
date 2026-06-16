@@ -74,7 +74,6 @@ export function RecordFormBottomSheet({
   const setCelebrating = useRecordStore((s) => s.setCelebrating);
   const currentMode = useRecordStore((s) => s.currentMode);
   const recordsCount = useRecordStore((s) => s.records.length);
-  const tossUser = useRecordStore((s) => s.tossUser);
 
   const labels = MODE_LABELS[currentMode];
   const { openToast } = useToast();
@@ -165,7 +164,6 @@ export function RecordFormBottomSheet({
 
     const recordToSave = { ...currentRecord, name: currentRecord.name.trim() };
     const wasFirst = isCreateMode && recordsCount === 0;
-    const countAfterSave = isCreateMode ? recordsCount + 1 : recordsCount;
 
     try {
       if (isCreateMode) {
@@ -176,26 +174,6 @@ export function RecordFormBottomSheet({
             : labels.addToast,
         );
         setCelebrating(true);
-
-        if (countAfterSave === 3 && !tossUser) {
-          const BACKUP_PROMPT_KEY = "howmuch_backup_prompt_shown";
-          let alreadyShown = false;
-          try {
-            alreadyShown = localStorage.getItem(BACKUP_PROMPT_KEY) === "true";
-          } catch {
-            // noop
-          }
-          if (!alreadyShown) {
-            try {
-              localStorage.setItem(BACKUP_PROMPT_KEY, "true");
-            } catch {
-              // noop
-            }
-            setTimeout(() => {
-              openToast("기록이 쌓이고 있어요. 지금 백업해두면 안전해요 🔒");
-            }, 2200);
-          }
-        }
       } else if (record) {
         await updateRecord(record.id, recordToSave);
         openToast(labels.editToast);

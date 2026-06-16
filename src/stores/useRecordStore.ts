@@ -1,7 +1,3 @@
-import {
-  tossAuthService,
-  type TossUserMeResponse,
-} from "../apis/tossAuthService";
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DocumentSnapshot } from "firebase/firestore";
@@ -34,7 +30,7 @@ interface RecordSlice {
 }
 
 const createRecordSlice: StateCreator<
-  RecordSlice & UISlice & AdSlice & AuthSlice,
+  RecordSlice & UISlice,
   [["zustand/persist", unknown]],
   [],
   RecordSlice
@@ -62,39 +58,16 @@ const createRecordSlice: StateCreator<
         initialTossId,
       )) as UserMetadata;
 
-      // 토스 연결 여부 판별.
-      // authenticate()는 익명 유저에게도 anon-UUID 또는 deviceId를 tossId 필드로 저장하므로,
-      // "anon-" 접두사가 없는 값은 토스 연결로 간주한다.
-      const rawTossId = userData?.tossId;
-      const isVerifiedTossUser =
-        typeof rawTossId === "string" &&
-        rawTossId.length > 0 &&
-        !rawTossId.startsWith("anon-");
-
-      if (!isVerifiedTossUser) {
-        set({ tossUser: null });
-      } else if (!get().tossUser) {
-        set({
-          tossUser: {
-            userKey: rawTossId,
-            scope: "",
-            agreedTerms: [],
-          },
-        });
-      }
-
       if (userData?.friends) {
         const { totalAmount } = await recordService.migrateLegacyData(
           uid,
           userData.friends,
-          userData.lastAdMilestoneShown || 0,
         );
         set({ totalPaid: totalAmount, totalReceived: 0 });
       } else if (userData) {
         set({
           totalPaid: userData.totalPaid || userData.totalAmount || 0,
           totalReceived: userData.totalReceived || 0,
-          lastAdMilestoneShown: userData.lastAdMilestoneShown || 0,
         });
       }
 
@@ -137,14 +110,8 @@ const createRecordSlice: StateCreator<
 
   addRecord: async (record) => {
     const snapshot = get();
-    const {
-      userIdentifier,
-      records,
-      totalPaid,
-      totalReceived,
-      lastAdMilestoneShown,
-      modeTogglePulse,
-    } = snapshot;
+    const { userIdentifier, records, totalPaid, totalReceived, modeTogglePulse } =
+      snapshot;
     if (!userIdentifier) throw new Error("인증 필요");
 
     const isFirstRecord = records.length === 0;
@@ -170,14 +137,12 @@ const createRecordSlice: StateCreator<
         newRecord,
         newTotalPaid,
         newTotalReceived,
-        lastAdMilestoneShown,
       );
     } catch (error) {
       set({
         records,
         totalPaid,
         totalReceived,
-        lastAdMilestoneShown,
         modeTogglePulse,
       });
       throw error;
@@ -301,7 +266,7 @@ interface UISlice {
 }
 
 const createUISlice: StateCreator<
-  RecordSlice & UISlice & AdSlice & AuthSlice,
+  RecordSlice & UISlice,
   [["zustand/persist", unknown]],
   [],
   UISlice
@@ -374,126 +339,24 @@ const createUISlice: StateCreator<
 });
 
 /**
- * 3. 광고 상태 슬라이스 (광고 기능 비활성화 — DB 호환을 위해 필드만 유지)
- */
-interface AdSlice {
-  lastAdMilestoneShown: number;
-}
-
-const createAdSlice: StateCreator<
-  RecordSlice & UISlice & AdSlice & AuthSlice,
-  [["zustand/persist", unknown]],
-  [],
-  AdSlice
-> = () => ({
-  lastAdMilestoneShown: 0,
-});
-
-/**
- * 4. 인증 상태 슬라이스
- */
-interface AuthSlice {
-  tossUser: TossUserMeResponse | null;
-  isLoggingIn: boolean;
-  login: () => Promise<void>;
-}
-
-const createAuthSlice: StateCreator<
-  RecordSlice & UISlice & AdSlice & AuthSlice,
-  [["zustand/persist", unknown]],
-  [],
-  AuthSlice
-> = (set, get) => ({
-  tossUser: null,
-  isLoggingIn: false,
-  login: async () => {
-    set({ isLoggingIn: true });
-    try {
-      const user = await tossAuthService.executeFullLogin();
-      const userKeyStr = user.userKey;
-
-      // DB 쓰기가 성공한 후에만 tossUser를 커밋.
-      // 중간 실패 시 "연결됨" UI가 잠깐 노출되는 flicker 방지.
-
-      // 1. 해당 tossId(userKey)를 가진 기존 유저가 있는지 확인
-      const existingUser = await recordService.findUserByTossId(userKeyStr);
-
-      if (existingUser) {
-        // 레코드 재조회 후 한 번에 커밋
-        const { fetchedRecords, lastVisible } =
-          await recordService.fetchRecordsPage(existingUser.uid);
-        set({
-          tossUser: user,
-          userIdentifier: existingUser.uid,
-          totalPaid:
-            existingUser.data.totalPaid || existingUser.data.totalAmount || 0,
-          totalReceived: existingUser.data.totalReceived || 0,
-          lastAdMilestoneShown: existingUser.data.lastAdMilestoneShown || 0,
-          records: fetchedRecords,
-          lastVisible,
-          hasMore: fetchedRecords.length === 20,
-        });
-      } else {
-        // 2. 기존 유저가 없다면 현재 익명 유저 문서를 토스 계정으로 연결
-        const userIdentifier = get().userIdentifier;
-        if (!userIdentifier) {
-          throw new Error("인증 정보가 없어 연결할 수 없습니다.");
-        }
-        await recordService.updateUserTossId(userIdentifier, userKeyStr);
-        set({ tossUser: user });
-      }
-    } catch (error) {
-      console.error(
-        "[AuthStore] Login failed:",
-        error instanceof Error ? error.message : "unknown",
-      );
-      // 성공 경로에 도달하지 못했으므로 tossUser는 이미 null 유지 중.
-      // 안전 장치로 한 번 더 명시.
-      set({ tossUser: null });
-      throw error;
-    } finally {
-      set({ isLoggingIn: false });
-    }
-  },
-});
-
-/**
  * 최종 스토어 구성
  */
-export const useRecordStore = create<
-  RecordSlice & UISlice & AdSlice & AuthSlice
->()(
+export const useRecordStore = create<RecordSlice & UISlice>()(
   persist(
     (...a) => ({
       ...createRecordSlice(...a),
       ...createUISlice(...a),
-      ...createAdSlice(...a),
-      ...createAuthSlice(...a),
     }),
     {
       name: "howmuch-records-storage-v4",
       version: 4,
       partialize: (state) => ({
-        lastAdMilestoneShown: state.lastAdMilestoneShown,
         currentMode: state.currentMode,
         viewMode: state.viewMode,
-        tossUser: state.tossUser,
       }),
       onRehydrateStorage: () => (state) => {
-        // persist된 lastAdMilestoneShown은 0으로 초기화.
-        // initializeStore가 서버에서 실제 값을 가져오면 덮어씀.
-        // records가 복원되지 않는 상태에서 이전 마일스톤을 유지하면
-        // 광고 마일스톤 계산이 영구히 꼬일 수 있어 런타임 초기화가 안전함.
         if (state) {
-          state.lastAdMilestoneShown = 0;
           state.modeTogglePulse = false;
-
-          // 레거시 버전에서 저장된 숫자 형태의 userKey는 현재 스키마와 호환되지 않으므로 정리.
-          const key = state.tossUser?.userKey;
-          const isValidKey = typeof key === "string" && key.length > 0;
-          if (state.tossUser && !isValidKey) {
-            state.tossUser = null;
-          }
         }
       },
     },

@@ -4,9 +4,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  updateDoc,
   query,
-  where,
   orderBy,
   limit,
   startAfter,
@@ -90,7 +88,6 @@ export interface UserMetadata {
   totalAmount: number;
   totalPaid: number;
   totalReceived: number;
-  lastAdMilestoneShown: number;
   friends?: MoneyRecord[]; // 레거시 마이그레이션용
 }
 
@@ -120,7 +117,6 @@ export const recordService = {
           totalAmount: 0,
           totalPaid: 0,
           totalReceived: 0,
-          lastAdMilestoneShown: 0,
         };
         await withTimeout(setDoc(userDocRef, initialData));
         return initialData;
@@ -141,11 +137,7 @@ export const recordService = {
   /**
    * 레거시 데이터 마이그레이션 - 기존 friend 데이터에 mode: "paid" 추가
    */
-  async migrateLegacyData(
-    uid: string,
-    friendsArray: MoneyRecord[],
-    lastAdMilestoneShown: number,
-  ) {
+  async migrateLegacyData(uid: string, friendsArray: MoneyRecord[]) {
     try {
       checkOnline();
       const batch = writeBatch(db);
@@ -168,7 +160,6 @@ export const recordService = {
         totalAmount,
         totalPaid: totalAmount,
         totalReceived: 0,
-        lastAdMilestoneShown,
         migratedAt: new Date().toISOString(),
       });
 
@@ -227,7 +218,6 @@ export const recordService = {
     record: MoneyRecord,
     totalPaid: number,
     totalReceived: number,
-    lastAdMilestoneShown: number,
   ) {
     try {
       checkOnline();
@@ -240,7 +230,6 @@ export const recordService = {
         totalAmount: totalPaid + totalReceived,
         totalPaid,
         totalReceived,
-        lastAdMilestoneShown,
       });
 
       await withTimeout(batch.commit());
@@ -295,44 +284,6 @@ export const recordService = {
       });
 
       await withTimeout(batch.commit());
-    } catch (error) {
-      throwUserFriendlyError(error);
-    }
-  },
-
-  /**
-   * 토스 유저 키로 기존 유저 문서를 찾습니다.
-   */
-  async findUserByTossId(
-    tossId: string,
-  ): Promise<{ uid: string; data: UserMetadata } | null> {
-    try {
-      checkOnline();
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("tossId", "==", tossId), limit(1));
-      const snapshot = await withTimeout(getDocs(q));
-
-      if (snapshot.empty) return null;
-
-      const userDoc = snapshot.docs[0];
-      return {
-        uid: userDoc.id,
-        data: userDoc.data() as UserMetadata,
-      };
-    } catch (error) {
-      console.error("findUserByTossId failed:", error);
-      return null;
-    }
-  },
-
-  /**
-   * 유저 문서의 tossId 필드를 업데이트합니다.
-   */
-  async updateUserTossId(uid: string, tossId: string) {
-    try {
-      checkOnline();
-      const userDocRef = doc(db, "users", uid);
-      await withTimeout(updateDoc(userDocRef, { tossId }));
     } catch (error) {
       throwUserFriendlyError(error);
     }
