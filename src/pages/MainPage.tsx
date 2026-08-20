@@ -1,18 +1,25 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { Spacing, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useRecordStore } from "../stores/useRecordStore";
 import { RecordFormBottomSheet } from "../components/form/RecordFormBottomSheet";
-import { AmountInputPage } from "./AmountInputPage";
 import { RecordList } from "../components/record-card/RecordList";
 import { CoinRain } from "../components/common/CoinRain";
 import { GlobalErrorView } from "../components/common/GlobalErrorView";
 import { MainSummaryCard } from "../components/main/MainSummaryCard";
 import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
-import { RandomAmountPicker } from "../components/random-picker/RandomAmountPicker";
 import { useSwipeMode } from "../hooks/useSwipeMode";
 import { useFeatureGuide } from "../hooks/useFeatureGuide";
+
+const AmountInputPage = lazy(() =>
+  import("./AmountInputPage").then((module) => ({ default: module.AmountInputPage })),
+);
+const RandomAmountPicker = lazy(() =>
+  import("../components/random-picker/RandomAmountPicker").then((module) => ({
+    default: module.RandomAmountPicker,
+  })),
+);
 
 export function MainPage() {
   const { openToast } = useToast();
@@ -161,14 +168,16 @@ export function MainPage() {
         />
       )}
       {currentPage === "amountInput" && editingRecord ? (
-        <AmountInputPage
-          value={editingRecord.amount}
-          onBack={closeAmountInput}
-          onSave={(val) => {
-            setEditingRecord({ ...editingRecord, amount: val });
-            closeAmountInput();
-          }}
-        />
+        <Suspense fallback={null}>
+          <AmountInputPage
+            value={editingRecord.amount}
+            onBack={closeAmountInput}
+            onSave={(val) => {
+              setEditingRecord({ ...editingRecord, amount: val });
+              closeAmountInput();
+            }}
+          />
+        </Suspense>
       ) : (
         <>
           <div
@@ -257,7 +266,9 @@ export function MainPage() {
         guide={guide}
       />
 
-      <RandomAmountPicker />
+      <Suspense fallback={null}>
+        <RandomAmountPicker />
+      </Suspense>
 
       {(guide.currentStep !== null ||
         guide.isWaitingForForm ||

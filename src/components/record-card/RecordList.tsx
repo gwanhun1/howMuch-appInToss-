@@ -37,7 +37,8 @@ function AddRecordListRow({ onClick }: { onClick: () => void }) {
     onClick();
   };
   return (
-    <div
+    <button
+      type="button"
       onClick={handleClick}
       style={{
         display: "flex",
@@ -50,6 +51,8 @@ function AddRecordListRow({ onClick }: { onClick: () => void }) {
         border: "1px dashed rgba(49, 130, 246, 0.3)",
         cursor: "pointer",
         boxSizing: "border-box",
+        width: "100%",
+        font: "inherit",
       }}
     >
       <Asset.Icon
@@ -61,7 +64,7 @@ function AddRecordListRow({ onClick }: { onClick: () => void }) {
       <Text typography="t6" fontWeight="bold" style={{ color: adaptive.blue600 }}>
         기록 추가
       </Text>
-    </div>
+    </button>
   );
 }
 

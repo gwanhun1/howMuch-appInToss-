@@ -53,7 +53,16 @@ function RecordCardComponent({
   return (
     <div
       ref={cardRef}
+      role="button"
+      tabIndex={0}
+      aria-label={`${record.name}, ${record.amount.toLocaleString()}원 기록 열기`}
       onClick={handleTap}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handleTap();
+        }
+      }}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
@@ -80,12 +89,14 @@ function RecordCardComponent({
       }}
     >
       {record.isFavorite && (
-        <div
+        <button
+          type="button"
+          aria-label="중요 표시 해제"
           onClick={(e) => { e.stopPropagation(); onToggleFavorite(record.id); }}
-          style={{ position: "absolute", top: "8px", left: "8px", cursor: "pointer", padding: "4px", zIndex: 1 }}
+          style={{ position: "absolute", top: "8px", left: "8px", cursor: "pointer", padding: "4px", zIndex: 1, border: 0, background: "transparent" }}
         >
           <Asset.Icon name="icon-star-blue" frameShape={Asset.frameShape.CleanW16} />
-        </div>
+        </button>
       )}
 
       {ddayText && (

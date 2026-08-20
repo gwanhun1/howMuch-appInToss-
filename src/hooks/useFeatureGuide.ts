@@ -4,7 +4,6 @@ export type GuideStep = "add-button" | "form-all" | "mode-toggle" | null;
 
 export const STEP_ORDER: Exclude<GuideStep, null>[] = [
   "add-button",
-  "form-all",
   "mode-toggle",
 ];
 
@@ -63,10 +62,6 @@ export function useFeatureGuide(onGuideEnd?: () => void): GuideProps {
         return null;
       }
       const nextStep = STEP_ORDER[idx + 1];
-      if (prev === "add-button" && nextStep === "form-all") {
-        setIsWaitingForForm(true);
-        return null;
-      }
       const wasForm = FORM_STEPS.has(prev as Exclude<GuideStep, null>);
       const isForm = FORM_STEPS.has(nextStep);
       if (wasForm && !isForm) {

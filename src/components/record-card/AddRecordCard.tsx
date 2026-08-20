@@ -25,7 +25,9 @@ export function AddRecordCard({ onClick }: AddRecordCardProps) {
   };
 
   return (
-    <motion.div
+    <motion.button
+      type="button"
+      aria-label="기록 추가"
       className="add-card-pulse"
       onClick={handleClick}
       whileTap={{ scale: 0.96 }}
@@ -42,6 +44,8 @@ export function AddRecordCard({ onClick }: AddRecordCardProps) {
         height: "160px",
         boxSizing: "border-box",
         boxShadow: "0 4px 12px rgba(49, 130, 246, 0.05)",
+        width: "100%",
+        padding: 0,
       }}
     >
       <Asset.Icon
@@ -57,6 +61,6 @@ export function AddRecordCard({ onClick }: AddRecordCardProps) {
       >
         추가
       </Text>
-    </motion.div>
+    </motion.button>
   );
 }

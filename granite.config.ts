@@ -14,9 +14,9 @@ function getLocalIP() {
 }
 
 export default defineConfig({
-  appName: "howmuch-money",
+  appName: "howmuchmoney",
   brand: {
-    displayName: "얼마냈지요",
+    displayName: "얼마냈지",
     primaryColor: "#3182F6",
     icon: "https://static.toss.im/appsintoss/17227/e6c265d0-b517-44d1-8d5e-66e394617883.png",
     bridgeColorMode: "basic",

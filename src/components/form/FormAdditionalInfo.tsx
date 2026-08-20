@@ -80,13 +80,21 @@ export function FormAdditionalInfo({
         </div>
         <TextField
           variant="line"
-          label="날짜"
+          label="날짜 (선택)"
+          labelOption="sustain"
           type="date"
           value={date}
           onChange={handleDateChange}
           min={dateBounds.min}
           max={dateBounds.max}
         />
+        {!date && (
+          <div style={{ padding: "6px 20px 0" }}>
+            <Text typography="t7" color={adaptive.grey500}>
+              선택하지 않으면 날짜 없이 저장돼요
+            </Text>
+          </div>
+        )}
         <Spacing size={20} />
       </div>
     </div>

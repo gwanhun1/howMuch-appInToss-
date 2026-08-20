@@ -88,6 +88,8 @@ export function RecordFormBottomSheet({
   const nameFieldRef = useRef<HTMLDivElement>(null);
   const typeFieldRef = useRef<HTMLDivElement>(null);
   const amountFieldRef = useRef<HTMLDivElement>(null);
+  const formScrollRef = useRef<HTMLDivElement>(null);
+  const accordionScrollTimerRef = useRef<number | null>(null);
 
   const isCreateMode = selectedRecordId === "new";
 
@@ -101,12 +103,43 @@ export function RecordFormBottomSheet({
     if (open && record && !editingRecord) {
       setEditingRecord({ ...record });
     }
+    if (open) {
+      const isNewRecord = selectedRecordId === "new";
+      setExpanded(isNewRecord || Boolean(record?.relation || record?.date));
+    }
     if (!open) {
       setIsSubmitting(false);
       setExpanded(false);
       setShowValidationError(false);
     }
-  }, [open, record, editingRecord, setEditingRecord]);
+  }, [open, record, editingRecord, selectedRecordId, setEditingRecord]);
+
+  useEffect(
+    () => () => {
+      if (accordionScrollTimerRef.current !== null) {
+        window.clearTimeout(accordionScrollTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  const handleToggleAdditionalInfo = () => {
+    const willExpand = !expanded;
+    setExpanded(willExpand);
+    if (!willExpand) return;
+
+    if (accordionScrollTimerRef.current !== null) {
+      window.clearTimeout(accordionScrollTimerRef.current);
+    }
+    accordionScrollTimerRef.current = window.setTimeout(() => {
+      const container = formScrollRef.current;
+      container?.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+      accordionScrollTimerRef.current = null;
+    }, 320);
+  };
 
   const handleClose = () => {
     setExpanded(false);
@@ -232,17 +265,23 @@ export function RecordFormBottomSheet({
                 ? `${currentMode === "paid" ? "보낸 마음" : "받은 마음"} 추가하기`
                 : `${record?.name || "기록"} 정보 수정`}
             </Text>
-            <div
-              role="button"
+            <button
+              type="button"
               aria-label={
                 currentRecord.isFavorite ? "중요 표시 해제" : "중요 표시"
               }
-              onClick={() => {
+              onClick={async () => {
                 if (isGuideActive) return;
                 const newStatus = !currentRecord.isFavorite;
                 setEditingRecord({ ...currentRecord, isFavorite: newStatus });
-                if (!isCreateMode && record)
-                  updateRecord(record.id, { isFavorite: newStatus });
+                if (!isCreateMode && record) {
+                  try {
+                    await updateRecord(record.id, { isFavorite: newStatus });
+                  } catch {
+                    setEditingRecord(currentRecord);
+                    openToast("중요 표시 변경에 실패했어요");
+                  }
+                }
               }}
               style={{
                 cursor: "pointer",
@@ -252,6 +291,9 @@ export function RecordFormBottomSheet({
                 alignItems: "center",
                 justifyContent: "center",
                 margin: "-10px",
+                padding: 0,
+                border: 0,
+                background: "transparent",
               }}
             >
               <Asset.Icon
@@ -259,7 +301,7 @@ export function RecordFormBottomSheet({
                 size={24}
                 color={currentRecord.isFavorite ? undefined : adaptive.grey300}
               />
-            </div>
+            </button>
           </div>
         }
       >
@@ -272,6 +314,7 @@ export function RecordFormBottomSheet({
           }}
         >
           <div
+            ref={formScrollRef}
             style={{
               flex: 1,
               overflowY: isGuideActive ? "hidden" : "auto",
@@ -353,7 +396,7 @@ export function RecordFormBottomSheet({
               <ListRow
                 contents={
                   <Text typography="t7" color={adaptive.grey600}>
-                    추가 정보 (선택)
+                    관계와 날짜 (선택)
                   </Text>
                 }
                 verticalPadding="small"
@@ -361,9 +404,7 @@ export function RecordFormBottomSheet({
                 onClick={
                   isGuideActive
                     ? undefined
-                    : () => {
-                        setExpanded(!expanded);
-                      }
+                    : handleToggleAdditionalInfo
                 }
               />
               <div

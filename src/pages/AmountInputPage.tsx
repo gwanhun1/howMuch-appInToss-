@@ -164,7 +164,7 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
           {QUICK_AMOUNTS.map((item) => {
             const isSelected = amount === item.value.toString();
             return (
-              <button key={item.value} onClick={() => handleQuickSelect(item.value)} style={{
+              <button type="button" key={item.value} onClick={() => handleQuickSelect(item.value)} style={{
                 flexShrink: 0, padding: "12px 24px", borderRadius: "24px",
                 border: isSelected ? "none" : `1px solid ${adaptive.blue100}`,
                 backgroundColor: isSelected ? adaptive.blue500 : adaptive.blue50,
@@ -175,6 +175,7 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
               }}
                 onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.96)")}
                 onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
               >
                 {item.label}
               </button>

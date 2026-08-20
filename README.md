@@ -56,7 +56,7 @@
 
 - 🎲 **축하금 랜덤 추첨기(Picker)**: 재미 요소와 유저 리텐션 유도를 위한 애니메이션 카드 뒤집기 및 카운트업 추첨 기능
 
-- 🔄 **토스 하이브리드 연동**: 익명 진입 유저 식별자 확보 및 토스 본인인증 성공 시 데이터 병합 마이그레이션
+- 🔄 **무동의 사용자 연동**: `getAnonymousKey`로 로그인 화면 없이 미니앱 전용 식별자를 확보하고 기존 익명 데이터를 자동 이전
 
 ---
 
@@ -74,11 +74,11 @@
 ### Backend & Cloud
 
 - **Database**: Firebase Firestore
-- **Authentication**: Firebase Auth (Anonymous & Federated Login)
+- **Authentication**: Firebase Anonymous Auth + Toss Anonymous Key
 
 ### Testing
 
-- **E2E Test Harness**: Playwright (`aitMock.ts` 활용 SDK 모킹)
+- **Unit Test**: Vitest (합계 계산과 데이터 무결성 로직)
 
 ---
 
@@ -86,24 +86,24 @@
 
 ## 🚀 핵심 기술적 도전과 성과
 
-### 1️⃣ 하이브리드 사용자 식별 및 심리스 데이터 마이그레이션
+### 1️⃣ 무동의 사용자 식별 및 심리스 데이터 마이그레이션
 
-- `@apps-in-toss/web-framework`의 Bridge API를 활용해 인앱 기기 식별자(`getDeviceId`) 및 폴백 익명 UUID를 획득하여 최초 진입 장벽 제거.
-- 비회원(익명 로그인) 상태에서 경조사를 기록한 뒤, 토스 본인인증 성공 시 Firestore의 기존 익명 유저 문서를 토스 고유 해시 키 계정과 동적으로 매핑 및 안전하게 데이터를 이전(User Merge)하는 안정적인 인증 구조 설계.
+- `@apps-in-toss/web-framework`의 `getAnonymousKey`를 활용해 사용자 동의나 로그인 화면 없이 미니앱 전용 식별자를 확보하고, 미지원 환경에서는 기기 ID와 로컬 UUID로 폴백.
+- 식별자를 SHA-256 고정 문서 경로로 변환하고, 최초 전환 시 기존 Firebase 익명 UID 문서와 기록을 자동 이전.
 
 ### 2️⃣ Zustand Slice 패턴을 통한 모듈화 및 낙관적 업데이트 (Optimistic Update)
 
 - 상태 모델의 복잡성을 낮추기 위해 `RecordSlice`, `UISlice`, `AdSlice`, `AuthSlice`로 상태 및 액션을 완벽히 격리 및 모듈화.
 - 지연 시간이 발생할 수 있는 클라우드 DB 통신 시, UI 화면을 즉시 갱신하고 백엔드 처리 실패 시 롤백(Rollback)하는 낙관적 업데이트를 적용하여 웹뷰 환경에서 네이티브 앱 수준의 반응 속도 달성.
 
-### 3️⃣ Firestore writeBatch를 통한 트랜잭션 데이터 무결성 보장
+### 3️⃣ Firestore Transaction을 통한 데이터 무결성 보장
 
-- 개별 경조사 내역 기록(`users/{uid}/records`) 추가/수정/삭제 시, 상위 문서(`users/{uid}`) 내 총 누적 수입/지출 금액을 연산하여 **Firestore `writeBatch`**로 원자적(Atomic) 처리함으로써 데이터의 불일치 현상 원천 차단.
+- 개별 기록 추가/수정/삭제 시 **Firestore Transaction**에서 최신 합계를 다시 읽고 원자적으로 반영해 동시 요청의 합계 유실을 방지.
 
-### 4️⃣ Playwright E2E 테스트를 위한 토스 SDK 모킹 아키텍처
+### 4️⃣ 핵심 데이터 로직 자동 테스트
 
-- 토스 웹뷰 밖 브라우저 환경에서도 자동화 E2E 테스트가 정상 수행될 수 있도록 `addInitScript` 방식으로 가상 SDK 모킹 레이어(`aitMock.ts`) 구축.
-- 전역 `__QA_PERSONA__`를 통해 다채로운 사용자 케이스를 모킹 주입하고, 콘솔 에러 및 `unhandledrejection` 이벤트를 `__QA_TRACE__` 버퍼에 축적하여 모니터링 환경 구현.
+- Vitest로 추가·수정·삭제 및 보낸/받은 모드 변경 시 합계 계산을 검증.
+- Firebase Auth·Firestore 에뮬레이터 구성을 함께 제공해 인증과 데이터 이전 흐름을 확장 검증 가능.
 
 ### 5️⃣ 저사양 디바이스 성능 최적화 및 모바일 제스처 제어
 
@@ -123,10 +123,10 @@ src/
 ├── hooks/           # 스와이프, 기능 온보딩 등 커스텀 훅
 ├── pages/           # 메인 페이지 및 금액 입력 서브 페이지
 ├── stores/          # Zustand 스토어 (Slice 패턴 기반)
-├── test-harness/    # Playwright E2E 테스트용 Mock Script
 ├── types/           # 공통 TypeScript Type 정의
-└── utils/           # Firebase SDK 인스턴스화 및 헬퍼 함수
+└── utils/           # Firebase SDK, 계산 헬퍼 및 단위 테스트
 ```
+
 
 ---
 

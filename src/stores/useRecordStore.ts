@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { DocumentSnapshot } from "firebase/firestore";
 import type { MoneyRecord, RecordMode, RecordType } from "../types/record";
 import { recordService, type UserMetadata } from "../apis/recordService";
+import { applyRecordDelta } from "../utils/recordTotals";
 
 /** 첫 기록 저장 후 mode-toggle을 강조하는 시간(ms) */
 const MODE_TOGGLE_PULSE_DURATION_MS = 4000;
@@ -76,7 +77,7 @@ const createRecordSlice: StateCreator<
       set({
         records: fetchedRecords,
         lastVisible,
-        hasMore: fetchedRecords.length === 20,
+        hasMore: false,
       });
     } catch (error) {
       set({
@@ -132,12 +133,11 @@ const createRecordSlice: StateCreator<
     });
 
     try {
-      await recordService.addRecord(
+      const persistedTotals = await recordService.addRecord(
         userIdentifier,
         newRecord,
-        newTotalPaid,
-        newTotalReceived,
       );
+      set(persistedTotals);
     } catch (error) {
       set({
         records,
@@ -164,15 +164,12 @@ const createRecordSlice: StateCreator<
     const old = records.find((r) => r.id === id);
     if (!old) throw new Error("수정할 기록을 찾을 수 없습니다.");
 
-    let nextPaid = totalPaid;
-    let nextReceived = totalReceived;
-    if (updates.amount !== undefined) {
-      if (old.mode === "paid") {
-        nextPaid = totalPaid - old.amount + updates.amount;
-      } else {
-        nextReceived = totalReceived - old.amount + updates.amount;
-      }
-    }
+    const nextRecord = { ...old, ...updates };
+    const optimisticTotals = applyRecordDelta(
+      { totalPaid, totalReceived },
+      old,
+      nextRecord,
+    );
 
     const updated = records
       .map((r) => (r.id === id ? { ...r, ...updates } : r))
@@ -182,16 +179,15 @@ const createRecordSlice: StateCreator<
         return a.name.localeCompare(b.name);
       });
 
-    set({ records: updated, totalPaid: nextPaid, totalReceived: nextReceived });
+    set({ records: updated, ...optimisticTotals });
 
     try {
-      await recordService.updateRecord(
+      const persistedTotals = await recordService.updateRecord(
         userIdentifier,
         id,
         updates,
-        nextPaid,
-        nextReceived,
       );
+      set(persistedTotals);
     } catch (error) {
       set({ records, totalPaid, totalReceived });
       throw error;
@@ -205,28 +201,23 @@ const createRecordSlice: StateCreator<
     const target = records.find((r) => r.id === id);
     if (!target) throw new Error("삭제할 기록을 찾을 수 없습니다.");
 
-    const nextPaid =
-      target.mode === "paid"
-        ? Math.max(0, totalPaid - target.amount)
-        : totalPaid;
-    const nextReceived =
-      target.mode === "received"
-        ? Math.max(0, totalReceived - target.amount)
-        : totalReceived;
+    const optimisticTotals = applyRecordDelta(
+      { totalPaid, totalReceived },
+      target,
+      null,
+    );
 
     set({
       records: records.filter((r) => r.id !== id),
-      totalPaid: nextPaid,
-      totalReceived: nextReceived,
+      ...optimisticTotals,
     });
 
     try {
-      await recordService.removeRecord(
+      const persistedTotals = await recordService.removeRecord(
         userIdentifier,
         id,
-        nextPaid,
-        nextReceived,
       );
+      set(persistedTotals);
     } catch (error) {
       set({ records, totalPaid, totalReceived });
       throw error;

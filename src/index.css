@@ -147,6 +147,17 @@ body {
   .add-card-pulse::after {
     animation: none;
   }
+
+  .premium-amount-badge,
+  .coin-item,
+  .coin-spinning,
+  .upcoming-aura::before,
+  .avatar-edit-badge,
+  .swipe-arrow-left,
+  .swipe-arrow-right {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* 미래 일정 카드 (isUpcoming) 아우라 효과 */

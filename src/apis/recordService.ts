@@ -4,19 +4,19 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  query,
-  orderBy,
-  limit,
-  startAfter,
   writeBatch,
+  runTransaction,
   DocumentSnapshot,
 } from "firebase/firestore";
 import { signInAnonymously } from "firebase/auth";
 import { auth, db } from "@/utils/firebase";
-import { getTossUserIdentifier } from "@/utils/toss";
+import {
+  getStableUserDocumentId,
+  getTossUserIdentifier,
+} from "@/utils/toss";
+import { applyRecordDelta, type RecordTotals } from "@/utils/recordTotals";
 import type { MoneyRecord } from "../types/record";
 
-const PAGE_SIZE = 20;
 const REQUEST_TIMEOUT = 15000;
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -95,13 +95,81 @@ export const recordService = {
   async authenticate() {
     try {
       checkOnline();
-      const userCredential = await withTimeout(signInAnonymously(auth));
-      const uid = userCredential.user.uid;
       const tossId = await getTossUserIdentifier();
+      await auth.authStateReady();
+      const user = auth.currentUser ?? (await withTimeout(signInAnonymously(auth))).user;
+      const uid = await getStableUserDocumentId(tossId);
+      await this.migrateAnonymousAccount(user.uid, uid, tossId);
       return { uid, tossId };
     } catch (error) {
       throwUserFriendlyError(error);
     }
+  },
+
+  async migrateAnonymousAccount(
+    legacyUid: string,
+    stableUid: string,
+    tossId: string,
+  ) {
+    if (legacyUid === stableUid) return;
+
+    const legacyUserRef = doc(db, "users", legacyUid);
+    const legacyUser = await withTimeout(getDoc(legacyUserRef));
+    if (!legacyUser.exists()) return;
+    if (legacyUser.data().migratedToUid === stableUid) return;
+
+    const stableUserRef = doc(db, "users", stableUid);
+    const legacyRecords = await withTimeout(
+      getDocs(collection(db, "users", legacyUid, "records")),
+    );
+
+    // Firestore batch 한도에 여유를 두고 기존 기록을 새 고정 경로로 병합합니다.
+    const chunks: Array<typeof legacyRecords.docs> = [];
+    for (let index = 0; index < legacyRecords.docs.length; index += 400) {
+      chunks.push(legacyRecords.docs.slice(index, index + 400));
+    }
+    if (chunks.length === 0) chunks.push([]);
+
+    for (let index = 0; index < chunks.length; index += 1) {
+      const batch = writeBatch(db);
+      if (index === 0) {
+        batch.set(stableUserRef, {
+          ...legacyUser.data(),
+          tossId,
+          migratedFromUid: legacyUid,
+          migratedAt: new Date().toISOString(),
+        }, { merge: true });
+        batch.set(legacyUserRef, {
+          migratedToUid: stableUid,
+          migratedAt: new Date().toISOString(),
+        }, { merge: true });
+      }
+      for (const recordSnapshot of chunks[index]) {
+        batch.set(
+          doc(db, "users", stableUid, "records", recordSnapshot.id),
+          recordSnapshot.data(),
+          { merge: true },
+        );
+      }
+      await withTimeout(batch.commit());
+    }
+
+    // 여러 기기의 레거시 기록이 합쳐져도 저장된 전체 기록을 기준으로 총액을 복구합니다.
+    const mergedRecords = await withTimeout(
+      getDocs(collection(db, "users", stableUid, "records")),
+    );
+    let totalPaid = 0;
+    let totalReceived = 0;
+    for (const recordSnapshot of mergedRecords.docs) {
+      const record = recordSnapshot.data() as MoneyRecord;
+      if ((record.mode || "paid") === "paid") totalPaid += record.amount;
+      else totalReceived += record.amount;
+    }
+    await withTimeout(setDoc(stableUserRef, {
+      totalAmount: totalPaid + totalReceived,
+      totalPaid,
+      totalReceived,
+    }, { merge: true }));
   },
 
   async getOrCreateUser(uid: string, tossId: string) {
@@ -174,16 +242,14 @@ export const recordService = {
     try {
       checkOnline();
       const recordsColRef = collection(db, "users", uid, "records");
-      const q = query(recordsColRef, orderBy("name", "asc"), limit(PAGE_SIZE));
-      const snapshot = await withTimeout(getDocs(q));
+      // 개인 경조사 기록은 전체를 읽어야 필터, 최근 금액, 즐겨찾기 정렬이 정확합니다.
+      const snapshot = await withTimeout(getDocs(recordsColRef));
 
       const fetchedRecords = snapshot.docs.map((d) => {
         const data = d.data() as MoneyRecord;
         return { ...data, mode: data.mode || "paid" }; // 기존 데이터 호환
       });
-      const lastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
-
-      return { fetchedRecords, lastVisible };
+      return { fetchedRecords, lastVisible: null };
     } catch (error) {
       throwUserFriendlyError(error);
     }
@@ -192,22 +258,9 @@ export const recordService = {
   async fetchMoreRecords(uid: string, lastVisible: DocumentSnapshot) {
     try {
       checkOnline();
-      const recordsColRef = collection(db, "users", uid, "records");
-      const q = query(
-        recordsColRef,
-        orderBy("name", "asc"),
-        startAfter(lastVisible),
-        limit(PAGE_SIZE),
-      );
-
-      const snapshot = await withTimeout(getDocs(q));
-      const newRecords = snapshot.docs.map((d) => {
-        const data = d.data() as MoneyRecord;
-        return { ...data, mode: data.mode || "paid" };
-      });
-      const newLastVisible = snapshot.docs[snapshot.docs.length - 1] || null;
-
-      return { newRecords, newLastVisible };
+      void uid;
+      void lastVisible;
+      return { newRecords: [] as MoneyRecord[], newLastVisible: null };
     } catch (error) {
       throwUserFriendlyError(error);
     }
@@ -216,23 +269,30 @@ export const recordService = {
   async addRecord(
     uid: string,
     record: MoneyRecord,
-    totalPaid: number,
-    totalReceived: number,
-  ) {
+  ): Promise<RecordTotals> {
     try {
       checkOnline();
       const recordRef = doc(db, "users", uid, "records", record.id);
       const userDocRef = doc(db, "users", uid);
 
-      const batch = writeBatch(db);
-      batch.set(recordRef, record);
-      batch.update(userDocRef, {
-        totalAmount: totalPaid + totalReceived,
-        totalPaid,
-        totalReceived,
-      });
-
-      await withTimeout(batch.commit());
+      return await withTimeout(runTransaction(db, async (transaction) => {
+        const userSnapshot = await transaction.get(userDocRef);
+        const data = userSnapshot.data();
+        const totals = applyRecordDelta(
+          {
+            totalPaid: data?.totalPaid ?? data?.totalAmount ?? 0,
+            totalReceived: data?.totalReceived ?? 0,
+          },
+          null,
+          record,
+        );
+        transaction.set(recordRef, record);
+        transaction.set(userDocRef, {
+          totalAmount: totals.totalPaid + totals.totalReceived,
+          ...totals,
+        }, { merge: true });
+        return totals;
+      }));
     } catch (error) {
       throwUserFriendlyError(error);
     }
@@ -241,23 +301,34 @@ export const recordService = {
   async removeRecord(
     uid: string,
     recordId: string,
-    totalPaid: number,
-    totalReceived: number,
-  ) {
+  ): Promise<RecordTotals> {
     try {
       checkOnline();
       const recordRef = doc(db, "users", uid, "records", recordId);
       const userDocRef = doc(db, "users", uid);
 
-      const batch = writeBatch(db);
-      batch.delete(recordRef);
-      batch.update(userDocRef, {
-        totalAmount: totalPaid + totalReceived,
-        totalPaid,
-        totalReceived,
-      });
-
-      await withTimeout(batch.commit());
+      return await withTimeout(runTransaction(db, async (transaction) => {
+        const [userSnapshot, recordSnapshot] = await Promise.all([
+          transaction.get(userDocRef),
+          transaction.get(recordRef),
+        ]);
+        if (!recordSnapshot.exists()) throw new Error("삭제할 기록을 찾을 수 없습니다.");
+        const data = userSnapshot.data();
+        const totals = applyRecordDelta(
+          {
+            totalPaid: data?.totalPaid ?? data?.totalAmount ?? 0,
+            totalReceived: data?.totalReceived ?? 0,
+          },
+          recordSnapshot.data() as MoneyRecord,
+          null,
+        );
+        transaction.delete(recordRef);
+        transaction.set(userDocRef, {
+          totalAmount: totals.totalPaid + totals.totalReceived,
+          ...totals,
+        }, { merge: true });
+        return totals;
+      }));
     } catch (error) {
       throwUserFriendlyError(error);
     }
@@ -267,23 +338,36 @@ export const recordService = {
     uid: string,
     recordId: string,
     updates: Partial<MoneyRecord>,
-    totalPaid: number,
-    totalReceived: number,
-  ) {
+  ): Promise<RecordTotals> {
     try {
       checkOnline();
       const recordRef = doc(db, "users", uid, "records", recordId);
       const userDocRef = doc(db, "users", uid);
 
-      const batch = writeBatch(db);
-      batch.update(recordRef, updates);
-      batch.update(userDocRef, {
-        totalAmount: totalPaid + totalReceived,
-        totalPaid,
-        totalReceived,
-      });
-
-      await withTimeout(batch.commit());
+      return await withTimeout(runTransaction(db, async (transaction) => {
+        const [userSnapshot, recordSnapshot] = await Promise.all([
+          transaction.get(userDocRef),
+          transaction.get(recordRef),
+        ]);
+        if (!recordSnapshot.exists()) throw new Error("수정할 기록을 찾을 수 없습니다.");
+        const previous = recordSnapshot.data() as MoneyRecord;
+        const next = { ...previous, ...updates };
+        const data = userSnapshot.data();
+        const totals = applyRecordDelta(
+          {
+            totalPaid: data?.totalPaid ?? data?.totalAmount ?? 0,
+            totalReceived: data?.totalReceived ?? 0,
+          },
+          previous,
+          next,
+        );
+        transaction.update(recordRef, updates);
+        transaction.set(userDocRef, {
+          totalAmount: totals.totalPaid + totals.totalReceived,
+          ...totals,
+        }, { merge: true });
+        return totals;
+      }));
     } catch (error) {
       throwUserFriendlyError(error);
     }
