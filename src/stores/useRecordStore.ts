@@ -2,11 +2,17 @@ import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DocumentSnapshot } from "firebase/firestore";
 import type { MoneyRecord, RecordMode, RecordType } from "../types/record";
-import { recordService, type UserMetadata } from "../apis/recordService";
+import type { UserMetadata } from "../apis/recordService";
 import { applyRecordDelta } from "../utils/recordTotals";
 
 /** 첫 기록 저장 후 mode-toggle을 강조하는 시간(ms) */
 const MODE_TOGGLE_PULSE_DURATION_MS = 4000;
+
+// Firebase SDK는 초기 화면에 필요하지 않으므로 첫 렌더 이후에 내려받습니다.
+// 앱 메인 스킴 진입 시 무거운 Firebase 번들의 파싱이 첫 화면을 막지 않게 합니다.
+async function loadRecordService() {
+  return (await import("../apis/recordService")).recordService;
+}
 
 /**
  * 1. 레코드 데이터 슬라이스
@@ -51,13 +57,14 @@ const createRecordSlice: StateCreator<
   initializeStore: async () => {
     set({ isLoading: true, error: null });
     try {
+      const recordService = await loadRecordService();
       const { uid, tossId: initialTossId } = await recordService.authenticate();
       set({ userIdentifier: uid });
 
-      const userData = (await recordService.getOrCreateUser(
-        uid,
-        initialTossId,
-      )) as UserMetadata;
+      const [userData, { fetchedRecords, lastVisible }] = await Promise.all([
+        recordService.getOrCreateUser(uid, initialTossId) as Promise<UserMetadata>,
+        recordService.fetchRecordsPage(uid),
+      ]);
 
       if (userData?.friends) {
         const { totalAmount } = await recordService.migrateLegacyData(
@@ -72,8 +79,6 @@ const createRecordSlice: StateCreator<
         });
       }
 
-      const { fetchedRecords, lastVisible } =
-        await recordService.fetchRecordsPage(uid);
       set({
         records: fetchedRecords,
         lastVisible,
@@ -95,6 +100,7 @@ const createRecordSlice: StateCreator<
 
     set({ isLoadingMore: true });
     try {
+      const recordService = await loadRecordService();
       const { newRecords, newLastVisible } =
         await recordService.fetchMoreRecords(userIdentifier, lastVisible);
       set({
@@ -133,6 +139,7 @@ const createRecordSlice: StateCreator<
     });
 
     try {
+      const recordService = await loadRecordService();
       const persistedTotals = await recordService.addRecord(
         userIdentifier,
         newRecord,
@@ -182,6 +189,7 @@ const createRecordSlice: StateCreator<
     set({ records: updated, ...optimisticTotals });
 
     try {
+      const recordService = await loadRecordService();
       const persistedTotals = await recordService.updateRecord(
         userIdentifier,
         id,
@@ -213,6 +221,7 @@ const createRecordSlice: StateCreator<
     });
 
     try {
+      const recordService = await loadRecordService();
       const persistedTotals = await recordService.removeRecord(
         userIdentifier,
         id,
@@ -345,6 +354,16 @@ export const useRecordStore = create<RecordSlice & UISlice>()(
         currentMode: state.currentMode,
         viewMode: state.viewMode,
       }),
+      // 예전 저장값에 폼/페이지 상태가 있어도 진입 시 복원하지 않습니다.
+      // partialize는 쓰기만 제한하므로 읽을 때도 보기 설정만 허용합니다.
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<UISlice> | undefined;
+        return {
+          ...current,
+          currentMode: saved?.currentMode === "received" ? "received" : "paid",
+          viewMode: saved?.viewMode === "list" ? "list" : "card",
+        };
+      },
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.modeTogglePulse = false;

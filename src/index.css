@@ -330,3 +330,8 @@ div[data-tds-highlight] [role="button"] {
   pointer-events: auto !important;
   z-index: 11020 !important;
 }
+@keyframes boot-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}

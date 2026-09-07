@@ -18,8 +18,6 @@ import { ProfileImageBottomSheet } from "../../features/friend/components/form/P
 import { FormAvatar } from "./FormAvatar";
 import { FormTypeSelector } from "./FormTypeSelector";
 import { FormAdditionalInfo } from "./FormAdditionalInfo";
-import { FeatureHighlight } from "../onboarding/FeatureHighlight";
-import type { GuideProps } from "../../hooks/useFeatureGuide";
 
 type IconName = Parameters<typeof Asset.Icon>[0]["name"];
 
@@ -29,7 +27,6 @@ interface Props {
   onClose: () => void;
   onOpenAmountInput: () => void;
   onHome: () => void;
-  guide: GuideProps;
 }
 
 export function RecordFormBottomSheet({
@@ -38,31 +35,7 @@ export function RecordFormBottomSheet({
   onClose,
   onOpenAmountInput,
   onHome,
-  guide,
 }: Props) {
-  const isGuideActive = guide.currentStep !== null;
-
-  // 가이드 활성화 시 바텀시트 드래그를 캡처 단계에서 차단
-  const isGuideActiveRef = useRef(isGuideActive);
-  isGuideActiveRef.current = isGuideActive;
-  const isOpenRef = useRef(open);
-  isOpenRef.current = open;
-
-  useEffect(() => {
-    // touchmove만 차단하면 드래그는 막히고 탭(클릭)은 허용됨
-    const blockDrag = (e: TouchEvent) => {
-      if (!isGuideActiveRef.current || !isOpenRef.current) return;
-      e.preventDefault();
-      e.stopPropagation();
-    };
-    document.addEventListener("touchmove", blockDrag, {
-      capture: true,
-      passive: false,
-    });
-    return () => {
-      document.removeEventListener("touchmove", blockDrag, { capture: true });
-    };
-  }, []);
 
   const updateRecord = useRecordStore((s) => s.updateRecord);
   const removeRecord = useRecordStore((s) => s.removeRecord);
@@ -147,9 +120,6 @@ export function RecordFormBottomSheet({
     setIsSubmitting(false);
     setEditingRecord(null);
     setConfirmingDelete(false);
-    if (guide.currentStep !== null || guide.isWaitingForForm) {
-      guide.skip();
-    }
     onClose();
   };
 
@@ -271,7 +241,6 @@ export function RecordFormBottomSheet({
                 currentRecord.isFavorite ? "중요 표시 해제" : "중요 표시"
               }
               onClick={async () => {
-                if (isGuideActive) return;
                 const newStatus = !currentRecord.isFavorite;
                 setEditingRecord({ ...currentRecord, isFavorite: newStatus });
                 if (!isCreateMode && record) {
@@ -317,28 +286,20 @@ export function RecordFormBottomSheet({
             ref={formScrollRef}
             style={{
               flex: 1,
-              overflowY: isGuideActive ? "hidden" : "auto",
-              WebkitOverflowScrolling: isGuideActive ? undefined : "touch",
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
             }}
           >
             <Spacing size={10} />
             <FormAvatar
               iconName={currentRecord.profileIcon}
               type={currentRecord.type}
-              onClick={() => {
-                if (!isGuideActive) setIsProfilePickerOpen(true);
-              }}
+              onClick={() => setIsProfilePickerOpen(true)}
             />
             <Spacing size={2} />
             <List>
               <div ref={nameFieldRef}>
-                <FeatureHighlight
-                  step="form-all"
-                  currentStep={guide.currentStep}
-                  onNext={guide.next}
-                  onSkip={guide.skip}
-                >
-                  <TextField
+                <TextField
                     variant="line"
                     label="이름"
                     labelOption="sustain"
@@ -351,8 +312,7 @@ export function RecordFormBottomSheet({
                     hasError={isNameInvalid}
                     help={isNameInvalid ? "이름을 입력해주세요" : undefined}
                     maxLength={20}
-                  />
-                </FeatureHighlight>
+                />
               </div>
               <div ref={typeFieldRef}>
                 <FormTypeSelector
@@ -382,7 +342,7 @@ export function RecordFormBottomSheet({
                       <Text color={adaptive.grey500}>입력하기</Text>
                     )
                   }
-                  onClick={isGuideActive ? undefined : onOpenAmountInput}
+                  onClick={onOpenAmountInput}
                   arrowType="right"
                 />
               </div>
@@ -401,11 +361,7 @@ export function RecordFormBottomSheet({
                 }
                 verticalPadding="small"
                 arrowType={expanded ? "down" : "right"}
-                onClick={
-                  isGuideActive
-                    ? undefined
-                    : handleToggleAdditionalInfo
-                }
+                onClick={handleToggleAdditionalInfo}
               />
               <div
                 onTouchMove={expanded ? (e) => e.stopPropagation() : undefined}
@@ -431,9 +387,6 @@ export function RecordFormBottomSheet({
               gap: "4px",
               backgroundColor: "#ffffff",
               borderTop: `1px solid ${adaptive.grey100}`,
-              ...(isGuideActive
-                ? { pointerEvents: "none" as const, opacity: 0.4 }
-                : {}),
             }}
           >
             {!isCreateMode && (

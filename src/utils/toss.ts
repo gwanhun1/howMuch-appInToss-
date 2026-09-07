@@ -5,6 +5,20 @@ interface QaPersonaInjection {
   userKey?: string;
 }
 
+const BRIDGE_TIMEOUT_MS = 2500;
+
+function withBridgeTimeout<T>(promise: Promise<T>): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      window.setTimeout(
+        () => reject(new Error("TossBridge response timed out")),
+        BRIDGE_TIMEOUT_MS,
+      ),
+    ),
+  ]);
+}
+
 function readQaPersona(): QaPersonaInjection | null {
   if (typeof window === "undefined") return null;
   const w = window as unknown as { __QA_PERSONA__?: QaPersonaInjection };
@@ -25,7 +39,7 @@ export const getTossUserIdentifier = async (): Promise<string> => {
 
   try {
     // 사용자 조작이나 동의 화면 없이 발급되는 미니앱 전용 식별키를 우선 사용합니다.
-    const anonymousKey = await getAnonymousKey();
+    const anonymousKey = await withBridgeTimeout(getAnonymousKey());
     if (
       anonymousKey &&
       anonymousKey !== "ERROR" &&

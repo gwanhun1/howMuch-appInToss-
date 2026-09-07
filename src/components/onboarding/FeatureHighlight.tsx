@@ -3,12 +3,10 @@ import {
   type GuideStep,
   STEP_ORDER,
   TOTAL_STEPS,
-  FORM_STEPS,
 } from "../../hooks/useFeatureGuide";
 
 const STEP_MESSAGES: Record<Exclude<GuideStep, null>, string> = {
   "add-button": "여기를 눌러 첫 기록을 만들어보세요",
-  "form-all": "이름 · 카테고리 · 금액을 차례로 입력하면 완료!",
   "mode-toggle": "보낸 마음 · 받은 마음은 여기서 전환할 수 있어요",
 };
 
@@ -28,7 +26,6 @@ export function FeatureHighlight({
   children,
 }: FeatureHighlightProps) {
   const isOpen = currentStep === step;
-  const isFormStep = FORM_STEPS.has(step);
   const currentIndex = STEP_ORDER.indexOf(step);
   const isLast = currentIndex === TOTAL_STEPS - 1;
 
@@ -40,9 +37,6 @@ export function FeatureHighlight({
     <Highlight
       open={isOpen}
       padding={10}
-      highlighterClassname={
-        isFormStep ? "highlight-above-bottomsheet" : undefined
-      }
       message={({ style }) => (
         <div
           style={{
@@ -71,21 +65,17 @@ export function FeatureHighlight({
             <Text typography="t7" color="rgba(255,255,255,0.45)">
               {currentIndex + 1} / {TOTAL_STEPS}
             </Text>
-            <div
+            <button
+              type="button"
               className="guide-next-button"
-              role="button"
-              tabIndex={0}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 onNext();
               }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onNext();
-              }}
               style={{
+                border: 0,
+                font: "inherit",
                 backgroundColor: "rgba(255,255,255,0.2)",
                 padding: "6px 14px",
                 borderRadius: "20px",
@@ -96,22 +86,19 @@ export function FeatureHighlight({
               <Text typography="t7" color="#fff" fontWeight="bold">
                 {isLast ? "완료" : "다음"}
               </Text>
-            </div>
+            </button>
             {onSkip && !isLast && (
-              <div
-                role="button"
-                tabIndex={0}
+              <button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   onSkip();
                 }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onSkip();
-                }}
                 style={{
+                  border: 0,
+                  background: "none",
+                  font: "inherit",
                   padding: "6px 10px",
                   cursor: "pointer",
                   pointerEvents: "auto",
@@ -124,7 +111,7 @@ export function FeatureHighlight({
                 >
                   건너뛰기
                 </Text>
-              </div>
+              </button>
             )}
           </div>
         </div>

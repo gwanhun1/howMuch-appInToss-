@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTossBackEvent } from "../hooks/useTossBackEvent";
 import { FixedBottomCTA, Spacing, TextField, Text, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { AppHeader } from "../components/common/AppHeader";
@@ -21,6 +22,8 @@ const QUICK_AMOUNTS = [
 ];
 
 export function AmountInputPage({ value, onSave, onBack }: Props) {
+  useTossBackEvent(onBack);
+
   const [amount, setAmount] = useState(value === 0 ? "" : value.toString());
   const { records, editingRecord, currentMode } = useRecordStore();
   const labels = MODE_LABELS[currentMode];

@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
 
 const isQaMode = import.meta.env.VITE_QA_MODE === "true";
 
@@ -19,8 +18,6 @@ const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const analytics =
-  !isQaMode && typeof window !== "undefined" ? getAnalytics(app) : null;
 
 if (isQaMode) {
   const firestoreHost =

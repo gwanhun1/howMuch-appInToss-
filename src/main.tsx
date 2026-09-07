@@ -1,13 +1,17 @@
-import { StrictMode } from "react";
+import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { TDSMobileAITProvider } from "@toss/tds-mobile-ait";
+import { BootScreen } from "@/components/common/BootScreen";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import "./index.css";
-import App from "@/App.tsx";
+
+const AppBootstrap = lazy(() => import("@/AppBootstrap"));
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <TDSMobileAITProvider>
-      <App />
-    </TDSMobileAITProvider>
+    <ErrorBoundary>
+      <Suspense fallback={<BootScreen />}>
+        <AppBootstrap />
+      </Suspense>
+    </ErrorBoundary>
   </StrictMode>,
 );

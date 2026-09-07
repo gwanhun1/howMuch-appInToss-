@@ -1,4 +1,4 @@
-import { Asset, IconButton, Text } from "@toss/tds-mobile";
+import { Asset, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 
 interface Props {
@@ -19,13 +19,6 @@ export function AppHeader({ title = "얼마냈지요", onBack }: Props) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
-        {onBack && (
-          <IconButton
-            onClick={onBack}
-            aria-label="뒤로 가기"
-            name="icon-arrow-back-ios-mono"
-          />
-        )}
         <Asset.Image
           frameShape={Asset.frameShape.CleanW24}
           src="https://static.toss.im/appsintoss/17227/e6c265d0-b517-44d1-8d5e-66e394617883.png"
@@ -40,6 +33,16 @@ export function AppHeader({ title = "얼마냈지요", onBack }: Props) {
           {title}
         </Text>
       </div>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          style={{ border: 0, background: "none", color: adaptive.grey700,
+            font: "inherit", padding: "12px 8px", cursor: "pointer" }}
+        >
+          입력 취소
+        </button>
+      )}
     </div>
   );
 }

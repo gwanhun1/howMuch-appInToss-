@@ -2,19 +2,10 @@ import { useState } from "react";
 import { Text, Spacing, BottomSheet, Button } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 
-export function ServiceFooter() {
+export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
   const [activePolicy, setActivePolicy] = useState<"terms" | "privacy" | null>(
     null,
   );
-
-  const handleReplayGuide = () => {
-    try {
-      localStorage.removeItem("howmuch_feature_guide_done");
-    } catch {
-      // noop
-    }
-    window.location.reload();
-  };
 
   return (
     <>
@@ -66,18 +57,22 @@ export function ServiceFooter() {
           >
             개인정보처리방침
           </Text>
-          <Text
-            typography="t7"
-            color={adaptive.grey400}
+          <button
+            type="button"
             style={{
+              background: "none",
+              border: 0,
+              padding: 0,
+              font: "inherit",
+              color: adaptive.grey600,
               fontSize: "11px",
               textDecoration: "underline",
               cursor: "pointer",
             }}
-            onClick={handleReplayGuide}
+            onClick={onShowGuide}
           >
-            앱 가이드 다시 보기
-          </Text>
+            사용법 보기
+          </button>
         </div>
       </div>
 

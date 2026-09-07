@@ -22,7 +22,7 @@ export default defineConfig({
     bridgeColorMode: "basic",
   },
   navigationBar: {
-    withBackButton: false, // 메인 페이지이므로 뒤로가기 버튼 불필요
+    withBackButton: true, // 비게임 가이드: 최초 화면에서 뒤로가기 시 미니앱 종료
     withHomeButton: false, // 홈 버튼 불필요
   },
   web: {

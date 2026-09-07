@@ -17,7 +17,9 @@ import {
 import { applyRecordDelta, type RecordTotals } from "@/utils/recordTotals";
 import type { MoneyRecord } from "../types/record";
 
-const REQUEST_TIMEOUT = 15000;
+// 초기 진입에서 여러 요청이 직렬로 누적되어 검수 제한(20초)을 넘지 않게 합니다.
+// 느린 네트워크에서는 빠르게 실패 UI를 보여주고 사용자가 재시도할 수 있습니다.
+const REQUEST_TIMEOUT = 3000;
 
 const ERROR_MESSAGES: Record<string, string> = {
   unavailable: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
@@ -96,7 +98,7 @@ export const recordService = {
     try {
       checkOnline();
       const tossId = await getTossUserIdentifier();
-      await auth.authStateReady();
+      await withTimeout(auth.authStateReady());
       const user = auth.currentUser ?? (await withTimeout(signInAnonymously(auth))).user;
       const uid = await getStableUserDocumentId(tossId);
       await this.migrateAnonymousAccount(user.uid, uid, tossId);

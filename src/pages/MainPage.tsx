@@ -57,8 +57,13 @@ export function MainPage() {
   } = useRecordStore();
 
   useEffect(() => {
-    initializeStore();
-    if (currentPage !== "main") resetToMain();
+    resetToMain();
+    // 첫 프레임을 먼저 그린 뒤 Firebase/브리지 초기화를 시작합니다.
+    // 네트워크가 느려도 메인 스킴 진입 화면 자체는 즉시 보여야 합니다.
+    const frameId = window.requestAnimationFrame(() => {
+      void initializeStore();
+    });
+    return () => window.cancelAnimationFrame(frameId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -121,27 +126,14 @@ export function MainPage() {
       onModeChange: setCurrentMode,
     });
 
-  const guide = useFeatureGuide(closeRecordForm);
+  const guide = useFeatureGuide();
 
   const isGuiding =
     guide.currentStep !== null ||
-    guide.isWaitingForForm ||
     guide.isPreparingGuide;
   const guardedTouchStart = isGuiding ? undefined : handleTouchStart;
   const guardedTouchMove = isGuiding ? undefined : handleTouchMove;
   const guardedTouchEnd = isGuiding ? undefined : handleTouchEnd;
-
-  useEffect(() => {
-    if (guide.isWaitingForForm && !isRecordFormOpen) {
-      startAddingRecord();
-    }
-  }, [guide.isWaitingForForm, isRecordFormOpen, startAddingRecord]);
-
-  useEffect(() => {
-    if (guide.isWaitingForForm && isRecordFormOpen) {
-      guide.startFormGuide();
-    }
-  }, [guide, isRecordFormOpen]);
 
   if (error) {
     return (
@@ -252,7 +244,10 @@ export function MainPage() {
             </div>
 
             <Spacing size={32} />
-            <ServiceFooter />
+            <ServiceFooter onShowGuide={() => {
+              window.scrollTo({ top: 0, behavior: "instant" });
+              guide.start();
+            }} />
           </div>
         </>
       )}
@@ -263,7 +258,6 @@ export function MainPage() {
         onClose={closeRecordForm}
         onOpenAmountInput={openAmountInput}
         onHome={resetToMain}
-        guide={guide}
       />
 
       <Suspense fallback={null}>
@@ -271,7 +265,6 @@ export function MainPage() {
       </Suspense>
 
       {(guide.currentStep !== null ||
-        guide.isWaitingForForm ||
         guide.isPreparingGuide) && (
         <div
           style={{

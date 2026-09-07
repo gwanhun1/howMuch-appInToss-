@@ -84,7 +84,6 @@ export function RecordList({
   const bottomRef = useRef<HTMLDivElement>(null);
   const isGuiding =
     guide.currentStep !== null ||
-    guide.isWaitingForForm ||
     guide.isPreparingGuide;
 
   useEffect(() => {

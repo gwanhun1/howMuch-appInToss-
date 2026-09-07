@@ -42,7 +42,6 @@ export function MainSummaryCard({
 
   const isGuiding =
     guide.currentStep !== null ||
-    guide.isWaitingForForm ||
     guide.isPreparingGuide;
 
   return (

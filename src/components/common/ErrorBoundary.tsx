@@ -1,5 +1,4 @@
 import { Component, type ReactNode } from "react";
-import { GlobalErrorView } from "./GlobalErrorView";
 
 interface Props {
   children: ReactNode;
@@ -31,11 +30,43 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <GlobalErrorView
-          title="문제가 발생했습니다"
-          description="앱에서 예기치 않은 오류가 발생했어요. 다시 시도해주세요."
-          onRetry={this.handleRetry}
-        />
+        <main
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            padding: 24,
+            boxSizing: "border-box",
+            background: "#f9fafb",
+            color: "#191f28",
+            textAlign: "center",
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: 22 }}>앱을 불러오지 못했어요</h1>
+          <p style={{ margin: 0, color: "#6b7684", lineHeight: 1.5 }}>
+            잠시 후 다시 시도해 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={this.handleRetry}
+            style={{
+              marginTop: 8,
+              minWidth: 120,
+              minHeight: 48,
+              border: 0,
+              borderRadius: 12,
+              background: "#3182f6",
+              color: "#fff",
+              fontSize: 16,
+              fontWeight: 700,
+            }}
+          >
+            다시 시도하기
+          </button>
+        </main>
       );
     }
     return this.props.children;
