@@ -1,6 +1,6 @@
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
-import type { DocumentSnapshot } from "firebase/firestore";
+import type { DocumentSnapshot } from "firebase/firestore/lite";
 import type { MoneyRecord, RecordMode, RecordType } from "../types/record";
 import type { UserMetadata } from "../apis/recordService";
 import { applyRecordDelta } from "../utils/recordTotals";
@@ -22,6 +22,7 @@ interface RecordSlice {
   totalPaid: number;
   totalReceived: number;
   isLoading: boolean;
+  isLoadingSlow: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
   lastVisible: DocumentSnapshot | null;
@@ -41,11 +42,14 @@ const createRecordSlice: StateCreator<
   [["zustand/persist", unknown]],
   [],
   RecordSlice
-> = (set, get) => ({
+> = (set, get) => {
+  let initializationPromise: Promise<void> | null = null;
+  return ({
   records: [],
   totalPaid: 0,
   totalReceived: 0,
   isLoading: true,
+  isLoadingSlow: false,
   isLoadingMore: false,
   hasMore: true,
   lastVisible: null,
@@ -54,43 +58,44 @@ const createRecordSlice: StateCreator<
 
   setUserIdentifier: (id) => set({ userIdentifier: id }),
 
-  initializeStore: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const recordService = await loadRecordService();
-      const { uid, tossId: initialTossId } = await recordService.authenticate();
-      set({ userIdentifier: uid });
-
-      const [userData, { fetchedRecords, lastVisible }] = await Promise.all([
-        recordService.getOrCreateUser(uid, initialTossId) as Promise<UserMetadata>,
-        recordService.fetchRecordsPage(uid),
-      ]);
-
-      if (userData?.friends) {
-        const { totalAmount } = await recordService.migrateLegacyData(
-          uid,
-          userData.friends,
-        );
-        set({ totalPaid: totalAmount, totalReceived: 0 });
-      } else if (userData) {
+  initializeStore: () => {
+    // StrictMode, 빠른 재시도, 중복 마운트가 인증/마이그레이션을 겹쳐 실행하지 않게 합니다.
+    if (initializationPromise) return initializationPromise;
+    initializationPromise = (async () => {
+      set({ isLoading: true, isLoadingSlow: false, error: null });
+      const slowTimer = setTimeout(() => set({ isLoadingSlow: true }), 5000);
+      try {
+        const recordService = await loadRecordService();
+        const { uid, tossId } = await recordService.authenticate();
+        const [userData, initialPage] = await Promise.all([
+          recordService.getOrCreateUser(uid, tossId) as Promise<UserMetadata>,
+          recordService.fetchRecordsPage(uid),
+        ]);
+        let page = initialPage;
+        let totalPaid = userData.totalPaid ?? userData.totalAmount ?? 0;
+        let totalReceived = userData.totalReceived ?? 0;
+        if (userData.friends) {
+          const { totalAmount } = await recordService.migrateLegacyData(uid, userData.friends);
+          totalPaid = totalAmount;
+          totalReceived = 0;
+          page = await recordService.fetchRecordsPage(uid);
+        }
         set({
-          totalPaid: userData.totalPaid || userData.totalAmount || 0,
-          totalReceived: userData.totalReceived || 0,
+          userIdentifier: uid,
+          totalPaid,
+          totalReceived,
+          records: page.fetchedRecords,
+          lastVisible: page.lastVisible,
+          hasMore: false,
         });
+      } catch (error) {
+        set({ error: error instanceof Error ? error.message : "기록을 불러오지 못했어요." });
+      } finally {
+        clearTimeout(slowTimer);
+        set({ isLoading: false, isLoadingSlow: false });
       }
-
-      set({
-        records: fetchedRecords,
-        lastVisible,
-        hasMore: false,
-      });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : "초기화 실패",
-      });
-    } finally {
-      set({ isLoading: false });
-    }
+    })().finally(() => { initializationPromise = null; });
+    return initializationPromise;
   },
 
   fetchMoreRecords: async () => {
@@ -232,7 +237,8 @@ const createRecordSlice: StateCreator<
       throw error;
     }
   },
-});
+  });
+};
 
 /**
  * 2. UI 상태 슬라이스

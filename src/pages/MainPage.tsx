@@ -5,7 +5,7 @@ import { useRecordStore } from "../stores/useRecordStore";
 import { RecordFormBottomSheet } from "../components/form/RecordFormBottomSheet";
 import { RecordList } from "../components/record-card/RecordList";
 import { CoinRain } from "../components/common/CoinRain";
-import { GlobalErrorView } from "../components/common/GlobalErrorView";
+import { ConnectionNotice } from "../components/common/ConnectionNotice";
 import { MainSummaryCard } from "../components/main/MainSummaryCard";
 import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
@@ -47,6 +47,7 @@ export function MainPage() {
     isCelebrating,
     setCelebrating,
     isLoading,
+    isLoadingSlow,
     error,
     totalPaid,
     totalReceived,
@@ -98,6 +99,10 @@ export function MainPage() {
 
   const handleToggleFavorite = useCallback(
     async (id: string) => {
+      if (isLoading || error) {
+        openToast("기록을 불러온 뒤에 변경할 수 있어요.");
+        return;
+      }
       const record = records.find((r) => r.id === id);
       if (!record) return;
       const willBeFavorite = !record.isFavorite;
@@ -117,7 +122,7 @@ export function MainPage() {
         );
       }
     },
-    [records, updateRecord, openToast],
+    [records, updateRecord, openToast, isLoading, error],
   );
 
   const { dragX, handleTouchStart, handleTouchMove, handleTouchEnd } =
@@ -134,12 +139,6 @@ export function MainPage() {
   const guardedTouchStart = isGuiding ? undefined : handleTouchStart;
   const guardedTouchMove = isGuiding ? undefined : handleTouchMove;
   const guardedTouchEnd = isGuiding ? undefined : handleTouchEnd;
-
-  if (error) {
-    return (
-      <GlobalErrorView description={error} onRetry={() => initializeStore()} />
-    );
-  }
 
   return (
     <div
@@ -194,6 +193,10 @@ export function MainPage() {
 
               <Spacing size={16} />
 
+              {(error || isLoadingSlow) && (
+                <ConnectionNotice error={error} onRetry={() => void initializeStore()} />
+              )}
+
               <div
                 style={{
                   transform: `translateX(${dragX}px)`,
@@ -202,20 +205,32 @@ export function MainPage() {
                 }}
               >
                 <div style={{ minHeight: "65vh" }}>
-                  <RecordList
+                  {(!error || records.length > 0) && <RecordList
                     records={filteredRecords}
                     totalCount={records.length}
                     isLoading={isLoading}
                     isLoadingMore={isLoadingMore}
                     hasMore={hasMore}
                     onLoadMore={fetchMoreRecords}
-                    onAddRecord={startAddingRecord}
-                    onRecordClick={openRecordForm}
+                    onAddRecord={(type) => {
+                      if (isLoading || error) {
+                        openToast("기록을 불러온 뒤에 추가할 수 있어요.");
+                        return;
+                      }
+                      startAddingRecord(type);
+                    }}
+                    onRecordClick={(id) => {
+                      if (isLoading || error) {
+                        openToast("기록을 불러온 뒤에 수정할 수 있어요.");
+                        return;
+                      }
+                      openRecordForm(id);
+                    }}
                     filterType={filterType}
                     viewMode={viewMode}
                     guide={guide}
                     onToggleFavorite={handleToggleFavorite}
-                  />
+                  />}
                 </div>
 
                 <div

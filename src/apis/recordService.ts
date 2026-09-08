@@ -7,8 +7,8 @@ import {
   writeBatch,
   runTransaction,
   DocumentSnapshot,
-} from "firebase/firestore";
-import { signInAnonymously } from "firebase/auth";
+} from "firebase/firestore/lite";
+import { signInAnonymously, type UserCredential } from "firebase/auth";
 import { auth, db } from "@/utils/firebase";
 import {
   getStableUserDocumentId,
@@ -16,10 +16,15 @@ import {
 } from "@/utils/toss";
 import { applyRecordDelta, type RecordTotals } from "@/utils/recordTotals";
 import type { MoneyRecord } from "../types/record";
+import { withRequestTimeout, RequestTimeoutError } from "../utils/requestTimeout";
 
-// 초기 진입에서 여러 요청이 직렬로 누적되어 검수 제한(20초)을 넘지 않게 합니다.
-// 느린 네트워크에서는 빠르게 실패 UI를 보여주고 사용자가 재시도할 수 있습니다.
-const REQUEST_TIMEOUT = 3000;
+let anonymousSignIn: Promise<UserCredential> | null = null;
+function signInOnce() {
+  if (!anonymousSignIn) {
+    anonymousSignIn = signInAnonymously(auth).finally(() => { anonymousSignIn = null; });
+  }
+  return anonymousSignIn;
+}
 
 const ERROR_MESSAGES: Record<string, string> = {
   unavailable: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
@@ -54,26 +59,6 @@ function getErrorMessage(error: unknown): string {
   return "알 수 없는 오류가 발생했습니다.";
 }
 
-function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number = REQUEST_TIMEOUT,
-): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(
-        () =>
-          reject(
-            new Error(
-              "요청 시간이 초과되었습니다. 네트워크 상태를 확인해주세요.",
-            ),
-          ),
-        ms,
-      ),
-    ),
-  ]);
-}
-
 function checkOnline(): void {
   if (typeof navigator !== "undefined" && !navigator.onLine) {
     throw new Error("인터넷 연결이 없습니다. 네트워크 상태를 확인해주세요.");
@@ -81,6 +66,10 @@ function checkOnline(): void {
 }
 
 function throwUserFriendlyError(error: unknown): never {
+  if (error instanceof RequestTimeoutError) throw error;
+  const code = error instanceof Error && "code" in error ? error.code : "unknown";
+  // 사용자 식별자/기록/토큰 없이 실패 종류만 남깁니다.
+  console.error("[recordService] 요청 실패", { code });
   throw new Error(getErrorMessage(error));
 }
 
@@ -97,9 +86,11 @@ export const recordService = {
   async authenticate() {
     try {
       checkOnline();
-      const tossId = await getTossUserIdentifier();
-      await withTimeout(auth.authStateReady());
-      const user = auth.currentUser ?? (await withTimeout(signInAnonymously(auth))).user;
+      const [tossId] = await Promise.all([
+        getTossUserIdentifier(),
+        withRequestTimeout(auth.authStateReady(), "사용자 연결 준비"),
+      ]);
+      const user = auth.currentUser ?? (await withRequestTimeout(signInOnce(), "사용자 연결")).user;
       const uid = await getStableUserDocumentId(tossId);
       await this.migrateAnonymousAccount(user.uid, uid, tossId);
       return { uid, tossId };
@@ -116,13 +107,14 @@ export const recordService = {
     if (legacyUid === stableUid) return;
 
     const legacyUserRef = doc(db, "users", legacyUid);
-    const legacyUser = await withTimeout(getDoc(legacyUserRef));
+    const legacyUser = await withRequestTimeout(getDoc(legacyUserRef), "기존 기록 확인");
     if (!legacyUser.exists()) return;
     if (legacyUser.data().migratedToUid === stableUid) return;
 
     const stableUserRef = doc(db, "users", stableUid);
-    const legacyRecords = await withTimeout(
+    const legacyRecords = await withRequestTimeout(
       getDocs(collection(db, "users", legacyUid, "records")),
+      "기존 기록 불러오기",
     );
 
     // Firestore batch 한도에 여유를 두고 기존 기록을 새 고정 경로로 병합합니다.
@@ -153,12 +145,13 @@ export const recordService = {
           { merge: true },
         );
       }
-      await withTimeout(batch.commit());
+      await batch.commit();
     }
 
     // 여러 기기의 레거시 기록이 합쳐져도 저장된 전체 기록을 기준으로 총액을 복구합니다.
-    const mergedRecords = await withTimeout(
+    const mergedRecords = await withRequestTimeout(
       getDocs(collection(db, "users", stableUid, "records")),
+      "기록 불러오기",
     );
     let totalPaid = 0;
     let totalReceived = 0;
@@ -167,18 +160,18 @@ export const recordService = {
       if ((record.mode || "paid") === "paid") totalPaid += record.amount;
       else totalReceived += record.amount;
     }
-    await withTimeout(setDoc(stableUserRef, {
+    await setDoc(stableUserRef, {
       totalAmount: totalPaid + totalReceived,
       totalPaid,
       totalReceived,
-    }, { merge: true }));
+    }, { merge: true });
   },
 
   async getOrCreateUser(uid: string, tossId: string) {
     try {
       checkOnline();
       const userDocRef = doc(db, "users", uid);
-      const userDoc = await withTimeout(getDoc(userDocRef));
+      const userDoc = await withRequestTimeout(getDoc(userDocRef), "사용자 기록 확인");
 
       if (!userDoc.exists()) {
         const initialData = {
@@ -188,7 +181,7 @@ export const recordService = {
           totalPaid: 0,
           totalReceived: 0,
         };
-        await withTimeout(setDoc(userDocRef, initialData));
+        await setDoc(userDocRef, initialData);
         return initialData;
       }
 
@@ -233,7 +226,7 @@ export const recordService = {
         migratedAt: new Date().toISOString(),
       });
 
-      await withTimeout(batch.commit());
+      await batch.commit();
       return { totalAmount };
     } catch (error) {
       throwUserFriendlyError(error);
@@ -245,7 +238,7 @@ export const recordService = {
       checkOnline();
       const recordsColRef = collection(db, "users", uid, "records");
       // 개인 경조사 기록은 전체를 읽어야 필터, 최근 금액, 즐겨찾기 정렬이 정확합니다.
-      const snapshot = await withTimeout(getDocs(recordsColRef));
+      const snapshot = await withRequestTimeout(getDocs(recordsColRef), "기록 불러오기");
 
       const fetchedRecords = snapshot.docs.map((d) => {
         const data = d.data() as MoneyRecord;
@@ -277,7 +270,7 @@ export const recordService = {
       const recordRef = doc(db, "users", uid, "records", record.id);
       const userDocRef = doc(db, "users", uid);
 
-      return await withTimeout(runTransaction(db, async (transaction) => {
+      return await runTransaction(db, async (transaction) => {
         const userSnapshot = await transaction.get(userDocRef);
         const data = userSnapshot.data();
         const totals = applyRecordDelta(
@@ -294,7 +287,7 @@ export const recordService = {
           ...totals,
         }, { merge: true });
         return totals;
-      }));
+      });
     } catch (error) {
       throwUserFriendlyError(error);
     }
@@ -309,7 +302,7 @@ export const recordService = {
       const recordRef = doc(db, "users", uid, "records", recordId);
       const userDocRef = doc(db, "users", uid);
 
-      return await withTimeout(runTransaction(db, async (transaction) => {
+      return await runTransaction(db, async (transaction) => {
         const [userSnapshot, recordSnapshot] = await Promise.all([
           transaction.get(userDocRef),
           transaction.get(recordRef),
@@ -330,7 +323,7 @@ export const recordService = {
           ...totals,
         }, { merge: true });
         return totals;
-      }));
+      });
     } catch (error) {
       throwUserFriendlyError(error);
     }
@@ -346,7 +339,7 @@ export const recordService = {
       const recordRef = doc(db, "users", uid, "records", recordId);
       const userDocRef = doc(db, "users", uid);
 
-      return await withTimeout(runTransaction(db, async (transaction) => {
+      return await runTransaction(db, async (transaction) => {
         const [userSnapshot, recordSnapshot] = await Promise.all([
           transaction.get(userDocRef),
           transaction.get(recordRef),
@@ -369,7 +362,7 @@ export const recordService = {
           ...totals,
         }, { merge: true });
         return totals;
-      }));
+      });
     } catch (error) {
       throwUserFriendlyError(error);
     }

@@ -1,26 +1,15 @@
 import { getAnonymousKey, getDeviceId } from "@apps-in-toss/web-framework";
+import { withRequestTimeout } from "./requestTimeout";
 
 interface QaPersonaInjection {
   tossId?: string;
   userKey?: string;
 }
 
-const BRIDGE_TIMEOUT_MS = 2500;
-
-function withBridgeTimeout<T>(promise: Promise<T>): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      window.setTimeout(
-        () => reject(new Error("TossBridge response timed out")),
-        BRIDGE_TIMEOUT_MS,
-      ),
-    ),
-  ]);
-}
+const BRIDGE_TIMEOUT_MS = 8000;
 
 function readQaPersona(): QaPersonaInjection | null {
-  if (typeof window === "undefined") return null;
+  if (import.meta.env.VITE_QA_MODE !== "true" || typeof window === "undefined") return null;
   const w = window as unknown as { __QA_PERSONA__?: QaPersonaInjection };
   return w.__QA_PERSONA__ ?? null;
 }
@@ -29,35 +18,31 @@ function readQaPersona(): QaPersonaInjection | null {
  * 토스 앱 내에서 사용자를 식별하기 위한 고유 ID를 가져옵니다.
  * AIT 환경에 따라 getDeviceId를 활용할 수 있습니다.
  *
- * ⚠️ 중요: 반환값은 반드시 `device-` 또는 `anon-` 접두어를 포함합니다.
- * 실제 토스 로그인 시 저장되는 userKey(순수 숫자 문자열)와 구분하기 위함입니다.
- * 이 규칙은 `useRecordStore.initializeStore`에서 연결 상태를 판별할 때 사용됩니다.
+ * 토스 사용자는 `toss-`, 구버전 기기는 `device-`, 일반 브라우저는 `anon-`를 씁니다.
+ * 토스 연결 실패를 다른 익명 사용자로 바꾸면 기존 기록이 사라진 것처럼 보이므로
+ * 네이티브 환경의 실패는 재시도 가능한 오류로 전달합니다.
  */
 export const getTossUserIdentifier = async (): Promise<string> => {
   const qa = readQaPersona();
   if (qa?.tossId) return qa.tossId;
+  if (!("ReactNativeWebView" in window)) return getLocalAnonymousId();
 
-  try {
-    // 사용자 조작이나 동의 화면 없이 발급되는 미니앱 전용 식별키를 우선 사용합니다.
-    const anonymousKey = await withBridgeTimeout(getAnonymousKey());
-    if (
-      anonymousKey &&
-      anonymousKey !== "ERROR" &&
-      anonymousKey.type === "HASH"
-    ) {
-      return `toss-${anonymousKey.hash}`;
-    }
+  // 사용자 조작이나 동의 화면 없이 발급되는 미니앱 전용 식별키를 우선 사용합니다.
+  const anonymousKey = await withRequestTimeout(getAnonymousKey(), "토스 사용자 확인", BRIDGE_TIMEOUT_MS);
+  if (
+    anonymousKey &&
+    anonymousKey !== "ERROR" &&
+    anonymousKey.type === "HASH" && anonymousKey.hash
+  ) {
+    return `toss-${anonymousKey.hash}`;
+  }
 
-    // 지원하지 않는 토스앱에서는 기기 고유 ID로 폴백합니다.
+  // 지원하지 않는 토스앱에서는 기기 고유 ID로 폴백합니다.
+  if (anonymousKey === undefined) {
     const deviceId = getDeviceId();
     if (deviceId) return `device-${deviceId}`;
-
-    // 브라우저/구형 환경의 마지막 폴백입니다.
-    return getLocalAnonymousId();
-  } catch (error) {
-    console.error("TossBridge를 통해 식별자를 가져오는데 실패했습니다:", error);
-    return getLocalAnonymousId();
   }
+  throw new Error("토스 사용자 정보를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
 };
 
 /**

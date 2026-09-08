@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore/lite";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 
 const isQaMode = import.meta.env.VITE_QA_MODE === "true";
@@ -16,6 +16,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+// 일회성 조회/트랜잭션만 사용하므로 WebChannel 지속 연결이 필요하지 않습니다.
+// Lite는 HTTPS REST로 통신해 웹뷰의 스트리밍 연결 지연을 피합니다.
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
