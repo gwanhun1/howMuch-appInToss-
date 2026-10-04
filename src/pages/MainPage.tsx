@@ -12,6 +12,7 @@ import { useSwipeMode } from "../hooks/useSwipeMode";
 import { useFeatureGuide } from "../hooks/useFeatureGuide";
 import { PeopleSearch } from "@/components/people/PeopleSearch";
 import { usePeopleSearch } from "@/hooks/usePeopleSearch";
+import { useWeddingLedger } from "@/hooks/useWeddingLedger";
 import { useBudgetCalculator } from "@/hooks/useBudgetCalculator";
 import type { GuideEvent } from "@/apis/amountGuide/type";
 import { useTossBackEvent } from "@/hooks/useTossBackEvent";
@@ -23,10 +24,13 @@ const AmountGuidePage = lazy(() =>
   import("./AmountGuidePage").then((module) => ({ default: module.AmountGuidePage })),
 );
 
+const WeddingLedgerPage = lazy(() => import("./WeddingLedgerPage").then((m) => ({ default: m.WeddingLedgerPage })));
 const BudgetCalculatorPage = lazy(() => import("./BudgetCalculatorPage").then((m) => ({ default: m.BudgetCalculatorPage })));
 
 export function MainPage() {
   const budget = useBudgetCalculator();
+  const weddingLedger = useWeddingLedger();
+  const [showWeddingLedger, setShowWeddingLedger] = useState(false);
   const [showBudget, setShowBudget] = useState(false);
   const [budgetGuide, setBudgetGuide] = useState<{ id: string; type: GuideEvent } | null>(null);
   const [showAmountGuide, setShowAmountGuide] = useState(false);
@@ -150,6 +154,12 @@ export function MainPage() {
   const guardedTouchMove = isGuiding ? undefined : handleTouchMove;
   const guardedTouchEnd = isGuiding ? undefined : handleTouchEnd;
 
+  if (showWeddingLedger) return (
+    <Suspense fallback={<div role="status" style={{ padding: 24 }}>장부를 불러오고 있어요.</div>}>
+      <WeddingLedgerPage model={weddingLedger} onBack={() => setShowWeddingLedger(false)} />
+    </Suspense>
+  );
+
   if (showBudget && !showAmountGuide) return (
     <Suspense fallback={<div role="status" style={{ padding: 24 }}>계산기를 불러오고 있어요.</div>}>
       <BudgetCalculatorPage model={budget} onBack={() => setShowBudget(false)} onGuide={(id, type) => {
@@ -213,6 +223,8 @@ export function MainPage() {
               <Button display="block" onClick={() => setShowAmountGuide(true)}>얼마 낼까? 상황별 금액 가이드</Button>
               <Spacing size={8} />
               <Button display="block" variant="weak" onClick={() => setShowBudget(true)}>이번 달 경조사비 계산하기</Button>
+              <Spacing size={8} />
+              <Button display="block" variant="weak" onClick={() => setShowWeddingLedger(true)}>결혼식 축의금 빠르게 정리하기</Button>
             </div>
 
             <div>

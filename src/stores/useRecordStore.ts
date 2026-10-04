@@ -32,6 +32,7 @@ interface RecordSlice {
   initializeStore: () => Promise<void>;
   fetchMoreRecords: () => Promise<void>;
   addRecord: (record: MoneyRecord) => Promise<void>;
+  addRecords: (records: MoneyRecord[]) => Promise<void>;
   updateRecord: (id: string, updates: Partial<MoneyRecord>) => Promise<void>;
   removeRecord: (id: string) => Promise<void>;
   setUserIdentifier: (id: string) => void;
@@ -167,6 +168,21 @@ const createRecordSlice: StateCreator<
         MODE_TOGGLE_PULSE_DURATION_MS,
       );
     }
+  },
+
+  addRecords: async (records) => {
+    const { userIdentifier, isLoading, error } = get();
+    if (!userIdentifier || isLoading || error) throw new Error("기록 연결 후 저장할 수 있어요.");
+    const newRecords = records.map((r) => ({ ...r, createdAt: r.createdAt ?? new Date().toISOString() }));
+    const service = await loadRecordService();
+    const totals = await service.addRecords(userIdentifier, newRecords);
+    // 요청 중 화면이 바뀌어도 현재 목록에 병합하고, 실패 시에는 기존 목록을 건드리지 않습니다.
+    if (get().userIdentifier !== userIdentifier) throw new Error("사용자 연결이 변경됐어요. 다시 접속해주세요.");
+    set((state) => {
+      const merged = new Map(state.records.map((r) => [r.id, r]));
+      for (const record of newRecords) merged.set(record.id, record);
+      return { records: [...merged.values()], ...totals };
+    });
   },
 
   updateRecord: async (id, updates) => {

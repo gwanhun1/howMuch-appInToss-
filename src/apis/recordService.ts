@@ -14,6 +14,7 @@ import {
   getStableUserDocumentId,
   getTossUserIdentifier,
 } from "@/utils/toss";
+import { isValidRecordDate, MAX_WEDDING_GUESTS } from "./weddingLedger";
 import { applyRecordDelta, type RecordTotals } from "@/utils/recordTotals";
 import type { MoneyRecord } from "../types/record";
 import { withRequestTimeout, RequestTimeoutError } from "../utils/requestTimeout";
@@ -291,6 +292,35 @@ export const recordService = {
     } catch (error) {
       throwUserFriendlyError(error);
     }
+  },
+
+  /** 같은 기록 ID의 재요청은 기존 값을 대체해 합계가 중복 증가하지 않습니다. */
+  async addRecords(uid: string, records: MoneyRecord[]): Promise<RecordTotals> {
+    if (!records.length || records.length > MAX_WEDDING_GUESTS || new Set(records.map((r) => r.id)).size !== records.length) {
+      throw new Error("한 번에 1~25개의 서로 다른 기록만 저장할 수 있어요.");
+    }
+    if (records.some((r) => !r.id || !r.name.trim() || r.name.trim().length > 50 || r.relation.length > 50 || !isValidRecordDate(r.date) || r.mode !== "received" || r.type !== "축의금" ||
+      !Number.isSafeInteger(r.amount) || r.amount <= 0 || r.amount > 100000000)) {
+      throw new Error("축의금 이름과 금액을 확인해주세요.");
+    }
+    try {
+      checkOnline();
+      const userRef = doc(db, "users", uid);
+      const recordRefs = records.map((r) => doc(db, "users", uid, "records", r.id));
+      return await runTransaction(db, async (transaction) => {
+        const userSnapshot = await transaction.get(userRef);
+        const previousRecords = await Promise.all(recordRefs.map((ref) => transaction.get(ref)));
+        const data = userSnapshot.data();
+        let totals: RecordTotals = { totalPaid: data?.totalPaid ?? data?.totalAmount ?? 0, totalReceived: data?.totalReceived ?? 0 };
+        records.forEach((record, index) => {
+          const previous = previousRecords[index];
+          totals = applyRecordDelta(totals, previous.exists() ? previous.data() as MoneyRecord : null, record);
+          transaction.set(recordRefs[index], record);
+        });
+        transaction.set(userRef, { ...totals, totalAmount: totals.totalPaid + totals.totalReceived }, { merge: true });
+        return totals;
+      });
+    } catch (error) { throwUserFriendlyError(error); }
   },
 
   async removeRecord(
