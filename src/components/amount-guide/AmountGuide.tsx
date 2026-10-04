@@ -11,6 +11,8 @@ interface Props {
   onRecord: (draft: GuidedRecordDraft) => void;
   canRecord: boolean;
   connectionMessage: string | null;
+  initialType?: GuideEvent;
+  selectionMode?: boolean;
 }
 
 function Choices<T extends string>({ label, values, selected, onChange }: {
@@ -23,9 +25,9 @@ function Choices<T extends string>({ label, values, selected, onChange }: {
   </fieldset>;
 }
 
-export function AmountGuide({ onBack, onRecord, canRecord, connectionMessage }: Props) {
+export function AmountGuide({ onBack, onRecord, canRecord, connectionMessage, initialType, selectionMode = false }: Props) {
   useTossBackEvent(onBack);
-  const guide = useAmountGuide();
+  const guide = useAmountGuide(initialType);
   const { situation, changeSituation } = guide;
   return <main className="amount-guide" style={{ color: adaptive.grey900, background: adaptive.grey50 }}>
     <header className="guide-header">
@@ -73,7 +75,7 @@ export function AmountGuide({ onBack, onRecord, canRecord, connectionMessage }: 
       <Spacing size={24} />
       <Button display="block" disabled={!canRecord} onClick={() => onRecord({
         type: situation.type, relation: situation.relation, name: guide.name.trim(), amount: guide.amount,
-      })}>{guide.amount.toLocaleString()}원 기록 입력하기</Button>
+      })}>{guide.amount.toLocaleString()}원 {selectionMode ? "계산기에 적용하기" : "기록 입력하기"}</Button>
       <p className="guide-note">{connectionMessage ?? "입력창에서 이름·날짜·금액을 확인한 뒤 저장해요. 예정 금액은 실제로 보낸 뒤 기록해주세요."}</p>
     </div>
   </main>;

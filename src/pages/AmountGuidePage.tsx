@@ -1,9 +1,11 @@
 import { AmountGuide } from "@/components/amount-guide/AmountGuide";
+import type { GuideEvent } from "@/apis/amountGuide/type";
 import type { GuidedRecordDraft } from "@/types/record";
 import { useRecordStore } from "@/stores/useRecordStore";
 
-export function AmountGuidePage({ onBack, onRecord }: {
+export function AmountGuidePage({ onBack, onRecord, initialType, selectionMode = false }: {
   onBack: () => void; onRecord: (draft: GuidedRecordDraft) => void;
+  initialType?: GuideEvent; selectionMode?: boolean;
 }) {
   const isLoading = useRecordStore((s) => s.isLoading);
   const error = useRecordStore((s) => s.error);
@@ -12,5 +14,7 @@ export function AmountGuidePage({ onBack, onRecord }: {
     : error ? "기록 연결에 실패했어요. 돌아가서 연결을 재시도해주세요."
       : !userIdentifier ? "기록 연결 후 저장할 수 있어요." : null;
   return <AmountGuide onBack={onBack} onRecord={onRecord}
-    canRecord={!isLoading && !error && !!userIdentifier} connectionMessage={connectionMessage} />;
+    initialType={initialType} selectionMode={selectionMode}
+    canRecord={selectionMode || (!isLoading && !error && !!userIdentifier)}
+    connectionMessage={selectionMode ? "선택한 금액을 계산기에 반영해요. 실제 지출 기록에는 저장하지 않아요." : connectionMessage} />;
 }

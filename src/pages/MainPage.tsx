@@ -12,6 +12,8 @@ import { useSwipeMode } from "../hooks/useSwipeMode";
 import { useFeatureGuide } from "../hooks/useFeatureGuide";
 import { PeopleSearch } from "@/components/people/PeopleSearch";
 import { usePeopleSearch } from "@/hooks/usePeopleSearch";
+import { useBudgetCalculator } from "@/hooks/useBudgetCalculator";
+import type { GuideEvent } from "@/apis/amountGuide/type";
 import { useTossBackEvent } from "@/hooks/useTossBackEvent";
 
 const AmountInputPage = lazy(() =>
@@ -21,7 +23,12 @@ const AmountGuidePage = lazy(() =>
   import("./AmountGuidePage").then((module) => ({ default: module.AmountGuidePage })),
 );
 
+const BudgetCalculatorPage = lazy(() => import("./BudgetCalculatorPage").then((m) => ({ default: m.BudgetCalculatorPage })));
+
 export function MainPage() {
+  const budget = useBudgetCalculator();
+  const [showBudget, setShowBudget] = useState(false);
+  const [budgetGuide, setBudgetGuide] = useState<{ id: string; type: GuideEvent } | null>(null);
   const [showAmountGuide, setShowAmountGuide] = useState(false);
   const { openToast } = useToast();
 
@@ -143,9 +150,25 @@ export function MainPage() {
   const guardedTouchMove = isGuiding ? undefined : handleTouchMove;
   const guardedTouchEnd = isGuiding ? undefined : handleTouchEnd;
 
+  if (showBudget && !showAmountGuide) return (
+    <Suspense fallback={<div role="status" style={{ padding: 24 }}>계산기를 불러오고 있어요.</div>}>
+      <BudgetCalculatorPage model={budget} onBack={() => setShowBudget(false)} onGuide={(id, type) => {
+        setBudgetGuide({ id, type });
+        setShowAmountGuide(true);
+      }} />
+    </Suspense>
+  );
+
   if (showAmountGuide) return (
     <Suspense fallback={<div style={{ padding: 24 }} role="status">금액 가이드를 불러오고 있어요.</div>}>
-      <AmountGuidePage onBack={() => setShowAmountGuide(false)} onRecord={(draft) => {
+      <AmountGuidePage initialType={budgetGuide?.type} selectionMode={!!budgetGuide}
+        onBack={() => { setShowAmountGuide(false); setBudgetGuide(null); }} onRecord={(draft) => {
+        if (budgetGuide) {
+          budget.applyGuide(budgetGuide.id, draft);
+          setBudgetGuide(null);
+          setShowAmountGuide(false);
+          return;
+        }
         if (isLoading || error || !useRecordStore.getState().userIdentifier) {
           openToast("기록 연결 후 저장할 수 있어요.");
           return;
@@ -188,6 +211,8 @@ export function MainPage() {
             <Spacing size={12} />
             <div style={{ padding: "0 20px 16px" }} onTouchStart={(e) => e.stopPropagation()}>
               <Button display="block" onClick={() => setShowAmountGuide(true)}>얼마 낼까? 상황별 금액 가이드</Button>
+              <Spacing size={8} />
+              <Button display="block" variant="weak" onClick={() => setShowBudget(true)}>이번 달 경조사비 계산하기</Button>
             </div>
 
             <div>

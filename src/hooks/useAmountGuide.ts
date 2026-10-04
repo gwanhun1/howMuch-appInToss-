@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { getAmountGuide } from "@/apis/amountGuide";
-import type { GuideSituation } from "@/apis/amountGuide/type";
+import type { GuideEvent, GuideSituation } from "@/apis/amountGuide/type";
 import { useRecordStore } from "@/stores/useRecordStore";
 
-export function useAmountGuide() {
+export function useAmountGuide(initialType: GuideEvent = "축의금") {
   const [situation, setSituation] = useState<GuideSituation>({
-    type: "축의금", relation: "친구", closeness: "regular", attending: true,
+    type: initialType, relation: "친구", closeness: "regular", attending: true,
   });
   const [name, setName] = useState("");
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
