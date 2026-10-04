@@ -50,3 +50,20 @@ it("저장 실패에도 현재 꾸미기는 유지하고 재접속 보존 실패
   expect(result.current.getDecoration(result.current.residents[0]).house).toBe("forest");
   expect(result.current.storageMessage).toContain("저장하지 못했어요");
 });
+
+it("연결된 사용자가 없으면 꾸미기를 기기에 쓰지 않는다", () => {
+  const save = vi.spyOn(Storage.prototype, "setItem");
+  const { result } = renderHook(() => useHeartVillage(records, null));
+  act(() => result.current.selectResident("record-0"));
+  act(() => result.current.decorate({ house: "rose" }));
+  expect(save).not.toHaveBeenCalled();
+  expect(result.current.getDecoration(result.current.residents[0]).house).toBe("sky");
+});
+
+it("선택한 집의 기록이 삭제되면 오래된 기록 상세를 남기지 않는다", () => {
+  const { result, rerender } = renderHook(({ rows }) => useHeartVillage(rows, "u"), { initialProps: { rows: records } });
+  act(() => result.current.selectResident("record-0"));
+  expect(result.current.selected?.id).toBe("record-0");
+  rerender({ rows: records.filter((r) => r.id !== "record-0") });
+  expect(result.current.selected).toBeNull();
+});
