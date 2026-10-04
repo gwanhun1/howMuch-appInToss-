@@ -1,4 +1,5 @@
-import { Button, Spacing, Text, TextField } from "@toss/tds-mobile";
+import { FeatureTextField } from "@/components/growth/FeatureTextField";
+import { Button, Spacing, Text } from "@toss/tds-mobile";
 import { FeatureHeader } from "@/components/growth/FeatureHeader";
 import { MAX_PLAN_ROWS, parseExpenseAmount } from "@/apis/budgetCalculator";
 import type { useBudgetCalculator } from "@/hooks/useBudgetCalculator";
@@ -17,7 +18,7 @@ export function BudgetCalculator({ model, onBack, onGuide }: {
       <Text typography="t3" fontWeight="bold">이번 달, 얼마 준비할까요?</Text>
       <p className="growth-note">예정된 경조사와 금액을 더해보세요. 계산 내용은 실제 지출 기록에 포함되지 않아요.</p>
       <label className="growth-field">계획할 달<input type="month" value={model.month} onChange={(e) => model.setMonth(e.target.value)} /></label>
-      <TextField.Clearable variant="box" label="준비한 예산 (선택)" inputMode="numeric" suffix="원"
+      <FeatureTextField variant="box" label="준비한 예산 (선택)" inputMode="numeric" suffix="원"
         value={model.budget} maxLength={9} placeholder="예산과 예정 금액을 비교해보세요"
         onChange={(e) => model.setBudget(e.target.value.replace(/[^0-9]/g, ""))} />
       {model.budget && parseExpenseAmount(model.budget) === null && <p className="growth-error">예산은 1원부터 1억 원까지 입력해주세요.</p>}
@@ -34,11 +35,11 @@ export function BudgetCalculator({ model, onBack, onGuide }: {
         <div className="growth-row-head"><Text typography="t5" fontWeight="bold">예정 경조사 {index + 1}</Text>
           <Button size="small" variant="weak" color="dark" aria-label={`예정 경조사 ${index + 1} 삭제`} onClick={() => model.removeRow(row.id)}>삭제</Button></div>
         <Spacing size={16} />
-        <TextField.Clearable variant="box" label="이름·행사 (선택)" placeholder="예: 친구 결혼식" maxLength={50}
+        <FeatureTextField variant="box" label="이름·행사 (선택)" placeholder="예: 친구 결혼식" maxLength={50}
           value={row.name} onChange={(e) => model.updateRow(row.id, { name: e.target.value })} />
         <label className="growth-field">종류<select value={row.type} onChange={(e) => model.updateRow(row.id, { type: e.target.value as RecordType })}>
           {["축의금", "조의금", "돌잔치", "용돈"].map((type) => <option key={type}>{type}</option>)}</select></label>
-        <TextField.Clearable variant="box" label="예정 금액" inputMode="numeric" suffix="원" placeholder="예정 금액을 입력해주세요"
+        <FeatureTextField variant="box" label="예정 금액" inputMode="numeric" suffix="원" placeholder="예정 금액을 입력해주세요"
           value={row.amount} maxLength={9} onChange={(e) => model.updateRow(row.id, { amount: e.target.value.replace(/[^0-9]/g, "") })} />
         {row.amount && parseExpenseAmount(row.amount) === null && <p className="growth-error">1원부터 1억 원까지 입력해주세요.</p>}
         <Spacing size={12} />

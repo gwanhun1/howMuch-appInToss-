@@ -1,4 +1,4 @@
-import { TextField } from "@toss/tds-mobile";
+import { FeatureTextField } from "@/components/growth/FeatureTextField";
 import type { usePeopleSearch } from "@/hooks/usePeopleSearch";
 import "../amount-guide/guide.css";
 
@@ -8,7 +8,7 @@ export function PeopleSearch({ search, isLoading, error, onRecordClick }: {
 }) {
   return <section className="people-search" aria-label="이름으로 기록 찾기"
     onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
-    <TextField.Clearable variant="box" label="이름으로 찾기" placeholder="누구에게 얼마 주고받았나요?"
+    <FeatureTextField variant="box" label="이름으로 찾기" placeholder="누구에게 얼마 주고받았나요?"
       value={search.query} maxLength={50} onChange={(e) => search.setQuery(e.target.value)} />
     {search.isSearching && <div className="people-results">
       <p className="guide-note" role="status">{isLoading ? "기록을 불러오고 있어요."

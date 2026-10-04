@@ -1,7 +1,8 @@
-import { Button, Spacing, Text, TextField } from "@toss/tds-mobile";
+import { FeatureTextField } from "@/components/growth/FeatureTextField";
+import { Button, Spacing, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useAmountGuide } from "@/hooks/useAmountGuide";
-import { useTossBackEvent } from "@/hooks/useTossBackEvent";
+import { FeatureHeader } from "@/components/growth/FeatureHeader";
 import type { GuideEvent, Closeness } from "@/apis/amountGuide/type";
 import type { GuidedRecordDraft } from "@/types/record";
 import "./guide.css";
@@ -26,14 +27,10 @@ function Choices<T extends string>({ label, values, selected, onChange }: {
 }
 
 export function AmountGuide({ onBack, onRecord, canRecord, connectionMessage, initialType, selectionMode = false }: Props) {
-  useTossBackEvent(onBack);
   const guide = useAmountGuide(initialType);
   const { situation, changeSituation } = guide;
   return <main className="amount-guide" style={{ color: adaptive.grey900, background: adaptive.grey50 }}>
-    <header className="guide-header">
-      {!("ReactNativeWebView" in window) && <Button size="small" variant="weak" onClick={onBack}>돌아가기</Button>}
-      <Text typography="t5" fontWeight="bold">경조사 금액 가이드</Text>
-    </header>
+    <FeatureHeader title="경조사 금액 가이드" onBack={onBack} />
     <div className="guide-content">
       <Text typography="t3" fontWeight="bold">마음을 전할 금액, 함께 생각해봐요</Text>
       <Spacing size={8} />
@@ -61,7 +58,7 @@ export function AmountGuide({ onBack, onRecord, canRecord, connectionMessage, in
         <p className="guide-note">서비스 자체 기준으로 만든 참고 선택지예요. 실제 평균이나 정답은 아니며, 기록할 때 금액을 자유롭게 바꿀 수 있어요.</p>
       </section>
       <Spacing size={24} />
-      <TextField.Clearable variant="box" label="이름 (선택)" value={guide.name} maxLength={50}
+      <FeatureTextField variant="box" label="이름 (선택)" value={guide.name} maxLength={50}
         placeholder="이전 내역도 함께 확인해보세요" onChange={(e) => guide.setName(e.target.value)} />
       {guide.personHistory.length > 0 && <section className="guide-history">
         <h2>같은 이름으로 남긴 기록</h2><p className="guide-note">동명이인일 수 있어요. 관계와 날짜를 함께 확인해주세요.</p>

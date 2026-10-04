@@ -219,14 +219,6 @@ export function MainPage() {
             onTouchEnd={guardedTouchEnd}
           >
             <Spacing size={12} />
-            <div style={{ padding: "0 20px 16px" }} onTouchStart={(e) => e.stopPropagation()}>
-              <Button display="block" onClick={() => setShowAmountGuide(true)}>얼마 낼까? 상황별 금액 가이드</Button>
-              <Spacing size={8} />
-              <Button display="block" variant="weak" onClick={() => setShowBudget(true)}>이번 달 경조사비 계산하기</Button>
-              <Spacing size={8} />
-              <Button display="block" variant="weak" onClick={() => setShowWeddingLedger(true)}>결혼식 축의금 빠르게 정리하기</Button>
-            </div>
-
             <div>
               <MainSummaryCard
                 totalAmount={currentTotal}
@@ -240,6 +232,13 @@ export function MainPage() {
               />
 
               <Spacing size={16} />
+
+              <nav aria-label="경조사 도구" style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0 20px 16px" }}
+                onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+                <Button size="small" variant="weak" color="dark" onClick={() => setShowAmountGuide(true)}>금액 가이드</Button>
+                <Button size="small" variant="weak" color="dark" onClick={() => setShowBudget(true)}>예정 비용</Button>
+                <Button size="small" variant="weak" color="dark" onClick={() => setShowWeddingLedger(true)}>축의금 장부</Button>
+              </nav>
 
               {(error || isLoadingSlow) && (
                 <ConnectionNotice error={error} onRetry={() => void initializeStore()} />

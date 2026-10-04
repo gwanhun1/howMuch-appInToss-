@@ -1,4 +1,5 @@
-import { Button, Checkbox, Spacing, Text, TextField } from "@toss/tds-mobile";
+import { FeatureTextField } from "@/components/growth/FeatureTextField";
+import { Button, Checkbox, Spacing, Text } from "@toss/tds-mobile";
 import { FeatureHeader } from "@/components/growth/FeatureHeader";
 import type { useWeddingLedger } from "@/hooks/useWeddingLedger";
 import { MAX_WEDDING_GUESTS } from "@/apis/weddingLedger";
@@ -26,11 +27,11 @@ export function WeddingLedger({ model, onBack }: { model: ReturnType<typeof useW
         <div className="growth-row-head"><Text typography="t5" fontWeight="bold">{index + 1}번째 하객</Text>
           <Button size="small" variant="weak" color="dark" disabled={model.isSaving} aria-label={`${index + 1}번째 하객 삭제`}
             onClick={() => model.removeGuest(guest.id)}>삭제</Button></div><Spacing size={16} />
-        <TextField.Clearable variant="box" label="이름" placeholder="하객 이름" value={guest.name} maxLength={50}
+        <FeatureTextField variant="box" label="이름" placeholder="하객 이름" value={guest.name} maxLength={50}
           disabled={model.isSaving} onChange={(e) => model.updateGuest(guest.id, { name: e.target.value })} /><Spacing size={12} />
-        <TextField.Clearable variant="box" label="받은 금액" placeholder="받은 축의금" suffix="원" inputMode="numeric" maxLength={9}
+        <FeatureTextField variant="box" label="받은 금액" placeholder="받은 축의금" suffix="원" inputMode="numeric" maxLength={9}
           value={guest.amount} disabled={model.isSaving} onChange={(e) => model.updateGuest(guest.id, { amount: e.target.value.replace(/[^0-9]/g, "") })} /><Spacing size={12} />
-        <TextField.Clearable variant="box" label="관계·구분 (선택)" placeholder="예: 신랑측 친구" value={guest.relation} maxLength={50}
+        <FeatureTextField variant="box" label="관계·구분 (선택)" placeholder="예: 신랑측 친구" value={guest.relation} maxLength={50}
           disabled={model.isSaving} onChange={(e) => model.updateGuest(guest.id, { relation: e.target.value })} />
         {model.duplicates.includes(guest.id) && <p className="growth-error">같은 날짜·이름·관계·금액의 기록이 있어요. 중복인지 확인해주세요.</p>}
       </section>)}
