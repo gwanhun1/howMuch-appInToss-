@@ -27,14 +27,17 @@ export function HeartVillage({ model, isLoading, error, canDecorate, hasMore, is
     <FeatureHeader title="마음 마을" onBack={selected ? () => model.selectResident(null) : onBack} />
     <div className="growth-content">
       <Text typography="t3" fontWeight="bold">내가 기억하는 작은 마을</Text>
-      <p className="growth-note">마음을 주고받은 기록들이 이웃이 되었어요.<br />집을 눌러 추억을 보고, 내 취향으로 꾸며보세요.</p>
+      <p className="growth-note village-intro">집을 톡 눌러, 함께한 마음을 만나보세요.<br />이웃의 집과 캐릭터도 꾸밀 수 있어요.</p>
       {error ? <ConnectionNotice error={error} onRetry={onRetry} /> : isLoading ?
         <div className="village-state" role="status">이웃들을 만나고 있어요.</div> : <>
         <section className="village-scene" aria-label="마음 마을 지도">
           <div className="village-cloud village-cloud--one" aria-hidden="true" />
           <div className="village-cloud village-cloud--two" aria-hidden="true" />
           <div className="village-greeting" aria-hidden="true">마음이 머무는 곳</div>
-          <div className="village-path" aria-hidden="true" />
+          <svg className="village-path" viewBox="0 0 300 100" fill="none" aria-hidden="true">
+            <path d="M-20 72C36 20 76 97 148 51S246 25 320 66" stroke="#eee5d2" strokeWidth="18" strokeLinecap="round" />
+            <path d="M-20 72C36 20 76 97 148 51S246 25 320 66" stroke="#faf6ea" strokeWidth="12" strokeLinecap="round" />
+          </svg>
           {model.residents.length ? <div className="village-neighbors">
             {model.visibleResidents.map((resident) => <button className="village-neighbor" type="button" key={resident.id}
               aria-label={`${resident.name}, ${resident.relation || "관계 없음"}의 집 열기`}
@@ -49,8 +52,14 @@ export function HeartVillage({ model, isLoading, error, canDecorate, hasMore, is
             <p>마음 하나를 기록하면<br />이곳에 작은 집이 생겨요.</p>
             <Button size="small" onClick={onAddRecord}>첫 마음 기록하기</Button>
           </div>}
-          <span className="village-tree village-tree--left" aria-hidden="true">♣</span>
-          <span className="village-tree village-tree--right" aria-hidden="true">♣</span>
+          <svg className="village-tree village-tree--left" viewBox="0 0 40 44" aria-hidden="true">
+            <path d="M20 23V40" stroke="#c6b69a" strokeWidth="4" strokeLinecap="round" />
+            <circle cx="20" cy="14" r="12" fill="#bbd3c0" /><circle cx="13" cy="23" r="10" fill="#a9c9b0" /><circle cx="26" cy="24" r="11" fill="#b4d0b8" />
+          </svg>
+          <svg className="village-tree village-tree--right" viewBox="0 0 40 44" aria-hidden="true">
+            <path d="M20 23V40" stroke="#c6b69a" strokeWidth="4" strokeLinecap="round" />
+            <circle cx="20" cy="14" r="12" fill="#c5d9bf" /><circle cx="13" cy="23" r="10" fill="#b6cda9" /><circle cx="26" cy="24" r="11" fill="#bfd5b4" />
+          </svg>
         </section>
         {model.residents.length > 0 && <nav className="village-pagination" aria-label="마을 구역 이동">
           <Button size="small" variant="weak" disabled={model.page === 0} onClick={() => model.setPage(model.page - 1)}>이전 구역</Button>
@@ -69,7 +78,7 @@ export function HeartVillage({ model, isLoading, error, canDecorate, hasMore, is
         <div className="village-detail-house"><VillageHouse decoration={decoration} /></div>
         <p className="growth-note">{selected.relation || "관계 없음"} · 같은 이름·관계의 기록 {selected.records.length}개</p>
         <fieldset className="village-choices"><legend>집 꾸미기</legend>
-          <div className="growth-actions">{HOUSE_STYLES.map((style) => <Button key={style.value} size="small" variant="weak"
+          <div className="growth-actions">{HOUSE_STYLES.map((style) => <Button key={style.value} className={`village-style-choice village-style-choice--${style.value}`} size="small" variant="weak"
             color={decoration.house === style.value ? "primary" : "dark"} aria-pressed={decoration.house === style.value}
             disabled={!canDecorate} onClick={() => model.decorate({ house: style.value })}>{style.label}</Button>)}</div>
         </fieldset>
