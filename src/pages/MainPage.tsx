@@ -16,6 +16,7 @@ import { useWeddingLedger } from "@/hooks/useWeddingLedger";
 import { useBudgetCalculator } from "@/hooks/useBudgetCalculator";
 import type { GuideEvent } from "@/apis/amountGuide/type";
 import { useTossBackEvent } from "@/hooks/useTossBackEvent";
+import { trackGrowthToolOpened } from "@/apis/growthAnalytics";
 
 const AmountInputPage = lazy(() =>
   import("./AmountInputPage").then((module) => ({ default: module.AmountInputPage })),
@@ -235,9 +236,9 @@ export function MainPage() {
 
               <nav aria-label="경조사 도구" style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0 20px 16px" }}
                 onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
-                <Button size="small" variant="weak" color="dark" onClick={() => setShowAmountGuide(true)}>금액 가이드</Button>
-                <Button size="small" variant="weak" color="dark" onClick={() => setShowBudget(true)}>예정 비용</Button>
-                <Button size="small" variant="weak" color="dark" onClick={() => setShowWeddingLedger(true)}>축의금 장부</Button>
+                <Button size="small" variant="weak" color="dark" onClick={() => { void trackGrowthToolOpened("amount_guide"); setShowAmountGuide(true); }}>금액 가이드</Button>
+                <Button size="small" variant="weak" color="dark" onClick={() => { void trackGrowthToolOpened("budget_calculator"); setShowBudget(true); }}>예정 비용</Button>
+                <Button size="small" variant="weak" color="dark" onClick={() => { void trackGrowthToolOpened("wedding_ledger"); setShowWeddingLedger(true); }}>축의금 장부</Button>
               </nav>
 
               {(error || isLoadingSlow) && (

@@ -165,6 +165,17 @@ export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
             이용자는 언제든지 본인의 데이터를 삭제하거나 수집 중단을 요청할 수
             있습니다.
           </Text>
+          <Spacing size={16} />
+          <Text typography="t6" fontWeight="bold">
+            5. 서비스 이용 분석
+          </Text>
+          <Spacing size={8} />
+          <Text typography="t7" color={adaptive.grey700}>
+            이용 흐름과 노출 성과를 분석하기 위해 기록 저장 성공과 보조 도구
+            선택 이벤트를 토스 SDK로 전달합니다. SDK는 미니앱 전용 익명 식별키를
+            함께 처리합니다. 이름, 금액, 날짜, 관계, CSV 내용은 해당 분석
+            이벤트에 포함하지 않습니다.
+          </Text>
           <Spacing size={24} />
           <Button
             size="medium"

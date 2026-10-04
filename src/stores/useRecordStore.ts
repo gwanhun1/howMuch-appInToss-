@@ -4,6 +4,7 @@ import type { DocumentSnapshot } from "firebase/firestore/lite";
 import type { GuidedRecordDraft, MoneyRecord, RecordMode, RecordType } from "../types/record";
 import type { UserMetadata } from "../apis/recordService";
 import { applyRecordDelta } from "../utils/recordTotals";
+import { trackRecordSaved } from "@/apis/growthAnalytics";
 
 /** 첫 기록 저장 후 mode-toggle을 강조하는 시간(ms) */
 const MODE_TOGGLE_PULSE_DURATION_MS = 4000;
@@ -161,6 +162,8 @@ const createRecordSlice: StateCreator<
       throw error;
     }
 
+    if (!records.some((r) => r.id === newRecord.id)) void trackRecordSaved("single");
+
     if (isFirstRecord) {
       set({ modeTogglePulse: true });
       setTimeout(
@@ -171,7 +174,7 @@ const createRecordSlice: StateCreator<
   },
 
   addRecords: async (records) => {
-    const { userIdentifier, isLoading, error } = get();
+    const { userIdentifier, isLoading, error, records: previousRecords } = get();
     if (!userIdentifier || isLoading || error) throw new Error("기록 연결 후 저장할 수 있어요.");
     const newRecords = records.map((r) => ({ ...r, createdAt: r.createdAt ?? new Date().toISOString() }));
     const service = await loadRecordService();
@@ -183,6 +186,9 @@ const createRecordSlice: StateCreator<
       for (const record of newRecords) merged.set(record.id, record);
       return { records: [...merged.values()], ...totals };
     });
+    if (newRecords.some((record) => !previousRecords.some((previous) => previous.id === record.id))) {
+      void trackRecordSaved("wedding_ledger");
+    }
   },
 
   updateRecord: async (id, updates) => {
