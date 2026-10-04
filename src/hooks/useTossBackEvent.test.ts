@@ -42,3 +42,15 @@ it("브리지 연결 실패가 금액 입력 화면을 중단시키지 않는다
   });
   expect(() => renderHook(() => useTossBackEvent(vi.fn()))).not.toThrow();
 });
+
+it("입력창이 닫히면 뒤로가기 구독을 해제해 첫 화면 종료 동작을 유지한다", () => {
+  vi.stubGlobal("ReactNativeWebView", { postMessage: vi.fn() });
+  const unsubscribe = vi.fn();
+  vi.mocked(graniteEvent.addEventListener).mockReturnValue(unsubscribe);
+  const { rerender } = renderHook(({ enabled }) => useTossBackEvent(vi.fn(), enabled), {
+    initialProps: { enabled: true },
+  });
+  rerender({ enabled: false });
+  expect(unsubscribe).toHaveBeenCalledOnce();
+  expect(graniteEvent.addEventListener).toHaveBeenCalledOnce();
+});

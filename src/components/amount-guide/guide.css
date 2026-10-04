@@ -1,0 +1,21 @@
+.guide-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; }
+.guide-header button { border:0; background:none; color:var(--tds-color-blue600,#2272eb); font:inherit; padding:8px 0; cursor:pointer; }
+.guide-header span { font-weight:600; }
+.guide-content { padding:16px 20px calc(32px + env(safe-area-inset-bottom)); max-width:560px; margin:auto; }
+.guide-fieldset { border:0; padding:0; margin:24px 0; min-width:0; }
+.guide-fieldset legend { font-weight:600; margin-bottom:12px; }
+.guide-choices { display:flex; flex-wrap:wrap; gap:8px; }
+.guide-history button:focus-visible,.person-record:focus-visible { outline:2px solid #3182f6; outline-offset:3px; }
+.guide-result { padding:20px; border-radius:20px; background:var(--bottomsheet-bg,#fff); }
+.guide-result p,.guide-note { font-size:13px; line-height:1.6; color:var(--tds-color-grey600,#6b7684); }
+.guide-history h2 { font-size:16px; margin:24px 0 12px; }
+.guide-history p { font-size:14px; line-height:1.6; }
+.guide-history button { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; width:100%; border:0; border-bottom:1px solid var(--tds-color-grey200,#e5e8eb); padding:14px 0; font:inherit; font-size:14px; color:inherit; background:none; text-align:left; cursor:pointer; }
+.guide-history strong { color:var(--tds-color-blue600,#2272eb); }
+.people-search { margin:0 20px 16px; }
+.people-results { margin-top:16px; }
+.people-results details { margin-bottom:12px; border-radius:16px; padding:16px; background:var(--bottomsheet-bg,#fff); }
+.people-results summary { cursor:pointer; overflow-wrap:anywhere; }
+.people-totals { display:flex; flex-wrap:wrap; gap:16px; font-size:13px; color:var(--tds-color-grey600,#6b7684); margin:12px 0; }
+.person-record { width:100%; border:0; border-top:1px solid var(--tds-color-grey100,#f2f4f6); background:none; color:inherit; font:inherit; text-align:left; padding:12px 0; cursor:pointer; display:flex; justify-content:space-between; gap:12px; font-size:14px; }
+.person-record small { display:block; color:var(--tds-color-grey600,#6b7684); margin-top:4px; }

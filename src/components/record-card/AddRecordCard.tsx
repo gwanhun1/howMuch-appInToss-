@@ -28,7 +28,6 @@ export function AddRecordCard({ onClick }: AddRecordCardProps) {
     <motion.button
       type="button"
       aria-label="기록 추가"
-      className="add-card-pulse"
       onClick={handleClick}
       whileTap={{ scale: 0.96 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}

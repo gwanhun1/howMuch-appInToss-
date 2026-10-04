@@ -117,7 +117,6 @@ export function TotalAmountBadge({
             color="blue"
             variant="fill"
             size="small"
-            className="premium-amount-badge"
             style={{
               maxWidth: "100px",
               overflow: "hidden",

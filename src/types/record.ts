@@ -14,3 +14,5 @@ export interface MoneyRecord {
   isFavorite?: boolean;
   createdAt?: string;
 }
+
+export type GuidedRecordDraft = Pick<MoneyRecord, "name" | "type" | "relation" | "amount">;

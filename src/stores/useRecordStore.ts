@@ -1,7 +1,7 @@
 import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DocumentSnapshot } from "firebase/firestore/lite";
-import type { MoneyRecord, RecordMode, RecordType } from "../types/record";
+import type { GuidedRecordDraft, MoneyRecord, RecordMode, RecordType } from "../types/record";
 import type { UserMetadata } from "../apis/recordService";
 import { applyRecordDelta } from "../utils/recordTotals";
 
@@ -262,6 +262,7 @@ interface UISlice {
   setEditingRecord: (r: MoneyRecord | null) => void;
   setSelectedRecordId: (id: string | null) => void;
   startAddingRecord: (initialType?: RecordType | null) => void;
+  startGuidedRecord: (draft: GuidedRecordDraft) => void;
   openRecordForm: (id: string) => void;
   closeRecordForm: () => void;
   openProfileImageSheet: () => void;
@@ -312,6 +313,19 @@ const createUISlice: StateCreator<
       isRecordFormOpen: true,
       currentPage: "main",
     })),
+
+  startGuidedRecord: (draft) =>
+    set({
+      currentMode: "paid",
+      filterType: "전체",
+      selectedRecordId: "new",
+      editingRecord: {
+        ...draft, id: crypto.randomUUID(), mode: "paid", profileIcon: "icon-face-cap",
+        date: "", isFavorite: false,
+      },
+      isRecordFormOpen: true,
+      currentPage: "main",
+    }),
 
   openRecordForm: (id) =>
     set((state) => ({

@@ -40,7 +40,7 @@
 |                                                         메인 페이지                                                          |                                                         금액 입력창                                                          |                                                         경조사금 선택                                                          |                                                         금액 추천창                                                          |
 | :--------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------: |
 | <img src="https://github.com/user-attachments/assets/ddbaaa37-5c75-4da2-adde-ccef4d1c77c2" width="100%" alt="메인 페이지" /> | <img src="https://github.com/user-attachments/assets/3922f6f6-5a3d-48fe-9764-0136be4b8dfc" width="100%" alt="금액 입력창" /> | <img src="https://github.com/user-attachments/assets/16b5a1e8-57f1-4184-9655-226af6d56594" width="100%" alt="경조사금 선택" /> | <img src="https://github.com/user-attachments/assets/61ef5a04-a8af-4192-a79b-288d2c0eff95" width="100%" alt="금액 추천창" /> |
-|                                                  _수입/지출 통합 대시보드_                                                   |                                                _간편하고 직관적인 금액 입력_                                                 |                                                 _카테고리 및 경조사 세부 선택_                                                 |                                                _AI/통계 기반 적정 금액 추천_                                                 |
+|                                                  _수입/지출 통합 대시보드_                                                   |                                                _간편하고 직관적인 금액 입력_                                                 |                                                 _카테고리 및 경조사 세부 선택_                                                 |                                                _상황별 참고 금액 가이드_                                                 |
 
 ---
 
@@ -54,7 +54,9 @@
 
 - 🗺️ **대화형 온보딩 가이드**: 신규 진입 사용자를 위해 주요 기능 안내 및 액션을 유도하는 온보딩 가이드 상태 머신 내장
 
-- 🎲 **축하금 랜덤 추첨기(Picker)**: 재미 요소와 유저 리텐션 유도를 위한 애니메이션 카드 뒤집기 및 카운트업 추첨 기능
+- 💡 **상황별 금액 가이드**: 행사·친밀도·참석 여부에 따른 참고 선택지와 개인 기록을 확인하고 기록 입력으로 연결
+
+- 🔎 **이름별 내역 검색**: 보낸·받은 기록을 이름과 관계별로 묶어 조회
 
 - 🔄 **무동의 사용자 연동**: `getAnonymousKey`로 로그인 화면 없이 미니앱 전용 식별자를 확보하고 기존 익명 데이터를 자동 이전
 
@@ -69,7 +71,7 @@
 - **Framework**: React 18 + TypeScript
 - **State Management**: Zustand 5 (Slice Pattern, Persist Middleware)
 - **Styling & Icons**: Emotion (`@emotion/react`), `@toss/tds-colors`, `@toss/tds-mobile`
-- **Build Tool**: Vite + Granite (Apps in Toss 전용 빌드 도구)
+- **Build Tool**: Vite + Apps in Toss SDK 3.x
 
 ### Backend & Cloud
 
@@ -135,3 +137,7 @@ src/
 <p align="center">
   <img src="https://github.com/user-attachments/assets/ad2e8219-bb69-41d1-9521-6d539ae02b0d" width="80%" alt="얼마냈지요 서비스 화면" />
 </p>
+
+## 개발 환경
+
+Node.js 24 이상을 사용합니다 (`nvm install && nvm use`). `npm run dev`로 Vite를 실행하고 `npm run build`로 웹 번들과 SDK 3.x `.ait` 파일을 생성합니다. 출시 전 토스앱 QR 테스트와 콘솔 검수가 필요합니다.

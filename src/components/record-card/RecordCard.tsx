@@ -67,7 +67,6 @@ function RecordCardComponent({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onPointerLeave={handlePointerUp}
-      className={isUpcoming ? "upcoming-aura" : ""}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -85,7 +84,6 @@ function RecordCardComponent({
         overflow: "visible",
         transform: "scale(1)",
         transition: "transform 0.12s ease-out",
-        ...(isUpcoming ? { "--aura-color": `${theme.color}40` } as React.CSSProperties : {}),
       }}
     >
       {record.isFavorite && (

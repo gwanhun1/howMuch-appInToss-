@@ -47,3 +47,18 @@ describe("앱 진입 시 바텀시트 상태", () => {
     expect(useRecordStore.getState().isRecordFormOpen).toBe(false);
   });
 });
+
+describe("가이드에서 기록 입력으로 전환", () => {
+  it("받은 마음 보기에서도 보낸 마음 초안을 만들고 저장 전에는 합계를 바꾸지 않는다", async () => {
+    const { useRecordStore } = await import("./useRecordStore");
+    useRecordStore.setState({ currentMode: "received", totalPaid: 100000, totalReceived: 200000, records: [] });
+    useRecordStore.getState().startGuidedRecord({ name: "김민수", relation: "직장", type: "축의금", amount: 150000 });
+    expect(useRecordStore.getState()).toMatchObject({ currentMode: "paid", filterType: "전체",
+      selectedRecordId: "new", isRecordFormOpen: true, totalPaid: 100000, totalReceived: 200000, records: [],
+      editingRecord: { name: "김민수", relation: "직장", type: "축의금", amount: 150000, mode: "paid", date: "" },
+    });
+    useRecordStore.getState().closeRecordForm();
+    expect(useRecordStore.getState().editingRecord).toBeNull();
+    expect(useRecordStore.getState().records).toEqual([]);
+  });
+});

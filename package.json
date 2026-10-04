@@ -4,8 +4,8 @@
   "version": "2.0.1",
   "type": "module",
   "scripts": {
-    "dev": "granite dev",
-    "build": "ait build",
+    "dev": "vite --host",
+    "build": "tsc -b && vite build && ait build",
     "lint": "eslint .",
     "test": "vitest run",
     "preview": "vite preview",
@@ -17,12 +17,12 @@
     "qa:dev": "vite --mode qa --host"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "^2.4.7",
+    "@apps-in-toss/web-framework": "^3.7.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@toss/tds-colors": "^0.1.0",
-    "@toss/tds-mobile": "^2.2.1",
-    "@toss/tds-mobile-ait": "^2.2.1",
+    "@toss/tds-mobile": "^2.4.1",
+    "@toss/tds-mobile-ait": "^2.4.1",
     "firebase": "^12.8.0",
     "framer-motion": "^12.29.2",
     "lucide-react": "^0.563.0",
@@ -36,6 +36,7 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@apps-in-toss/devtools": "^3.7.0",
     "@eslint/js": "^9.17.0",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^24.10.1",
@@ -51,5 +52,8 @@
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.18.2",
     "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

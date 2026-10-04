@@ -1,27 +1,28 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
-import { Spacing, useToast } from "@toss/tds-mobile";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Spacing, useToast } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useRecordStore } from "../stores/useRecordStore";
 import { RecordFormBottomSheet } from "../components/form/RecordFormBottomSheet";
 import { RecordList } from "../components/record-card/RecordList";
-import { CoinRain } from "../components/common/CoinRain";
 import { ConnectionNotice } from "../components/common/ConnectionNotice";
 import { MainSummaryCard } from "../components/main/MainSummaryCard";
 import { RECORD_CATEGORIES } from "../constants/category";
 import { ServiceFooter } from "../components/common/ServiceFooter";
 import { useSwipeMode } from "../hooks/useSwipeMode";
 import { useFeatureGuide } from "../hooks/useFeatureGuide";
+import { PeopleSearch } from "@/components/people/PeopleSearch";
+import { usePeopleSearch } from "@/hooks/usePeopleSearch";
+import { useTossBackEvent } from "@/hooks/useTossBackEvent";
 
 const AmountInputPage = lazy(() =>
   import("./AmountInputPage").then((module) => ({ default: module.AmountInputPage })),
 );
-const RandomAmountPicker = lazy(() =>
-  import("../components/random-picker/RandomAmountPicker").then((module) => ({
-    default: module.RandomAmountPicker,
-  })),
+const AmountGuidePage = lazy(() =>
+  import("./AmountGuidePage").then((module) => ({ default: module.AmountGuidePage })),
 );
 
 export function MainPage() {
+  const [showAmountGuide, setShowAmountGuide] = useState(false);
   const { openToast } = useToast();
 
   const {
@@ -44,8 +45,6 @@ export function MainPage() {
     initializeStore,
     filterType,
     setFilterType,
-    isCelebrating,
-    setCelebrating,
     isLoading,
     isLoadingSlow,
     error,
@@ -55,6 +54,7 @@ export function MainPage() {
     hasMore,
     isLoadingMore,
     updateRecord,
+    startGuidedRecord,
   } = useRecordStore();
 
   useEffect(() => {
@@ -67,6 +67,9 @@ export function MainPage() {
     return () => window.cancelAnimationFrame(frameId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const search = usePeopleSearch(records);
+  useTossBackEvent(closeRecordForm, isRecordFormOpen && !showAmountGuide && currentPage === "main");
 
   const currentTotal = currentMode === "paid" ? totalPaid : totalReceived;
 
@@ -140,6 +143,20 @@ export function MainPage() {
   const guardedTouchMove = isGuiding ? undefined : handleTouchMove;
   const guardedTouchEnd = isGuiding ? undefined : handleTouchEnd;
 
+  if (showAmountGuide) return (
+    <Suspense fallback={<div style={{ padding: 24 }} role="status">금액 가이드를 불러오고 있어요.</div>}>
+      <AmountGuidePage onBack={() => setShowAmountGuide(false)} onRecord={(draft) => {
+        if (isLoading || error || !useRecordStore.getState().userIdentifier) {
+          openToast("기록 연결 후 저장할 수 있어요.");
+          return;
+        }
+        search.setQuery("");
+        startGuidedRecord(draft);
+        setShowAmountGuide(false);
+      }} />
+    </Suspense>
+  );
+
   return (
     <div
       style={{
@@ -149,15 +166,6 @@ export function MainPage() {
         overflowX: "hidden",
       }}
     >
-      {isCelebrating && (
-        <CoinRain
-          onComplete={() => setCelebrating(false)}
-          headline={records.length === 1 ? "첫 기록이 쌓였어요" : undefined}
-          subhead={
-            records.length === 1 ? "앞으로의 마음도 기록해볼까요?" : undefined
-          }
-        />
-      )}
       {currentPage === "amountInput" && editingRecord ? (
         <Suspense fallback={null}>
           <AmountInputPage
@@ -178,6 +186,9 @@ export function MainPage() {
             onTouchEnd={guardedTouchEnd}
           >
             <Spacing size={12} />
+            <div style={{ padding: "0 20px 16px" }} onTouchStart={(e) => e.stopPropagation()}>
+              <Button display="block" onClick={() => setShowAmountGuide(true)}>얼마 낼까? 상황별 금액 가이드</Button>
+            </div>
 
             <div>
               <MainSummaryCard
@@ -205,7 +216,14 @@ export function MainPage() {
                 }}
               >
                 <div style={{ minHeight: "65vh" }}>
-                  {(!error || records.length > 0) && <RecordList
+                  <PeopleSearch search={search} isLoading={isLoading} error={error}
+                    onRecordClick={(id) => {
+                      if (isLoading || error) return;
+                      const record = records.find((r) => r.id === id);
+                      if (record) setCurrentMode(record.mode);
+                      openRecordForm(id);
+                    }} />
+                  {!search.isSearching && (!error || records.length > 0) && <RecordList
                     records={filteredRecords}
                     totalCount={records.length}
                     isLoading={isLoading}
@@ -250,9 +268,9 @@ export function MainPage() {
                       gap: 6,
                     }}
                   >
-                    <span className="swipe-arrow-left">←</span>
+                    <span>←</span>
                     <span>스와이프하여 보낸/받은 마음을 확인해보세요</span>
-                    <span className="swipe-arrow-right">→</span>
+                    <span>→</span>
                   </div>
                 </div>
               </div>
@@ -274,10 +292,6 @@ export function MainPage() {
         onOpenAmountInput={openAmountInput}
         onHome={resetToMain}
       />
-
-      <Suspense fallback={null}>
-        <RandomAmountPicker />
-      </Suspense>
 
       {(guide.currentStep !== null ||
         guide.isPreparingGuide) && (

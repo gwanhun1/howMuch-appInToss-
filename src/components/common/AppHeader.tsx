@@ -33,7 +33,7 @@ export function AppHeader({ title = "얼마냈지요", onBack }: Props) {
           {title}
         </Text>
       </div>
-      {onBack && (
+      {onBack && !("ReactNativeWebView" in window) && (
         <button
           type="button"
           onClick={onBack}
