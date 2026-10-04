@@ -105,9 +105,8 @@ export function RecordFormBottomSheet({
       window.clearTimeout(accordionScrollTimerRef.current);
     }
     accordionScrollTimerRef.current = window.setTimeout(() => {
-      const container = formScrollRef.current;
-      container?.scrollTo({
-        top: container.scrollHeight,
+      formScrollRef.current?.lastElementChild?.scrollIntoView({
+        block: "end",
         behavior: "smooth",
       });
       accordionScrollTimerRef.current = null;
@@ -220,7 +219,26 @@ export function RecordFormBottomSheet({
       <BottomSheet
         open={open}
         onClose={handleClose}
-        maxHeight={"90vh"}
+        maxHeight="90vh"
+        hasTextField
+        cta={isCreateMode ? (
+          <BottomSheet.CTA onClick={handleSave} loading={isSubmitting} disabled={isSubmitting}>
+            저장
+          </BottomSheet.CTA>
+        ) : (
+          <BottomSheet.DoubleCTA
+            leftButton={(
+              <Button variant="weak" onClick={handleDelete}>
+                {confirmingDelete ? "정말 삭제하기" : "삭제"}
+              </Button>
+            )}
+            rightButton={
+              <Button onClick={handleSave} loading={isSubmitting} disabled={isSubmitting}>
+                저장
+              </Button>
+            }
+          />
+        )}
         header={
           <div
             style={{
@@ -230,7 +248,7 @@ export function RecordFormBottomSheet({
               alignItems: "center",
             }}
           >
-            <Text typography="t4" fontWeight="bold">
+            <Text typography="t4" fontWeight="bold" style={{ minWidth: 0, flex: 1, overflowWrap: "anywhere", paddingRight: 12 }}>
               {isCreateMode
                 ? `${currentMode === "paid" ? "보낸 마음" : "받은 마음"} 추가하기`
                 : `${record?.name || "기록"} 정보 수정`}
@@ -255,6 +273,7 @@ export function RecordFormBottomSheet({
               style={{
                 cursor: "pointer",
                 minWidth: 44,
+                flexShrink: 0,
                 minHeight: 44,
                 display: "flex",
                 alignItems: "center",
@@ -278,16 +297,13 @@ export function RecordFormBottomSheet({
           style={{
             display: "flex",
             flexDirection: "column",
-            height: "65vh",
-            maxHeight: "90vh",
+            minWidth: 0,
           }}
         >
           <div
             ref={formScrollRef}
             style={{
-              flex: 1,
-              overflowY: "auto",
-              WebkitOverflowScrolling: "touch",
+              minWidth: 0,
             }}
           >
             <Spacing size={10} />
@@ -379,36 +395,6 @@ export function RecordFormBottomSheet({
                 />
               </div>
             </List>
-          </div>
-          <div
-            style={{
-              padding: "14px 10px",
-              display: "flex",
-              gap: "4px",
-              backgroundColor: "#ffffff",
-              borderTop: `1px solid ${adaptive.grey100}`,
-            }}
-          >
-            {!isCreateMode && (
-              <Button
-                style={{ flex: 1 }}
-                variant="weak"
-                size="large"
-                onClick={handleDelete}
-              >
-                {confirmingDelete ? "정말 삭제하기" : "삭제"}
-              </Button>
-            )}
-            <Button
-              style={{ flex: 1 }}
-              variant="fill"
-              size="medium"
-              onClick={handleSave}
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
-              저장
-            </Button>
           </div>
         </div>
       </BottomSheet>

@@ -140,6 +140,7 @@ function RecordListItemComponent({
           style={{
             display: "flex",
             alignItems: "center",
+            flexWrap: "wrap",
             gap: "6px",
             marginTop: "4px",
           }}

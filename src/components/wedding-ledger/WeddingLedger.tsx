@@ -1,6 +1,7 @@
 import { FeatureTextField } from "@/components/growth/FeatureTextField";
 import { Button, Checkbox, Spacing, Text } from "@toss/tds-mobile";
 import { FeatureHeader } from "@/components/growth/FeatureHeader";
+import { FeatureActionBar } from "@/components/growth/FeatureActionBar";
 import type { useWeddingLedger } from "@/hooks/useWeddingLedger";
 import { MAX_WEDDING_GUESTS } from "@/apis/weddingLedger";
 import "../growth/growth.css";
@@ -14,7 +15,7 @@ export function WeddingLedger({ model, onBack }: { model: ReturnType<typeof useW
         onChange={(e) => model.setDate(e.target.value)} /></label>
       <section className="growth-card" aria-label="저장된 축의금 장부">
         <Text typography="t6">선택한 날짜에 받은 축의금 {model.ledger.length}건</Text><Spacing size={8} />
-        <Text typography="t2" fontWeight="bold">{model.total.toLocaleString()}원</Text>
+        <Text typography="t2" fontWeight="bold" className="growth-total">{model.total.toLocaleString()}원</Text>
         <p className="growth-note">같은 날짜의 받은 축의금 기록을 모았어요. 이름·관계·날짜를 확인해주세요.</p>
         <Button variant="weak" size="small" disabled={!model.ledger.length || !!model.connectionMessage || model.isExporting}
           loading={model.isExporting} onClick={() => void model.exportCsv()}>저장된 장부 CSV 내보내기</Button>
@@ -54,9 +55,9 @@ export function WeddingLedger({ model, onBack }: { model: ReturnType<typeof useW
       {model.error && <p className="growth-error" role="alert">{model.error}</p>}
       {model.message && <p className="growth-note" role="status">{model.message}</p>}
       {model.prepared.error && <p className="growth-note">{model.prepared.error}</p>}
-      <Button display="block" disabled={!model.canSave} loading={model.isSaving} onClick={() => void model.save()}>
+      <FeatureActionBar><Button display="block" disabled={!model.canSave} loading={model.isSaving} onClick={() => void model.save()}>
         {model.guests.length}명 · {model.prepared.records.reduce((sum, r) => sum + r.amount, 0).toLocaleString()}원 저장하기
-      </Button>
+      </Button></FeatureActionBar>
     </div>
   </main>;
 }

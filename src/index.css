@@ -12,6 +12,14 @@ body {
   /* 배경색은 App 내부에서 adaptive 토큰으로 제어합니다 */
 }
 
+/* 화면을 잘라 숨기지 않고, 3열 카드의 실제 최소 너비를 줄입니다. */
+.record-grid > * { min-width:0; }
+@media (max-width:359px) {
+  .record-card { padding:28px 6px 16px !important; }
+  .record-card-avatar { width:44px !important; height:44px !important; flex-shrink:0; }
+  .record-card-avatar > div { transform:scale(.7333); }
+}
+
 /* 커스텀 애니메이션 스타일 */
 
 .add-card-pulse {

@@ -177,9 +177,10 @@ export function RecordList({
 
   return (
     <div
+      className="record-grid"
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
+        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
         columnGap: "12px",
         rowGap: "16px",
         padding: "0 20px",
@@ -230,7 +231,7 @@ export function RecordList({
       {!isGuiding && isLoadingMore && (
         <div
           style={{
-            gridColumn: "span 3",
+            gridColumn: "1 / -1",
             display: "flex",
             justifyContent: "center",
             padding: "16px 0",
@@ -240,7 +241,7 @@ export function RecordList({
         </div>
       )}
       {!isGuiding && !isLoading && !isLoadingMore && hasMore && (
-        <div ref={bottomRef} style={{ height: "20px", gridColumn: "span 3" }} />
+        <div ref={bottomRef} style={{ height: "20px", gridColumn: "1 / -1" }} />
       )}
     </div>
   );

@@ -53,6 +53,7 @@ function RecordCardComponent({
   return (
     <div
       ref={cardRef}
+      className="record-card"
       role="button"
       tabIndex={0}
       aria-label={`${record.name}, ${record.amount.toLocaleString()}원 기록 열기`}
@@ -69,6 +70,7 @@ function RecordCardComponent({
       onPointerLeave={handlePointerUp}
       style={{
         display: "flex",
+        minWidth: 0,
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
@@ -102,6 +104,7 @@ function RecordCardComponent({
           position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)",
           padding: "4px 10px", borderRadius: "10px", fontSize: "10px", fontWeight: "bold",
           backgroundColor: "#3182F6", color: "#fff", boxShadow: "0 2px 6px rgba(49, 130, 246, 0.3)", zIndex: 2,
+          whiteSpace: "nowrap", maxWidth: "calc(100% - 8px)", boxSizing: "border-box",
         }}>
           {ddayText}
         </div>
@@ -119,7 +122,7 @@ function RecordCardComponent({
         </div>
       )}
 
-      <div style={{
+      <div className="record-card-avatar" style={{
         width: "60px", height: "60px", borderRadius: "50%", backgroundColor: "rgba(255, 255, 255, 0.5)",
         display: "flex", justifyContent: "center", alignItems: "center",
         filter: record.type === RECORD_CATEGORIES.FUNERAL ? "grayscale(1)" : "none",
@@ -133,12 +136,12 @@ function RecordCardComponent({
 
       <Spacing size={12} />
       <Text typography="t7" fontWeight="bold" color={adaptive.grey800}
-        style={{ maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        style={{ maxWidth: "100%", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {record.name}
       </Text>
       {record.amount > 0 && (
         <Text typography="t7" color={amountColor} fontWeight="bold"
-          style={{ marginTop: "4px", maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          style={{ marginTop: "4px", maxWidth: "100%", minWidth: 0, fontSize: record.amount >= 10000000 ? "clamp(9px, 2.5vw, 13px)" : "clamp(11px, 3vw, 13px)", overflowWrap: "anywhere", textAlign: "center" }}>
           {record.amount.toLocaleString()}원
         </Text>
       )}

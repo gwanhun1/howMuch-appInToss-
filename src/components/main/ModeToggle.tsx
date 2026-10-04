@@ -17,6 +17,7 @@ export function ModeToggle({ currentMode, onModeChange }: ModeToggleProps) {
         gap: 2,
         minWidth: 0,
         flexShrink: 1,
+        flexWrap: "wrap",
       }}
     >
       {(["paid", "received"] as RecordMode[]).map((mode) => {
@@ -39,6 +40,7 @@ export function ModeToggle({ currentMode, onModeChange }: ModeToggleProps) {
               cursor: "pointer",
               lineHeight: "36px",
               minHeight: "44px",
+              flexShrink: 0,
               borderBottom: isActive
                 ? `2px solid ${adaptive.blue600}`
                 : "2px solid transparent",

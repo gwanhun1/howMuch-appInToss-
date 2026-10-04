@@ -57,6 +57,28 @@ export function ProfileImageBottomSheet({
       open={open}
       onClose={onClose}
       maxHeight="90vh"
+      header={
+        <div
+          style={{
+            padding: "16px 20px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexShrink: 0,
+          }}
+        >
+          <Text typography="t4" fontWeight="bold" style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+            프로필 아이콘 선택
+          </Text>
+          <Asset.Icon
+            name="icon-home-mono"
+            frameShape={Asset.frameShape.CleanW24}
+            color={adaptive.grey500}
+            onClick={onHome}
+            style={{ cursor: "pointer", flexShrink: 0 }}
+          />
+        </div>
+      }
       cta={
         <BottomSheet.DoubleCTA
           leftButton={
@@ -86,49 +108,18 @@ export function ProfileImageBottomSheet({
         style={{
           display: "flex",
           flexDirection: "column",
-          height: "65vh", // 고정 높이를 주어 뒤 시트를 가리도록 함
-          maxHeight: "90vh",
+          minWidth: 0,
         }}
       >
-        {/* Header */}
+        {/* 본문 스크롤은 BottomSheet가 관리해요. */}
         <div
           style={{
-            padding: "16px 20px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            minWidth: 0,
           }}
         >
-          <Text typography="t4" fontWeight="bold">
-            프로필 아이콘 선택
-          </Text>
-          <Asset.Icon
-            name="icon-home-mono"
-            frameShape={Asset.frameShape.CleanW24}
-            color={adaptive.grey500}
-            onClick={onHome}
-            style={{ cursor: "pointer" }}
-          />
-        </div>
-
-        <Spacing size={24} />
-
-        {/* Preview */}
-        <ProfileIconPreview
-          iconName={selected}
-          onReset={() => setSelected(DEFAULT_ICON)}
-        />
-
-        <Spacing size={24} />
-
-        {/* Scroll area */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            WebkitOverflowScrolling: "touch",
-          }}
-        >
+          <Spacing size={24} />
+          <ProfileIconPreview iconName={selected} onReset={() => setSelected(DEFAULT_ICON)} />
+          <Spacing size={24} />
           <ProfileIconGrid
             icons={PROFILE_ICONS}
             selectedIcon={selected}

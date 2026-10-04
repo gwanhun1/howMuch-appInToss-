@@ -3,6 +3,7 @@ import { Button, Spacing, Text } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 import { useAmountGuide } from "@/hooks/useAmountGuide";
 import { FeatureHeader } from "@/components/growth/FeatureHeader";
+import { FeatureActionBar } from "@/components/growth/FeatureActionBar";
 import type { GuideEvent, Closeness } from "@/apis/amountGuide/type";
 import type { GuidedRecordDraft } from "@/types/record";
 import "./guide.css";
@@ -70,9 +71,10 @@ export function AmountGuide({ onBack, onRecord, canRecord, connectionMessage, in
           <span>{r.name} · {r.date || "날짜 없음"}</span><strong>{r.amount.toLocaleString()}원 선택</strong>
         </button>)}</section>}
       <Spacing size={24} />
-      <Button display="block" disabled={!canRecord} onClick={() => onRecord({
+      <FeatureActionBar><Button display="block" disabled={!canRecord} onClick={() => onRecord({
         type: situation.type, relation: situation.relation, name: guide.name.trim(), amount: guide.amount,
       })}>{guide.amount.toLocaleString()}원 {selectionMode ? "계산기에 적용하기" : "기록 입력하기"}</Button>
+      </FeatureActionBar>
       <p className="guide-note">{connectionMessage ?? "입력창에서 이름·날짜·금액을 확인한 뒤 저장해요. 예정 금액은 실제로 보낸 뒤 기록해주세요."}</p>
     </div>
   </main>;

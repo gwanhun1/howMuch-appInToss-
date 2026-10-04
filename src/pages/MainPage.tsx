@@ -17,6 +17,7 @@ import { useBudgetCalculator } from "@/hooks/useBudgetCalculator";
 import type { GuideEvent } from "@/apis/amountGuide/type";
 import { useTossBackEvent } from "@/hooks/useTossBackEvent";
 import { trackGrowthToolOpened } from "@/apis/growthAnalytics";
+import { useViewScroll } from "@/hooks/useViewScroll";
 
 const AmountInputPage = lazy(() =>
   import("./AmountInputPage").then((module) => ({ default: module.AmountInputPage })),
@@ -68,6 +69,9 @@ export function MainPage() {
     updateRecord,
     startGuidedRecord,
   } = useRecordStore();
+
+  useViewScroll(showWeddingLedger ? "wedding" : showAmountGuide ? (budgetGuide ? "budget-guide" : "guide")
+    : showBudget ? "budget" : currentPage === "amountInput" ? "amount" : "main");
 
   useEffect(() => {
     resetToMain();
@@ -197,7 +201,7 @@ export function MainPage() {
         backgroundColor: adaptive.grey50,
         minHeight: "100vh",
         position: "relative",
-        overflowX: "hidden",
+        overflowX: "clip",
       }}
     >
       {currentPage === "amountInput" && editingRecord ? (
@@ -303,10 +307,12 @@ export function MainPage() {
                       alignItems: "center",
                       justifyContent: "center",
                       gap: 6,
+                      flexWrap: "wrap",
+                      padding: "0 20px",
                     }}
                   >
                     <span>←</span>
-                    <span>스와이프하여 보낸/받은 마음을 확인해보세요</span>
+                    <span style={{ minWidth: 0, textAlign: "center" }}>스와이프하여 보낸/받은 마음을 확인해보세요</span>
                     <span>→</span>
                   </div>
                 </div>

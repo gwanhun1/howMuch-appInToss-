@@ -24,7 +24,7 @@ export function BudgetCalculator({ model, onBack, onGuide }: {
       {model.budget && parseExpenseAmount(model.budget) === null && <p className="growth-error">예산은 1원부터 1억 원까지 입력해주세요.</p>}
       <section className="growth-card" aria-label="예정 금액 합계" aria-live="polite">
         <Text typography="t6">{model.month || "선택한 달"} · 예정 {model.rows.length}건</Text><Spacing size={8} />
-        <Text typography="t2" fontWeight="bold">{model.summary.total.toLocaleString()}원</Text>
+        <Text typography="t2" fontWeight="bold" className="growth-total">{model.summary.total.toLocaleString()}원</Text>
         <p className="growth-note">{Object.entries(model.summary.counts).map(([type, count]) => `${type} ${count}건`).join(" · ") || "예정된 경조사를 추가해주세요."}</p>
         {incomplete > 0 && <p className="growth-error">금액 확인이 필요한 {incomplete}건은 합계에서 제외했어요.</p>}
         {model.summary.remaining !== null && <p>{model.summary.remaining >= 0

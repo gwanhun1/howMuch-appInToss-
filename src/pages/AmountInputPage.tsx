@@ -81,11 +81,11 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
 
   return (
     <div style={{
-      backgroundColor: adaptive.grey50, height: "100vh",
+      backgroundColor: adaptive.grey50, height: "100dvh",
       display: "flex", flexDirection: "column", overflow: "hidden",
     }}>
       <AppHeader title={labels.amountInputTitle} onBack={onBack} />
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px" }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehaviorY: "contain", padding: "0 20px 24px" }}>
         <Spacing size={32} />
         <Text typography="t3" fontWeight="bold" color={adaptive.grey900}>
           {labels.amountInputQuestion}
@@ -160,15 +160,14 @@ export function AmountInputPage({ value, onSave, onBack }: Props) {
           간편하게 선택하기
         </Text>
         <div style={{
-          margin: "0 -20px", padding: "4px 20px", display: "flex", gap: "10px",
-          overflowX: "auto", WebkitOverflowScrolling: "touch",
-          msOverflowStyle: "none", scrollbarWidth: "none",
-        }} className="no-scrollbar">
+          padding: "4px 0", display: "grid", gap: "10px",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+        }}>
           {QUICK_AMOUNTS.map((item) => {
             const isSelected = amount === item.value.toString();
             return (
               <button type="button" key={item.value} onClick={() => handleQuickSelect(item.value)} style={{
-                flexShrink: 0, padding: "12px 24px", borderRadius: "24px",
+                minWidth: 0, padding: "12px 8px", borderRadius: "24px",
                 border: isSelected ? "none" : `1px solid ${adaptive.blue100}`,
                 backgroundColor: isSelected ? adaptive.blue500 : adaptive.blue50,
                 color: isSelected ? "#ffffff" : adaptive.blue700,
