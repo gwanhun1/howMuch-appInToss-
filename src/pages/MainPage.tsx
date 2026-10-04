@@ -26,12 +26,14 @@ const AmountGuidePage = lazy(() =>
   import("./AmountGuidePage").then((module) => ({ default: module.AmountGuidePage })),
 );
 
+const HeartVillagePage = lazy(() => import("./HeartVillagePage").then((m) => ({ default: m.HeartVillagePage })));
 const WeddingLedgerPage = lazy(() => import("./WeddingLedgerPage").then((m) => ({ default: m.WeddingLedgerPage })));
 const BudgetCalculatorPage = lazy(() => import("./BudgetCalculatorPage").then((m) => ({ default: m.BudgetCalculatorPage })));
 
 export function MainPage() {
   const budget = useBudgetCalculator();
   const weddingLedger = useWeddingLedger();
+  const [showVillage, setShowVillage] = useState(false);
   const [showWeddingLedger, setShowWeddingLedger] = useState(false);
   const [showBudget, setShowBudget] = useState(false);
   const [budgetGuide, setBudgetGuide] = useState<{ id: string; type: GuideEvent } | null>(null);
@@ -70,7 +72,7 @@ export function MainPage() {
     startGuidedRecord,
   } = useRecordStore();
 
-  useViewScroll(showWeddingLedger ? "wedding" : showAmountGuide ? (budgetGuide ? "budget-guide" : "guide")
+  useViewScroll(showVillage ? "village" : showWeddingLedger ? "wedding" : showAmountGuide ? (budgetGuide ? "budget-guide" : "guide")
     : showBudget ? "budget" : currentPage === "amountInput" ? "amount" : "main");
 
   useEffect(() => {
@@ -159,6 +161,23 @@ export function MainPage() {
   const guardedTouchMove = isGuiding ? undefined : handleTouchMove;
   const guardedTouchEnd = isGuiding ? undefined : handleTouchEnd;
 
+  if (showVillage) return (
+    <Suspense fallback={<div role="status" style={{ padding: 24 }}>마을을 불러오고 있어요.</div>}>
+      <HeartVillagePage onBack={() => setShowVillage(false)} onAddRecord={() => {
+        if (isLoading || error) return;
+        setShowVillage(false);
+        startAddingRecord();
+      }} onRecord={(id) => {
+        if (isLoading || error) return;
+        const record = records.find((r) => r.id === id);
+        if (!record) return;
+        setShowVillage(false);
+        setCurrentMode(record.mode);
+        openRecordForm(id);
+      }} />
+    </Suspense>
+  );
+
   if (showWeddingLedger) return (
     <Suspense fallback={<div role="status" style={{ padding: 24 }}>장부를 불러오고 있어요.</div>}>
       <WeddingLedgerPage model={weddingLedger} onBack={() => setShowWeddingLedger(false)} />
@@ -240,6 +259,7 @@ export function MainPage() {
 
               <nav aria-label="경조사 도구" style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0 20px 16px" }}
                 onTouchStart={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+                <Button size="small" variant="weak" color="dark" onClick={() => { void trackGrowthToolOpened("heart_village"); setShowVillage(true); }}>마음 마을</Button>
                 <Button size="small" variant="weak" color="dark" onClick={() => { void trackGrowthToolOpened("amount_guide"); setShowAmountGuide(true); }}>금액 가이드</Button>
                 <Button size="small" variant="weak" color="dark" onClick={() => { void trackGrowthToolOpened("budget_calculator"); setShowBudget(true); }}>예정 비용</Button>
                 <Button size="small" variant="weak" color="dark" onClick={() => { void trackGrowthToolOpened("wedding_ledger"); setShowWeddingLedger(true); }}>축의금 장부</Button>
