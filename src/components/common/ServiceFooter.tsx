@@ -2,10 +2,17 @@ import { useState } from "react";
 import { Text, Spacing, BottomSheet, Button } from "@toss/tds-mobile";
 import { adaptive } from "@toss/tds-colors";
 
-export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
+export function ServiceFooter({ onShowGuide, onPolicyOpenChange }: {
+  onShowGuide: () => void;
+  onPolicyOpenChange?: (open: boolean) => void;
+}) {
   const [activePolicy, setActivePolicy] = useState<"terms" | "privacy" | null>(
     null,
   );
+  const changePolicy = (policy: "terms" | "privacy" | null) => {
+    setActivePolicy(policy);
+    onPolicyOpenChange?.(policy !== null);
+  };
 
   return (
     <>
@@ -40,7 +47,7 @@ export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
               textDecoration: "underline",
               cursor: "pointer",
             }}
-            onClick={() => setActivePolicy("terms")}
+            onClick={() => changePolicy("terms")}
           >
             서비스 이용약관
           </Text>
@@ -53,7 +60,7 @@ export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
               cursor: "pointer",
               fontWeight: "bold",
             }}
-            onClick={() => setActivePolicy("privacy")}
+            onClick={() => changePolicy("privacy")}
           >
             개인정보처리방침
           </Text>
@@ -79,7 +86,7 @@ export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
       {/* 이용약관 바텀시트 */}
       <BottomSheet
         open={activePolicy === "terms"}
-        onClose={() => setActivePolicy(null)}
+        onClose={() => changePolicy(null)}
         header="이용약관"
         style={{ padding: "0 20px 20px" }}
       >
@@ -115,7 +122,7 @@ export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
           <Button
             size="medium"
             style={{ width: "100%" }}
-            onClick={() => setActivePolicy(null)}
+            onClick={() => changePolicy(null)}
           >
             확인
           </Button>
@@ -125,7 +132,7 @@ export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
       {/* 개인정보처리방침 바텀시트 */}
       <BottomSheet
         open={activePolicy === "privacy"}
-        onClose={() => setActivePolicy(null)}
+        onClose={() => changePolicy(null)}
         header="개인정보처리방침"
         style={{ padding: "0 20px 20px" }}
       >
@@ -176,11 +183,20 @@ export function ServiceFooter({ onShowGuide }: { onShowGuide: () => void }) {
             함께 처리합니다. 이름, 금액, 날짜, 관계, CSV 내용은 해당 분석
             이벤트에 포함하지 않습니다.
           </Text>
+          <Spacing size={16} />
+          <Text typography="t6" fontWeight="bold">6. 인앱 광고</Text>
+          <Spacing size={8} />
+          <Text typography="t7" color={adaptive.grey700}>
+            광고가 활성화된 경우 토스 광고 SDK를 통해 배너를 표시하며,
+            광고의 노출 및 클릭 이벤트는 광고 SDK에서 처리합니다.
+            경조사 기록의 이름, 금액, 날짜, 관계, CSV 내용은 광고 SDK에
+            전달하지 않습니다.
+          </Text>
           <Spacing size={24} />
           <Button
             size="medium"
             style={{ width: "100%" }}
-            onClick={() => setActivePolicy(null)}
+            onClick={() => changePolicy(null)}
           >
             확인
           </Button>

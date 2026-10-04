@@ -17,6 +17,7 @@ import { useBudgetCalculator } from "@/hooks/useBudgetCalculator";
 import type { GuideEvent } from "@/apis/amountGuide/type";
 import { useTossBackEvent } from "@/hooks/useTossBackEvent";
 import { trackGrowthToolOpened } from "@/apis/growthAnalytics";
+import { MainBannerAd } from "@/components/common/MainBannerAd";
 
 const AmountInputPage = lazy(() =>
   import("./AmountInputPage").then((module) => ({ default: module.AmountInputPage })),
@@ -35,6 +36,7 @@ export function MainPage() {
   const [showBudget, setShowBudget] = useState(false);
   const [budgetGuide, setBudgetGuide] = useState<{ id: string; type: GuideEvent } | null>(null);
   const [showAmountGuide, setShowAmountGuide] = useState(false);
+  const [footerPolicyOpen, setFooterPolicyOpen] = useState(false);
   const { openToast } = useToast();
 
   const {
@@ -314,7 +316,8 @@ export function MainPage() {
             </div>
 
             <Spacing size={32} />
-            <ServiceFooter onShowGuide={() => {
+            {!isRecordFormOpen && !isGuiding && !footerPolicyOpen && <MainBannerAd />}
+            <ServiceFooter onPolicyOpenChange={setFooterPolicyOpen} onShowGuide={() => {
               window.scrollTo({ top: 0, behavior: "instant" });
               guide.start();
             }} />
