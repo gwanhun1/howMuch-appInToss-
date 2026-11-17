@@ -1,0 +1,14 @@
+{
+  "amounts": [
+    {"input":"", "expected":null}, {"input":"0", "expected":null},
+    {"input":"1", "expected":1}, {"input":"100000000", "expected":100000000},
+    {"input":"100000001", "expected":null}, {"input":"1.5", "expected":null},
+    {"input":"-10", "expected":null}, {"input":"1e5", "expected":null}
+  ],
+  "guides": [
+    {"type":"축의금", "closeness":"regular", "attending":false, "expected":[50000,100000,150000]},
+    {"type":"조의금", "closeness":"regular", "attending":false, "expected":[100000,150000]},
+    {"type":"돌잔치", "closeness":"close", "attending":true, "expected":[100000,200000,300000]},
+    {"type":"축의금", "closeness":"acquaintance", "attending":true, "expected":[50000,100000]}
+  ]
+}

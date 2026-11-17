@@ -1,0 +1,21 @@
+name: Flutter checks
+on:
+  push:
+    paths: ['flutter_app/**', 'shared/**', '.github/workflows/flutter.yml']
+  pull_request:
+    paths: ['flutter_app/**', 'shared/**', '.github/workflows/flutter.yml']
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: bash scripts/check.sh
