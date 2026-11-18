@@ -6,6 +6,7 @@ import '../domain/record.dart';
 import '../domain/presentation.dart';
 import '../state/records.dart';
 import 'record_editor.dart';
+import 'backup_page.dart';
 import 'tools_page.dart';
 import 'wedding_page.dart';
 import 'widgets/product_widgets.dart';
@@ -144,7 +145,16 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '이름·관계·금액·날짜·프로필은 이 기기에 저장돼요. 앱에서 서버로 전송하지 않아요. 운영체제 백업 설정에 따라 OS가 앱 데이터를 백업할 수 있어요. 앱 삭제 시 기록이 사라질 수 있어요. CSV는 축의금 장부만 내보내요.',
+              '이름·관계·금액·날짜·프로필은 이 기기에 저장돼요. 앱에서 서버로 전송하지 않아요. 운영체제 백업 설정에 따라 OS가 앱 데이터를 백업할 수 있어요. 앱 삭제 시 기록이 사라질 수 있어요. CSV는 축의금 장부만 내보내요. 전체 기록은 백업·복원에서 JSON 파일로 따로 보관할 수 있어요.',
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(sheet);
+                page(const BackupPage());
+              },
+              icon: const Icon(Icons.backup_outlined),
+              label: const Text('기록 백업·복원'),
             ),
             const SizedBox(height: 16),
             const Text('이용 안내', style: TextStyle(fontWeight: FontWeight.w700)),

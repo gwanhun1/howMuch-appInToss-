@@ -67,3 +67,40 @@ TDS 전용 SVG는 포함하지 않았습니다. 토스페이스만 별도 라이
 - 기능/계산식/DB/새 의존성 변경 없음. 공통 컴포넌트 구조, 사용자 흐름, 상태 관리 자가 평가 각 4/5. 근거: 사용자 피드백 영역을 공통 규격으로 교체하고 좌표·작은 화면 회귀 검사. 액션: 화면 캡처를 기준으로 간격 확인.
 
 [메인·가이드·예정 비용·장부 간격 수정 캡처](screenshots/tool-layout-overview.png). 가이드 결과와 예정 행사 입력까지 스크롤해 확인했으며, 전체 폭 하단 버튼을 반영한 iOS 캡처입니다. 최신 앱을 iPhone 17 Pro 시뮬레이터에 다시 빌드해 실행했습니다.
+
+## 2026-11-18 — 독립 앱 전체 기록 백업·복원
+
+- 사용자 확인: 기존 버전의 iPhone 실기기 점검 완료. 앱인토스 연동은 하지 않으며 포트폴리오 작업은 배포 완료 후 진행.
+- 설정 → 기록 백업·복원: 보낸/받은 모든 기록을 버전 1 JSON 파일로 내보내기. 이름·관계·금액·날짜·프로필·중요 표시·ID·작성일 보존. 보기 설정과 미저장 초안 제외. 암호화되지 않은 개인정보 파일임을 화면에 안내.
+- 파일 선택 뒤 전체/추가/동일/충돌 건수와 추가 금액 확인. 같은 ID는 현재 기록을 유지하며 없는 ID만 추가. 반복 복원으로 중복이 생기지 않음. 취소/잘못된 파일/실패 시 기존 기록 유지. 새 파일 선택 시 이전 미리보기 제거.
+- UTF-8/BOM, 형식 식별자, 버전, 필드 타입, ID 중복, 금액/날짜, 최대 10MB/10,000건 검증. 복원 목록 전체를 검증한 뒤 SQLite 트랜잭션으로 일괄 추가. DB 스키마 변경 없음.
+- Gate 1 PASS: Dart 포맷, `flutter analyze` 0 issues, 단위/위젯 41개 통과. Android debug APK 빌드 성공. React 소스/TypeScript/의존성은 변경하지 않았으며 이 작업에서 root 빌드는 재실행하지 않음.
+- Gate 2: 신규 의존성 없음. 기존 file_picker/share_plus 사용. 파일/건수 상한 적용. 성능 SLA와 release 크기 목표는 지정되지 않았으며 처리 시간 벤치마크는 하지 않음.
+- Gate 3: 구조 4/5 — domain codec/preview, data 파일/SQLite 경계, Riverpod 갱신, UI 분리. 흐름 4/5 — 명시적 복원 버튼 전 미리보기, 취소·재시도, 기존 ID 보존. 상태 4/5 — 복원 트랜잭션 성공 뒤 조회 실패를 저장 실패와 구분. Evidence: codec·위젯·실제 SQLite 테스트. Action: 작은 화면 320px/글자 1.8배, 실패 재시도/반복 복원 회귀 검사 추가.
+- iOS 통합 검사 PASS: 실제 임시 JSON 파일과 SQLite로 백업→기존 기록 수정→복원→기존 값 보존→반복 복원 방지. 별도 `howmuch-backup-test.db`만 사용. migration_test에서 복원 도중 trigger 오류를 발생시켜 rollback 및 기존 DB 보존, 재실행 후 유지 검증.
+- OS 공유·파일 선택 경계는 통합 테스트에서 대체했음. 새 기능의 iPhone 실제 공유 창/파일 선택은 추가 수동 확인 대상. 이전 버전 실기기 확인과 구분.
+- 계산 규칙/운영 Firebase/토스 연동/배포 변경 없음. 사용자 기기 데이터 삭제 없이 별도 테스트 DB 사용.
+
+[백업·미리보기·복원 결과 캡처](screenshots/backup-overview.png)
+
+## 2026-11-18 — 지정 로고·파란 시작 화면
+
+- 사용자가 지정한 로고와 일치하는 로컬 600×600 PNG를 원본으로 보관. iOS AppIcon 15종, Android 5밀도 런처/adaptive icon, 1024px/512px 스토어 파일 생성. 1024px 파일은 업스케일이며 새 고해상도 그림을 재생성하지 않음.
+- iOS LaunchScreen: 원본 테두리 색 #0C67F5 전체 배경, 240×240pt 로고를 화면 중심에 제약조건으로 고정. Android 레거시/12+ 및 다크 모드에도 같은 배경과 중앙 로고 적용. Android 12+와 adaptive icon은 시스템 안전 영역을 고려한 캔버스 사용.
+- Gate 1 PASS: iOS 시뮬레이터 debug 빌드, Android debug APK 빌드 성공. iOS 모든 PNG 규격/불투명 RGB 확인, 네이티브 XML 파싱과 git diff whitespace 확인. Dart/TS 로직 및 의존성 변경 없음. 앱 테스트 41개는 직전 백업 작업에서 통과했으며 네이티브 이미지 교체만으로 재실행하지 않음.
+- Gate 2: 새 런타임 의존성 없음. Python 생성 스크립트는 기존 환경의 Pillow 사용. branding 원본/스토어 약 1.6MB, Android res 전체 약 4.2MB, iOS xcassets 전체 약 2.1MB. release 번들 증감은 측정하지 않음.
+- Gate 3: 구조 4/5 — 원본과 재생성 스크립트 보관. 흐름 4/5 — OS 시작 화면에서 Flutter 첫 화면으로 전환, 인위적 지연 없음. 상태 4/5 — 데이터/상태 수정 없이 네이티브 리소스만 교체. Action/Evidence: 실제 iOS cold launch 연속 캡처에서 앱 아이콘→파란 중앙 로고→메인 화면 전환을 확인. debugger 대기 중 배경만 보인 캡처는 정상 실행 프레임으로 대체.
+- Android는 빌드와 마스크 미리보기까지 확인했으며 실제 기기 시작 화면/런처는 미확인. 스토어 제출/계정·서명 변경 없음.
+
+[실제 iOS 시작 화면](screenshots/ios-launch.png) · [아이콘·시작 배치 미리보기](screenshots/branding-preview.png)
+
+플랫폼 기준: [Android adaptive icon](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive), [Android SplashScreen](https://developer.android.com/reference/androidx/core/splashscreen/SplashScreen).
+
+## 2026-11-18 — 기존 앱인토스 등록 자료 보관
+
+- 사용자가 열어둔 Chrome 콘솔 탭만 조작. 기본 정보/노출 단계의 앱 이름·영어 이름·부제·상세 설명·문의 이메일·키워드·주요 기능·출처별 항목을 `store/appintoss-reference/metadata/original.json`에 복사. 임시저장/검토 요청/필드 수정 없음.
+- 미리보기 이미지 4장을 Chrome ‘이미지를 다른 이름으로 저장’으로 원본 다운로드. 각 636×1048. 원본 파일명/바이트/SHA-256을 manifest에 보존하고 전체 파일 열기/해시 확인 PASS. 콘솔 로고 원본도 보관.
+- `store/ios-draft/ko/`에 복사 가능한 텍스트 파일 생성. 원문과 iOS 준비 메모를 구분. 기존 토스 UI/TDS 그림은 Flutter 실제 화면으로 교체가 필요한 참고 자료임을 명시. 앱인토스 연령/카테고리/딥링크를 iOS로 자동 매핑하지 않음.
+- Gate 1: JSON 파싱, PNG 무결성/해상도, 4개 파일 SHA-256, 텍스트 원문 일치 확인 PASS. 자료·문서만 추가했으므로 코드 테스트/빌드는 재실행하지 않음.
+- Gate 2: 런타임 의존성/번들 영향 없음. 자료는 native/Dart asset manifest에 등록하지 않음.
+- Gate 3: 구조 4/5 — 원본/복사용 문구/출처 분리. 흐름 4/5 — 순서 있는 contact sheet와 안내. 상태 4/5 — 콘솔 상태 보존, 로컬 복사만 수행. Evidence/Action: 다운로드 파일을 실제 열어 확인하고 원본 해시/해상도 기록.

@@ -1,0 +1,43 @@
+{
+  "copied_on": "2026-11-18",
+  "source": "https://apps-in-toss.toss.im/workspace/17227/mini-app/howmuch-money/meta/edit?step=0",
+  "source_status": "Values displayed in the existing Chrome edit form; not verified as the currently published listing.",
+  "name_ko": "얼마냈지요",
+  "name_en": "Howmuchmoney",
+  "subtitle_ko": "경조사에서 오간 금액을 기록",
+  "description_ko": "경조사에서 주고받은 돈을 기록하고 관리할 수 있어요.\n이름, 카테고리, 금액을 입력하면 기록이 완료돼요.\n보낸 돈과 받은 돈을 스와이프로 전환하며 확인할 수 있어요.\n축의금·조의금·돌잔치·용돈별로 필터링해서 볼 수 있어요.\n총 얼마를 주고받았는지 한눈에 요약해서 보여줘요.",
+  "appintoss_app_name": "howmuch-money",
+  "age_label_source_only": "만 19세 이상",
+  "support_email": "wjdrhksgns7602@gmail.com",
+  "category_source_only": [
+    "일상·생활",
+    "결혼·경조사",
+    "경조사비"
+  ],
+  "keywords_ko": [
+    "축의금",
+    "경조사",
+    "부조금",
+    "결혼",
+    "장례",
+    "조의금",
+    "용돈",
+    "돌잔치",
+    "부의금",
+    "기록"
+  ],
+  "primary_feature": {
+    "ko": "축의금과 부의금 기록하기",
+    "en": "Record Gift Money",
+    "source_deep_link": "intoss://howmuch-money/main"
+  },
+  "logo_url": "https://static.toss.im/appsintoss/17227/e6c265d0-b517-44d1-8d5e-66e394617883.png",
+  "dark_mode_logo": null,
+  "not_observed": [
+    "privacy_policy_url",
+    "support_website_url",
+    "copyright_holder",
+    "ios_age_rating"
+  ],
+  "no_console_edits_submitted": true
+}

@@ -1,0 +1,59 @@
+{
+  "source_console": "https://apps-in-toss.toss.im/workspace/17227/mini-app/howmuch-money/meta/edit?step=1",
+  "copied_on": "2026-11-18",
+  "screenshots": [
+    {
+      "file": "screenshots/01.png",
+      "original_filename": "b8247fe2-5efc-439d-bb31-42ab076f6b6e.png",
+      "size_px": [
+        636,
+        1048
+      ],
+      "bytes": 470097,
+      "sha256": "6f97b91151703f9e34ce1d607e2e07bf56cf5ddb72bae4de7c95bc5ebad97322",
+      "download_method": "Existing Chrome tab → screenshot modal → Save Image As (original file)"
+    },
+    {
+      "file": "screenshots/02.png",
+      "original_filename": "4a069c8a-1880-4194-b5a6-080ab54b2215.png",
+      "size_px": [
+        636,
+        1048
+      ],
+      "bytes": 302885,
+      "sha256": "fbc2611e38881ae47bf7c788d800e02284f4d41693c0882527a28ceb28d7086e",
+      "download_method": "Existing Chrome tab → screenshot modal → Save Image As (original file)"
+    },
+    {
+      "file": "screenshots/03.png",
+      "original_filename": "e213859a-6210-4478-a867-b48f5ba64f70.png",
+      "size_px": [
+        636,
+        1048
+      ],
+      "bytes": 214927,
+      "sha256": "f44e48d8ba84c65d559d2ceab55cfc63ef90fb3112f5b940331c50cd82bd4c1b",
+      "download_method": "Existing Chrome tab → screenshot modal → Save Image As (original file)"
+    },
+    {
+      "file": "screenshots/04.png",
+      "original_filename": "de3ba8fe-f058-4ecb-b519-1dcfb03f165d.png",
+      "size_px": [
+        636,
+        1048
+      ],
+      "bytes": 241734,
+      "sha256": "cd8b67f353b022f3f6e16d3573d94e2d31f1f47b89010f910083c3dcf7a21804",
+      "download_method": "Existing Chrome tab → screenshot modal → Save Image As (original file)"
+    }
+  ],
+  "logo": {
+    "file": "app-logo.png",
+    "source_url": "https://static.toss.im/appsintoss/17227/e6c265d0-b517-44d1-8d5e-66e394617883.png",
+    "size_px": [
+      600,
+      600
+    ],
+    "sha256": "7986a992e733193ece9d1bb6b69ed2a91d5af301e70b9175532f44a2bb0a929a"
+  }
+}

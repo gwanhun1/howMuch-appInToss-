@@ -56,7 +56,48 @@ void main() {
       throwsA(isA<DatabaseException>()),
     );
     expect((await repo.readAll()).map((r) => r.id), ['existing']);
+    await expectLater(
+      repo.restoreMissing([
+        const MoneyRecord(
+          id: 'new',
+          name: '복원',
+          amount: 50000,
+          date: '2026-11-18',
+        ),
+        const MoneyRecord(
+          id: 'fail',
+          name: '실패',
+          amount: 50000,
+          date: '2026-11-18',
+        ),
+      ]),
+      throwsA(isA<DatabaseException>()),
+    );
+    expect((await repo.readAll()).map((r) => r.id), ['existing']);
+    final restore = [
+      const MoneyRecord(
+        id: 'existing',
+        name: '덮어쓰면 안 됨',
+        amount: 1,
+        date: '2026-11-18',
+      ),
+      const MoneyRecord(
+        id: 'new',
+        name: '복원',
+        amount: 50000,
+        date: '2026-11-18',
+      ),
+    ];
+    expect(await repo.restoreMissing(restore), 1);
+    expect(await repo.restoreMissing(restore), 0);
+    expect(
+      (await repo.readAll()).firstWhere((r) => r.id == 'existing').name,
+      '기존 기록',
+    );
     await repo.db.close();
+    final reopened = await SqliteRecordRepository.open(name: name);
+    expect((await reopened.readAll()).length, 2);
+    await reopened.db.close();
     await deleteDatabase(file);
   });
 }

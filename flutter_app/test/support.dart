@@ -1,5 +1,6 @@
 import 'package:howmuch/data/record_repository.dart';
 import 'package:howmuch/domain/record.dart';
+import 'package:howmuch/domain/record_backup.dart';
 
 class MemoryRepository implements RecordRepository {
   final records = <String, MoneyRecord>{};
@@ -28,6 +29,15 @@ class MemoryRepository implements RecordRepository {
       failNextReadAfterWrite = false;
       failReadOnce = true;
     }
+  }
+
+  @override
+  Future<int> restoreMissing(List<MoneyRecord> values) async {
+    if (failWrites) throw StateError('disk full');
+    validateBackupRecords(values);
+    final additions = values.where((r) => !records.containsKey(r.id)).toList();
+    await saveAll(additions);
+    return additions.length;
   }
 
   @override

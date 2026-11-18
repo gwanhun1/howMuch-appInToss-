@@ -2,10 +2,12 @@ import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 import '../domain/record.dart';
+import '../domain/record_backup.dart';
 
 abstract interface class RecordRepository {
   Future<List<MoneyRecord>> readAll();
   Future<void> saveAll(List<MoneyRecord> records);
+  Future<int> restoreMissing(List<MoneyRecord> records);
   Future<void> delete(String id);
   Future<void> clear();
 }
@@ -55,6 +57,27 @@ class SqliteRecordRepository implements RecordRepository {
         );
       }
       await batch.commit(noResult: true);
+    });
+  }
+
+  @override
+  Future<int> restoreMissing(List<MoneyRecord> records) async {
+    validateBackupRecords(records);
+    return db.transaction((txn) async {
+      final existing = (await txn.query(
+        'records',
+        columns: ['id'],
+      )).map((r) => r['id'] as String).toSet();
+      var added = 0;
+      final batch = txn.batch();
+      for (final record in records) {
+        if (existing.add(record.id)) {
+          batch.insert('records', record.toMap());
+          added++;
+        }
+      }
+      await batch.commit(noResult: true);
+      return added;
     });
   }
 

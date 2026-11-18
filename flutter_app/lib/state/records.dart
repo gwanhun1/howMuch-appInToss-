@@ -19,6 +19,18 @@ class RecordsController extends AsyncNotifier<List<MoneyRecord>> {
     state = AsyncData(await ref.read(repositoryProvider).readAll());
   }
 
+  Future<int> restore(List<MoneyRecord> records) async {
+    final repository = ref.read(repositoryProvider);
+    final count = await repository.restoreMissing(records);
+    try {
+      state = AsyncData(await repository.readAll());
+    } catch (error, stack) {
+      // The transaction succeeded; a refresh error must not report restore failure.
+      state = AsyncError(error, stack);
+    }
+    return count;
+  }
+
   Future<void> remove(String id) async {
     await ref.read(repositoryProvider).delete(id);
     state = AsyncData(await ref.read(repositoryProvider).readAll());

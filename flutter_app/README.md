@@ -35,6 +35,7 @@ flutter pub get
 - 예정 비용: 계획 월, 예산, 최대 50행, 빠른 금액, 행사별 건수, 미입력/범위 초과 제외, 초과/잔액
 - 축의금 장부: 날짜별 내역·합계, 최대 25명 직접 입력, CSV 추가·검증·중복 확인·트랜잭션 저장·내보내기
 - 장부/계산기 미저장 입력은 앱의 현재 실행 동안 화면을 다녀와도 유지
+- 전체 기록 JSON 백업·복원: 미리보기, 기존 기록 보존, 반복 복원 중복 방지
 - 금액 카드 뽑기·다시 섞기·클립보드 복사, 사용법 재생, 이용 안내/개인정보/전체 삭제
 
 [기능 대응표](docs/feature-parity.md)와 [검증 보고서](docs/verification.md)에 구현 범위와 남은 실기기 확인을 기록했습니다.
@@ -62,12 +63,13 @@ React hook/Zustand와 Flutter Riverpod은 런타임이 달라 직접 공유하�
 ./scripts/check.sh
 ./scripts/test_ios.sh
 flutter test integration_test/migration_test.dart -d <기기-ID>
+flutter test integration_test/backup_test.dart -d <기기-ID>
 flutter drive --driver=test_driver/screenshots.dart --target=integration_test/app_test.dart --dart-define=CAPTURE_SCREENSHOTS=true -d <기기-ID>
 flutter build ios --simulator --debug
 flutter build apk --debug
 ```
 
-스크린샷 드라이버는 `docs/screenshots/`에 실제 iOS 화면을 저장합니다. DB 테스트는 `howmuch-integration.db`, `howmuch-migration-test.db`만 초기화합니다. 일반 앱 `howmuch.db`는 유지합니다. GitHub Actions는 정적 분석·단위·위젯 테스트를 실행합니다. iOS 테스트는 로컬에서 실행합니다.
+스크린샷 드라이버는 `docs/screenshots/`에 실제 iOS 화면을 저장합니다. DB 테스트는 `howmuch-integration.db`, `howmuch-migration-test.db`, `howmuch-backup-test.db`만 초기화합니다. 일반 앱 `howmuch.db`는 유지합니다. GitHub Actions는 정적 분석·단위·위젯 테스트를 실행합니다. iOS 테스트는 로컬에서 실행합니다.
 
 CSV 연습 파일: `examples/wedding-guests.csv` (UTF-8, 예시 이름, 날짜 열이 없어 선택 날짜로 입력).
 
@@ -75,6 +77,18 @@ CSV 연습 파일: `examples/wedding-guests.csv` (UTF-8, 예시 이름, 날짜 �
 
 일반 기록은 SQLite에 영구 저장합니다. DB v1→v2는 기존 기록을 보존하며 정렬용 작성일 열을 추가합니다. 보기 설정만 SharedPreferences에 저장합니다. 미저장 장부/계산기는 현재 앱 실행 중에만 유지합니다.
 
-앱을 삭제하면 기록이 사라질 수 있습니다. OS 설정에 따라 운영체제 백업이 적용될 수 있습니다. CSV는 축의금 장부 전용으로 전체 기록 백업은 아닙니다. 로그인·클라우드 동기화·토스 기록 이전·토스 Analytics는 적용하지 않습니다.
+앱을 삭제하면 기록이 사라질 수 있습니다. OS 설정에 따라 운영체제 백업이 적용될 수 있습니다. CSV는 축의금 장부 전용입니다. 설정 → 기록 백업·복원에서 전체 기록을 JSON 파일로 보관할 수 있습니다. 버전 1 백업은 최대 10MB/10,000건이며 이름·관계·금액·날짜·프로필·중요 표시·작성일·ID를 보존합니다. 보기 설정과 미저장 초안은 제외합니다. 파일은 암호화되지 않으며 사용자가 보관 위치를 선택합니다. 복원 전 추가/동일/충돌 건수를 표시하고, 같은 ID는 현재 기기의 기록을 보존합니다. 새 기록은 하나의 SQLite 트랜잭션으로 추가하며 같은 백업을 반복해도 중복 저장되지 않습니다. 로그인·클라우드 동기화·토스 기록 이전·토스 Analytics는 적용하지 않습니다.
 
-실제 iPhone의 키보드·파일 선택·공유 시트, Android 실기기는 추가 검증이 필요합니다. 정식 앱 아이콘, 공개 개인정보처리방침/지원 페이지, 고유 앱 ID, 배포 서명과 스토어 자료도 출시 전에 준비해야 합니다. Android release 설정은 아직 개발용 서명입니다.
+기존 버전 iPhone 실기기 점검은 사용자 확인으로 완료했습니다. 새 백업 기능의 파일 선택·공유 시트와 Android 실기기는 추가 확인 대상입니다. 정식 앱 아이콘, 공개 개인정보처리방침/지원 페이지, 고유 앱 ID, 배포 서명과 스토어 자료도 출시 전에 준비해야 합니다. Android release 설정은 아직 개발용 서명입니다.
+
+2026-11-18: 사용자가 기존 버전의 iPhone 실기기 점검 완료를 알려주었습니다. 이후 추가된 백업 기능의 OS 공유 창/파일 선택은 별도 실기기 확인이 필요합니다. 앱인토스 연동은 진행하지 않으며 포트폴리오 정리는 배포 완료 뒤 진행합니다.
+
+## 앱 아이콘과 시작 화면
+
+사용자가 지정한 파란 꽃·봉투·원화 로고를 `assets/branding/app-icon-source.png`에 보관합니다. 원본은 600×600이며 1024px 스토어 파일은 원본을 리사이즈한 것입니다. 그림을 재생성하거나 라운드 모서리를 원본에 추가하지 않습니다.
+
+`python3 scripts/generate_brand_assets.py`로 iOS AppIcon/LaunchImage, Android 밀도별 런처·adaptive icon·시작 화면, Google Play용 512px 이미지를 생성합니다(Pillow 필요). 시작 배경은 원본 가장자리의 `#0C67F5`, 로고는 중앙 240pt/dp 기준입니다. Android 12 이상은 시스템 스플래시 규격에 맞춘 캔버스를 사용합니다. OS가 첫 화면을 표시할 때까지 유지하며 인위적인 대기 시간을 추가하지 않습니다.
+
+## 스토어 등록 문구·이미지 원본
+
+기존 앱인토스 콘솔에서 복사한 미리보기 4장·로고·등록 문구와 iOS 복사용 텍스트는 [store/README.md](store/README.md)에 정리했습니다. 기존 이미지와 iOS 제출 전 교체할 항목을 구분합니다.
