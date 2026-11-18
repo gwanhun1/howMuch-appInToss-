@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Flutter: 포맷·분석·테스트",
+      "type": "process",
+      "command": "bash",
+      "args": ["scripts/check.sh"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "iOS: Release 아카이브 준비 (서명·업로드 제외)",
+      "type": "process",
+      "command": "bash",
+      "args": ["scripts/prepare_ios_release.sh"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "iOS: 기존 Release 아카이브 검사",
+      "type": "process",
+      "command": "python3",
+      "args": ["scripts/inspect_ios_archive.py"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}

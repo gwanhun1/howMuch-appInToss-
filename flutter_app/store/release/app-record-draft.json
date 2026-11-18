@@ -1,0 +1,20 @@
+{
+  "status": "prepared_locally_not_registered",
+  "name": "얼마냈지요",
+  "primary_language": "ko",
+  "platforms": [
+    "iOS"
+  ],
+  "proposed_bundle_id": "com.howmuchjournal.howmuch",
+  "proposed_sku": "howmuch-ios-1",
+  "version": "1.0.0",
+  "build_number": "1",
+  "privacy_url": "https://small-heather-964.notion.site/41c7443c4245819ab944f6ea48b477f4",
+  "support_url": "https://small-heather-964.notion.site/41c7443c4245814db8d6e2a316dcd239",
+  "listing_assets": "store/ios-upload/",
+  "app_store_connect_app_id": null,
+  "paid_team_id": null,
+  "distribution_signing_ready": false,
+  "membership_payment_completed": true,
+  "membership_activation_observed": false
+}

@@ -51,5 +51,6 @@ app.*.map.json
 !.vscode/
 !.vscode/extensions.json
 !.vscode/launch.json
+!.vscode/tasks.json
 
 /test_outputs/

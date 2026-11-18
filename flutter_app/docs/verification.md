@@ -127,3 +127,16 @@ TDS 전용 SVG는 포함하지 않았습니다. 토스페이스만 별도 라이
 - 제출 자료: store/ios-submission-assets.zip에 12장 이미지·아이콘·문구·공개 URL·안내 포함. App Store Connect에 업로드하거나 심사 승인을 받은 상태는 아님. Apple 멤버십 결제/가입·약관 동의·배포 서명·스토어 등록은 수행하지 않음.
 
 [설정의 공개 링크](screenshots/settings-service-links.png) · [iPhone 이미지 미리보기](../store/ios-upload/iphone-large-1320x2868-preview.jpg) · [제출 파일 ZIP](../store/ios-submission-assets.zip)
+
+## 2026-11-18 — Mac 환경·iOS Release 준비 마무리
+
+- 사용자 요청에 따라 Apple 멤버십 처리 대기 중 독립적으로 가능한 환경 구성을 마무리. 사용자가 Xcode Apple 계정 로그인/이중 인증을 직접 완료했고, Apple Accounts에서 Personal Team 표시를 확인. Runner.xcworkspace를 Xcode에서 열어둠. 유료 Team은 아직 확인되지 않아 임의 Team ID/배포 인증서 생성 없이 기록.
+- flutter doctor -v: Flutter 3.50.0/Dart 3.14.0, Android SDK 36/JDK 17/라이선스, Xcode 26.4/iOS SDK 26.4/CocoaPods 1.16.2 등 모든 항목 정상. Apple 현재 업로드 최소 SDK 기준(Xcode 26+/iOS 26 SDK+) 확인.
+- scripts/prepare_ios_release.sh: 필수 검사 → flutter build ipa --release --no-codesign → archive 구조 검사. VS Code tasks.json에 검사/Release 준비/기존 archive 검사 명령 등록.
+- scripts/inspect_ios_archive.py: Bundle ID·버전·빌드·기기 SDK·AOT 프레임워크·엔진·debug kernel 제외·dSYM·PrivacyInfo 검사. 기기용 Release 아카이브와 시뮬레이터 빌드를 구분. 결과는 ignored build/ios/release-readiness.json에 저장. 단순 구조 검사와 Apple 배포 검증을 구분하며 업로드 완료로 표시하지 않음.
+- Gate 1 PASS: 새 Release 준비 스크립트를 실제 끝까지 실행. 포맷 0 변경, analyze 0 issues, 44개 테스트 통과. Xcode Release archive 성공(180.2MB), 현재 버전 1.0.0(1), Bundle ID com.howmuchjournal.howmuch, iOS 15.0 이상, iPhone/iPad. 검사 스크립트의 추가 device SDK 검사도 별도 실행해 통과.
+- Gate 2: 앱 기능/DB/직접 의존성 변경 없음. build 산출물은 ignored이며 git에 추가하지 않음. Release 아카이브 180.2MB는 dSYM 등을 포함한 개발 산출물 크기로 다운로드 IPA 크기가 아님. 개인정보 manifest 6개 포함 확인.
+- Gate 3: 구조 4/5 — 반복 가능한 준비 명령과 별도 read-only archive 검사. 흐름 4/5 — VS Code/Xcode 진입점, 활성화 후 절차 문서화. 상태 4/5 — 결제 완료와 멤버십 활성화를 분리하고 유료 Team ID/앱 레코드 ID는 미확인 null 유지. Evidence/Action: 실제 전체 스크립트 실행과 archive 파일 검사, Xcode 계정/프로젝트 UI 확인.
+- 원격 combined status에는 Vercel success만 반환. GitHub CLI 미인증이므로 Flutter Actions 성공으로 간주하지 않음. 최신 Flutter 검증은 로컬 44개 통과로 구분.
+- Apple 계정 페이지는 마지막 확인 시 ‘대기 중’과 최대 48시간 처리 안내. 연결된 메일에서 확인한 메시지는 구매 주문 확인. App Store Connect에서 앱 생성 메뉴가 나타나지 않은 상태. 계정/결제 개인정보·비밀번호/인증서/프로비저닝은 저장소에 기록하지 않음.
+- 미수행: 배포용 서명과 IPA export, Apple Validate App, App ID/앱 레코드 등록, 업로드/심사 제출. 현재 환경 준비 완료와 실제 배포 완료를 구분.

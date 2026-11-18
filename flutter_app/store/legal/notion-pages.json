@@ -14,12 +14,13 @@
   "existing_appintoss_terms_unchanged": "https://app.notion.com/p/3057443c424580df8d1df0a9058e3d85",
   "release_decisions": {
     "keep_existing_promotional_images": true,
-    "apple_developer_membership_paid": false,
-    "portfolio_after_release": true
+    "apple_developer_membership_paid": true,
+    "portfolio_after_release": true,
+    "apple_developer_membership_activation": "pending_as_observed"
   },
   "pending": [
-    "Apple Developer Program enrollment/payment and membership activation.",
-    "App Store Connect app record, distribution signing, TestFlight and review submission."
+    "Wait for paid membership/team activation and refresh Xcode account.",
+    "Register Bundle ID/App Store app record, configure signing, validate/upload and submit for review."
   ],
   "basis": [
     "Current Flutter app code, reviewed 2026-11-18.",

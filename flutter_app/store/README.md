@@ -66,3 +66,5 @@
 iOS 스크린샷 규격 출처: https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/
 
 최신 제출 자료 묶음: [ios-submission-assets.zip](ios-submission-assets.zip). 업로드 가능한 크기의 이미지·등록 문구·공개 개인정보/지원 URL을 포함합니다.
+
+Mac 환경과 서명 전 Release 빌드: [배포 준비 상태](release/README.md). 멤버십 구매는 완료됐고 마지막 확인 시 유료 Team 활성화 대기 상태입니다.
