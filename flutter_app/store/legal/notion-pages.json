@@ -1,15 +1,15 @@
 {
   "updated_on": "2026-11-18",
-  "status": "private_drafts",
+  "status": "published_verified",
   "privacy": {
     "id": "41c7443c-4245-819a-b944-f6ea48b477f4",
     "notion_url": "https://app.notion.com/p/41c7443c4245819ab944f6ea48b477f4",
-    "public_url": null
+    "public_url": "https://small-heather-964.notion.site/41c7443c4245819ab944f6ea48b477f4"
   },
   "support": {
     "id": "41c7443c-4245-814d-b8d6-e2a316dcd239",
     "notion_url": "https://app.notion.com/p/41c7443c4245814db8d6e2a316dcd239",
-    "public_url": null
+    "public_url": "https://small-heather-964.notion.site/41c7443c4245814db8d6e2a316dcd239"
   },
   "existing_appintoss_terms_unchanged": "https://app.notion.com/p/3057443c424580df8d1df0a9058e3d85",
   "release_decisions": {
@@ -18,12 +18,17 @@
     "portfolio_after_release": true
   },
   "pending": [
-    "Publish both pages on Notion and verify logged-out access.",
-    "Record public URLs, then add policy/support links within app and App Store Connect."
+    "Apple Developer Program enrollment/payment and membership activation.",
+    "App Store Connect app record, distribution signing, TestFlight and review submission."
   ],
   "basis": [
     "Current Flutter app code, reviewed 2026-11-18.",
     "https://developer.apple.com/app-store/review/guidelines/",
     "https://developer.apple.com/app-store/app-privacy-details/"
-  ]
+  ],
+  "verified_on": "2026-11-18",
+  "verification_method": "Published in the existing signed-in Chrome window; public body and both cross-links verified in separate unauthenticated browser.",
+  "search_engine_indexing": false,
+  "in_app_links_connected": true,
+  "ios_native_url_launch_verified": true
 }

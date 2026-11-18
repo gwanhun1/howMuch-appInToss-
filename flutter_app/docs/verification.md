@@ -113,3 +113,17 @@ TDS 전용 SVG는 포함하지 않았습니다. 토스페이스만 별도 라이
 - Gate 2: 런타임 의존성/앱 asset 등록 변경 없음.
 - Gate 3: 구조 4/5 — 기존 미니앱/독립 앱 문서와 공개 상태 분리. 흐름 4/5 — 사용법·백업·복원·삭제 FAQ와 문의처. 상태 4/5 — 공개 URL은 null로 기록하고 공개 완료로 표시하지 않음. Evidence/Action: 공개 상태를 store/legal/notion-pages.json에 기록하고 두 문서 readback 확인.
 - 사용자 선호 반영: 홍보 이미지 디자인 유지, 필요 시 규격 조정만 검토. Apple 멤버십 미결제, 포트폴리오는 배포 뒤. 스토어 등록·약관 수락·공개 권한 변경 없음.
+
+## 2026-11-18 — 노션 공개 게시·앱 링크·기존 이미지 iOS 규격 준비
+
+- 사용자 요청 1~3 단계 수행. 기존 Chrome 창의 Notion 게시 기능으로 개인정보처리방침/고객지원 두 페이지만 공개. 검색 엔진 인덱싱은 기본 꺼짐 유지. 기존 앱인토스 약관/다른 페이지 권한 변경 없음.
+- 공개 주소는 small-heather-964.notion.site의 각 페이지 ID 경로. 로그인 없는 별도 브라우저에서 두 문서 본문과 상호 링크를 확인. 단순 HTTP 수집기는 Notion 자동화 차단으로 403이므로 브라우저 실제 표시를 기준으로 판정.
+- 설정에 개인정보처리방침/고객지원·문의 버튼 추가. 외부 브라우저 실행 실패/예외 시 복사 가능한 주소와 복사 버튼 제공. URL은 data/service_links.dart에 모으고 실행 함수를 Riverpod으로 주입해 위젯 흐름 검증.
+- 기존 홍보 이미지 4장을 자르거나 늘이거나 그림/문구를 변경하지 않고 contain 방식으로 배치. iPhone 1320×2868, 1284×2778, iPad 2048×2732 각 4장(총 12장), RGB 불투명 PNG로 생성. 원본 대비 종횡비 차이는 #232832 여백으로 처리. 원본 이미지의 선명도 한계는 유지.
+- Gate 1 PASS: Dart 포맷, flutter analyze 0 issues, 단위/위젯 44개 통과. iOS native smoke는 개인정보/고객지원 각각 앱을 foreground로 실행해 launchUrl 성공 확인. iOS 빌드 및 Android debug APK 빌드 성공. 기존 이미지 해시/규격/출력 픽셀 비교와 ZIP 무결성 검사 PASS. React 소스 변경 없어 root 빌드는 반복하지 않음.
+- 첫 iOS smoke에서 Safari를 연 뒤 앱이 백그라운드인 채 두 번째 URL 실행이 false를 반환함. 실제 사용자 흐름과 맞게 각 URL을 별도 foreground 실행에서 검사하도록 고쳐 두 실행 모두 통과. 앱 동작을 테스트 성공을 위해 바꾸지 않음.
+- Gate 2: 새 직접 의존성 url_launcher 6.3.3(공식 Flutter URL 실행 플러그인), 추가 플랫폼 구현 android/ios/macos 3개. 분석/광고 SDK 추가 없음. 홍보 출력 파일은 스토어 자료에만 보관하며 앱 asset manifest에 등록하지 않음. release 용량/성능 SLA는 측정하지 않음.
+- Gate 3: 구조 4/5 — 공개 URL/OS 실행 경계 분리, 원본·출력·manifest·재생성 스크립트 보관. 흐름 4/5 — 설정에서 외부 페이지 진입, 실패 시 복사 대안. 상태 4/5 — 공개 확인 상태와 URL을 JSON/등록 파일에 기록. Evidence/Action: 실제 iOS 설정 캡처·네이티브 URL 실행, 위젯 실패/예외 검사, 이미지 원본 전체 영역 픽셀 비교.
+- 제출 자료: store/ios-submission-assets.zip에 12장 이미지·아이콘·문구·공개 URL·안내 포함. App Store Connect에 업로드하거나 심사 승인을 받은 상태는 아님. Apple 멤버십 결제/가입·약관 동의·배포 서명·스토어 등록은 수행하지 않음.
+
+[설정의 공개 링크](screenshots/settings-service-links.png) · [iPhone 이미지 미리보기](../store/ios-upload/iphone-large-1320x2868-preview.jpg) · [제출 파일 ZIP](../store/ios-submission-assets.zip)

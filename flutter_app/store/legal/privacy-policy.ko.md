@@ -90,4 +90,4 @@
 
 ## 고객지원
 
-[얼마냈지요 고객지원 · 독립 앱](https://app.notion.com/p/41c7443c4245814db8d6e2a316dcd239)
+[얼마냈지요 고객지원 · 독립 앱](https://small-heather-964.notion.site/41c7443c4245814db8d6e2a316dcd239)

@@ -116,4 +116,4 @@
 
 ## 개인정보 안내
 
-[얼마냈지요 개인정보처리방침 · 독립 앱](https://app.notion.com/p/41c7443c4245819ab944f6ea48b477f4)
+[얼마냈지요 개인정보처리방침 · 독립 앱](https://small-heather-964.notion.site/41c7443c4245819ab944f6ea48b477f4)

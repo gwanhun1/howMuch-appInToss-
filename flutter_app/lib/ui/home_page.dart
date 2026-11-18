@@ -1,8 +1,10 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/record.dart';
+import '../data/service_links.dart';
 import '../domain/presentation.dart';
 import '../state/records.dart';
 import 'record_editor.dart';
@@ -128,6 +130,50 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  Future<void> openServiceLink(String title, String url) async {
+    try {
+      if (await ref.read(externalLinkOpenerProvider)(Uri.parse(url))) return;
+    } catch (_) {
+      // Keep a copyable link available when the OS cannot launch a browser.
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('브라우저를 열지 못했어요. 주소를 복사해서 브라우저에 붙여넣어주세요.'),
+            const SizedBox(height: 16),
+            SelectableText(url),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('닫기'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await Clipboard.setData(ClipboardData(text: url));
+                if (dialog.mounted) Navigator.pop(dialog);
+                if (mounted) toast(context, '주소를 복사했어요.');
+              } catch (_) {
+                if (dialog.mounted) {
+                  toast(dialog, '주소를 복사하지 못했어요. 주소를 길게 눌러 복사해주세요.');
+                }
+              }
+            },
+            child: const Text('주소 복사'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> settings() => showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -155,6 +201,19 @@ class _HomePageState extends ConsumerState<HomePage> {
               },
               icon: const Icon(Icons.backup_outlined),
               label: const Text('기록 백업·복원'),
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              key: const Key('privacy-policy-link'),
+              onPressed: () => openServiceLink('개인정보처리방침', privacyPolicyUrl),
+              icon: const Icon(Icons.privacy_tip_outlined, size: 20),
+              label: const Text('개인정보처리방침'),
+            ),
+            TextButton.icon(
+              key: const Key('customer-support-link'),
+              onPressed: () => openServiceLink('고객지원·문의', customerSupportUrl),
+              icon: const Icon(Icons.help_outline, size: 20),
+              label: const Text('고객지원·문의'),
             ),
             const SizedBox(height: 16),
             const Text('이용 안내', style: TextStyle(fontWeight: FontWeight.w700)),

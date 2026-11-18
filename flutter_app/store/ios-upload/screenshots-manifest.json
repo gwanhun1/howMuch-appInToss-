@@ -1,0 +1,246 @@
+{
+  "spec_checked_on": "2026-11-18",
+  "source": "https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications",
+  "files": [
+    {
+      "file": "screenshots/iphone-large-1320x2868/01.png",
+      "source": "store/appintoss-reference/screenshots/01.png",
+      "source_sha256": "6f97b91151703f9e34ce1d607e2e07bf56cf5ddb72bae4de7c95bc5ebad97322",
+      "output_size": [
+        1320,
+        2868
+      ],
+      "artwork_size": [
+        1320,
+        2175
+      ],
+      "offset": [
+        0,
+        346
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "3e155826dcfad174ef135e92f049a998742ae18e0de3f606b7ab60c2062d7733"
+    },
+    {
+      "file": "screenshots/iphone-large-1320x2868/02.png",
+      "source": "store/appintoss-reference/screenshots/02.png",
+      "source_sha256": "fbc2611e38881ae47bf7c788d800e02284f4d41693c0882527a28ceb28d7086e",
+      "output_size": [
+        1320,
+        2868
+      ],
+      "artwork_size": [
+        1320,
+        2175
+      ],
+      "offset": [
+        0,
+        346
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "9890d1686245d6d4f622142f0c88c6a7a8312a42eea2d7ad33808f9c0493a6e2"
+    },
+    {
+      "file": "screenshots/iphone-large-1320x2868/03.png",
+      "source": "store/appintoss-reference/screenshots/03.png",
+      "source_sha256": "f44e48d8ba84c65d559d2ceab55cfc63ef90fb3112f5b940331c50cd82bd4c1b",
+      "output_size": [
+        1320,
+        2868
+      ],
+      "artwork_size": [
+        1320,
+        2175
+      ],
+      "offset": [
+        0,
+        346
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "e28ef6d06d959e5cc4d689aab07ab3e47cce806357ec7a3c79fc977ad5dc59ca"
+    },
+    {
+      "file": "screenshots/iphone-large-1320x2868/04.png",
+      "source": "store/appintoss-reference/screenshots/04.png",
+      "source_sha256": "cd8b67f353b022f3f6e16d3573d94e2d31f1f47b89010f910083c3dcf7a21804",
+      "output_size": [
+        1320,
+        2868
+      ],
+      "artwork_size": [
+        1320,
+        2175
+      ],
+      "offset": [
+        0,
+        346
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "613e636e6ab54312c280d24e68785fe26d590f10470b5360843c991f6d2f2e9a"
+    },
+    {
+      "file": "screenshots/iphone-1284x2778/01.png",
+      "source": "store/appintoss-reference/screenshots/01.png",
+      "source_sha256": "6f97b91151703f9e34ce1d607e2e07bf56cf5ddb72bae4de7c95bc5ebad97322",
+      "output_size": [
+        1284,
+        2778
+      ],
+      "artwork_size": [
+        1284,
+        2116
+      ],
+      "offset": [
+        0,
+        331
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "03f09d675f2c0f67ef5f223778f2471eacfd0ad9d8fda0cf0cab474ae0b3d945"
+    },
+    {
+      "file": "screenshots/iphone-1284x2778/02.png",
+      "source": "store/appintoss-reference/screenshots/02.png",
+      "source_sha256": "fbc2611e38881ae47bf7c788d800e02284f4d41693c0882527a28ceb28d7086e",
+      "output_size": [
+        1284,
+        2778
+      ],
+      "artwork_size": [
+        1284,
+        2116
+      ],
+      "offset": [
+        0,
+        331
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "3aad96a407dd3c802db375e21e1cd866bcad91afe27021a3eabaf7b872875885"
+    },
+    {
+      "file": "screenshots/iphone-1284x2778/03.png",
+      "source": "store/appintoss-reference/screenshots/03.png",
+      "source_sha256": "f44e48d8ba84c65d559d2ceab55cfc63ef90fb3112f5b940331c50cd82bd4c1b",
+      "output_size": [
+        1284,
+        2778
+      ],
+      "artwork_size": [
+        1284,
+        2116
+      ],
+      "offset": [
+        0,
+        331
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "2bb833a26b90e5c6ba1e142678d83c021e91e5c9b1b86b89aac92beca5b2f8be"
+    },
+    {
+      "file": "screenshots/iphone-1284x2778/04.png",
+      "source": "store/appintoss-reference/screenshots/04.png",
+      "source_sha256": "cd8b67f353b022f3f6e16d3573d94e2d31f1f47b89010f910083c3dcf7a21804",
+      "output_size": [
+        1284,
+        2778
+      ],
+      "artwork_size": [
+        1284,
+        2116
+      ],
+      "offset": [
+        0,
+        331
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "e59f47af74df70ac88ce7f27aa41a395cf32b80117a3bda983182b8f63ad6ebd"
+    },
+    {
+      "file": "screenshots/ipad-13-2048x2732/01.png",
+      "source": "store/appintoss-reference/screenshots/01.png",
+      "source_sha256": "6f97b91151703f9e34ce1d607e2e07bf56cf5ddb72bae4de7c95bc5ebad97322",
+      "output_size": [
+        2048,
+        2732
+      ],
+      "artwork_size": [
+        1658,
+        2732
+      ],
+      "offset": [
+        195,
+        0
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "1860a98b31cf09871183b02260b4b7b0fde75d535d9965ae2a35afd20840221c"
+    },
+    {
+      "file": "screenshots/ipad-13-2048x2732/02.png",
+      "source": "store/appintoss-reference/screenshots/02.png",
+      "source_sha256": "fbc2611e38881ae47bf7c788d800e02284f4d41693c0882527a28ceb28d7086e",
+      "output_size": [
+        2048,
+        2732
+      ],
+      "artwork_size": [
+        1658,
+        2732
+      ],
+      "offset": [
+        195,
+        0
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "074ae78957d9ded4026a5ad0ee7270e75b399c49b5b3597c33fe446c1b98c51e"
+    },
+    {
+      "file": "screenshots/ipad-13-2048x2732/03.png",
+      "source": "store/appintoss-reference/screenshots/03.png",
+      "source_sha256": "f44e48d8ba84c65d559d2ceab55cfc63ef90fb3112f5b940331c50cd82bd4c1b",
+      "output_size": [
+        2048,
+        2732
+      ],
+      "artwork_size": [
+        1658,
+        2732
+      ],
+      "offset": [
+        195,
+        0
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "1a0247dc1af828e490fb897de35e06c2c44e221beee0ae6974df37b27e40c985"
+    },
+    {
+      "file": "screenshots/ipad-13-2048x2732/04.png",
+      "source": "store/appintoss-reference/screenshots/04.png",
+      "source_sha256": "cd8b67f353b022f3f6e16d3573d94e2d31f1f47b89010f910083c3dcf7a21804",
+      "output_size": [
+        2048,
+        2732
+      ],
+      "artwork_size": [
+        1658,
+        2732
+      ],
+      "offset": [
+        195,
+        0
+      ],
+      "background": "#232832",
+      "method": "contain; no crop, no stretch, no content changes",
+      "sha256": "01006e9c7b25f8dfa9bf7bae212354f83a4b4830c8ba3a4b05760ebbd394360d"
+    }
+  ]
+}
