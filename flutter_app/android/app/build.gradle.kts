@@ -4,7 +4,21 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseKeystore = providers.environmentVariable("HOWMUCH_KEYSTORE")
+val releasePassword = providers.environmentVariable("HOWMUCH_KEYSTORE_PASSWORD")
+
 android {
+    signingConfigs {
+        create("production") {
+            if (releaseKeystore.isPresent) {
+                storeFile = file(releaseKeystore.get())
+                storePassword = releasePassword.get()
+                keyAlias = "howmuch"
+                keyPassword = releasePassword.get()
+            }
+        }
+    }
+
     namespace = "com.howmuchjournal.howmuch"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -31,9 +45,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("production")
         }
     }
 }
