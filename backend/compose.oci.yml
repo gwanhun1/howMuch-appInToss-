@@ -1,0 +1,17 @@
+# 1GiB Oracle VM에서 LogMe와 함께 쓰는 면접용 설정이다.
+services:
+  db:
+    mem_limit: 128m
+    shm_size: 32m
+    command:
+      - postgres
+      - -c
+      - shared_buffers=24MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - max_connections=12
+  api:
+    image: howmuch-fastapi-api:oci-local
+    mem_limit: 192m
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--limit-concurrency", "3"]

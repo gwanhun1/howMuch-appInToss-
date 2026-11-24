@@ -174,102 +174,195 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Future<void> settings() => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (sheet) => SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Future<void> confirmDeleteAccount(
+    Future<void> Function(String) remove,
+  ) async {
+    var password = '';
+    final confirmed = await showDialog<String>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('계정과 서버 기록을 삭제할까요?'),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              '내 기록과 개인정보',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '이름·관계·금액·날짜·프로필은 이 기기에 저장돼요. 앱에서 서버로 전송하지 않아요. 운영체제 백업 설정에 따라 OS가 앱 데이터를 백업할 수 있어요. 앱 삭제 시 기록이 사라질 수 있어요. CSV는 축의금 장부만 내보내요. 전체 기록은 백업·복원에서 JSON 파일로 따로 보관할 수 있어요.',
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(sheet);
-                page(const BackupPage());
-              },
-              icon: const Icon(Icons.backup_outlined),
-              label: const Text('기록 백업·복원'),
-            ),
-            const SizedBox(height: 16),
-            TextButton.icon(
-              key: const Key('privacy-policy-link'),
-              onPressed: () => openServiceLink('개인정보처리방침', privacyPolicyUrl),
-              icon: const Icon(Icons.privacy_tip_outlined, size: 20),
-              label: const Text('개인정보처리방침'),
-            ),
-            TextButton.icon(
-              key: const Key('customer-support-link'),
-              onPressed: () => openServiceLink('고객지원·문의', customerSupportUrl),
-              icon: const Icon(Icons.help_outline, size: 20),
-              label: const Text('고객지원·문의'),
-            ),
-            const SizedBox(height: 16),
-            const Text('이용 안내', style: TextStyle(fontWeight: FontWeight.w700)),
-            const Text(
-              '경조사 비용을 기록하고 관리하는 도구입니다. 참고 금액과 통계는 실제 평균이나 정답을 의미하지 않아요. 송금이나 금융 거래 기능은 제공하지 않아요.',
-            ),
-            const SizedBox(height: 16),
-            const Text('프로필에는 토스팀에서 제공한 토스페이스가 적용되어 있습니다.'),
-            TextButton(
-              onPressed: () =>
-                  showLicensePage(context: context, applicationName: '얼마냈지요'),
-              child: const Text('오픈소스·토스페이스 라이선스'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(sheet);
-                guide();
-              },
-              child: const Text('사용법 보기'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(sheet);
-                final yes = await showDialog<bool>(
-                  context: context,
-                  builder: (dialog) => AlertDialog(
-                    title: const Text('모든 기록을 삭제할까요?'),
-                    content: const Text('삭제한 기록은 되돌릴 수 없어요.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialog, false),
-                        child: const Text('취소'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(dialog, true),
-                        child: const Text('모두 삭제'),
-                      ),
-                    ],
-                  ),
-                );
-                if (yes == true) {
-                  await change(
-                    () => ref.read(recordsProvider.notifier).clear(),
-                  );
-                }
-              },
-              child: const Text(
-                '모든 기록 삭제',
-                style: TextStyle(color: Colors.red),
-              ),
+            const Text('서버에 저장된 계정과 모든 기록이 삭제돼요. 되돌릴 수 없어요.'),
+            TextField(
+              obscureText: true,
+              decoration: const InputDecoration(labelText: '현재 비밀번호'),
+              onChanged: (text) => password = text,
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialog),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (password.isNotEmpty) Navigator.pop(dialog, password);
+            },
+            child: const Text('계정 삭제'),
+          ),
+        ],
       ),
-    ),
-  );
+    );
+    if (mounted && confirmed != null) await change(() => remove(confirmed));
+  }
+
+  Future<void> settings() {
+    final apiLogout = ref.read(apiLogoutProvider);
+    final openCloud = ref.read(apiOpenProvider);
+    final returnToLocal = ref.read(apiReturnToLocalProvider);
+    final deleteAccount = ref.read(apiDeleteAccountProvider);
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '내 기록과 개인정보',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              if (apiLogout != null) ...[
+                Text(
+                  deleteAccount == null
+                      ? '데모 기록은 Oracle 서버에 저장돼요. 연습용 정보만 입력해주세요.'
+                      : '계정과 기록이 서버에 저장돼요. 설정에서 계정과 서버 기록을 삭제할 수 있어요.',
+                ),
+                if (deleteAccount != null)
+                  TextButton(
+                    onPressed: () async {
+                      Navigator.pop(sheet);
+                      await confirmDeleteAccount(deleteAccount);
+                    },
+                    child: const Text('계정과 서버 기록 삭제'),
+                  ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(sheet);
+                    change(apiLogout);
+                  },
+                  child: const Text('로그아웃'),
+                ),
+                if (returnToLocal != null)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(sheet);
+                      returnToLocal();
+                    },
+                    child: const Text('기기 기록으로 돌아가기'),
+                  ),
+              ] else ...[
+                const Text(
+                  '이름·관계·금액·날짜·프로필은 이 기기에 저장돼요. 앱에서 서버로 전송하지 않아요. 운영체제 백업 설정에 따라 OS가 앱 데이터를 백업할 수 있어요. 앱 삭제 시 기록이 사라질 수 있어요. CSV는 축의금 장부만 내보내요. 전체 기록은 백업·복원에서 JSON 파일로 따로 보관할 수 있어요.',
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheet);
+                    page(const BackupPage());
+                  },
+                  icon: const Icon(Icons.backup_outlined),
+                  label: const Text('기록 백업·복원'),
+                ),
+                if (openCloud != null)
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(sheet);
+                      openCloud();
+                    },
+                    icon: const Icon(Icons.cloud_outlined),
+                    label: const Text('서버 기록 사용하기'),
+                  ),
+              ],
+              const SizedBox(height: 16),
+              if (apiLogout == null || deleteAccount != null) ...[
+                TextButton.icon(
+                  key: const Key('privacy-policy-link'),
+                  onPressed: () => openServiceLink(
+                    '개인정보처리방침',
+                    deleteAccount == null ? privacyPolicyUrl : apiPrivacyUrl,
+                  ),
+                  icon: const Icon(Icons.privacy_tip_outlined, size: 20),
+                  label: const Text('개인정보처리방침'),
+                ),
+                TextButton.icon(
+                  key: const Key('customer-support-link'),
+                  onPressed: () =>
+                      openServiceLink('고객지원·문의', customerSupportUrl),
+                  icon: const Icon(Icons.help_outline, size: 20),
+                  label: const Text('고객지원·문의'),
+                ),
+              ],
+              const SizedBox(height: 16),
+              const Text(
+                '이용 안내',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const Text(
+                '경조사 비용을 기록하고 관리하는 도구입니다. 참고 금액과 통계는 실제 평균이나 정답을 의미하지 않아요. 송금이나 금융 거래 기능은 제공하지 않아요.',
+              ),
+              const SizedBox(height: 16),
+              const Text('프로필에는 토스팀에서 제공한 토스페이스가 적용되어 있습니다.'),
+              TextButton(
+                onPressed: () =>
+                    showLicensePage(context: context, applicationName: '얼마냈지요'),
+                child: const Text('오픈소스·토스페이스 라이선스'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(sheet);
+                  guide();
+                },
+                child: const Text('사용법 보기'),
+              ),
+              if (apiLogout == null)
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(sheet);
+                    final yes = await showDialog<bool>(
+                      context: context,
+                      builder: (dialog) => AlertDialog(
+                        title: const Text('모든 기록을 삭제할까요?'),
+                        content: const Text('삭제한 기록은 되돌릴 수 없어요.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialog, false),
+                            child: const Text('취소'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialog, true),
+                            child: const Text('모두 삭제'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (yes == true) {
+                      await change(
+                        () => ref.read(recordsProvider.notifier).clear(),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    '모든 기록 삭제',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> breakdown(List<MoneyRecord> records) =>
       showModalBottomSheet<void>(
         context: context,

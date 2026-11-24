@@ -99,3 +99,23 @@ CSV 연습 파일: `examples/wedding-guests.csv` (UTF-8, 예시 이름, 날짜 �
 ## Release 빌드 환경
 
 `bash scripts/prepare_ios_release.sh`로 필수 검사 → 서명 없는 iOS Release 아카이브 → 구조 검사를 실행합니다. VS Code Run Task에도 등록했습니다. 현재 계정/서명 상태와 활성화 후 절차는 [배포 준비 상태](store/release/README.md)에 있습니다.
+
+## Oracle API 데모 모드
+
+`HOWMUCH_API_URL`에 디버그용 HTTP 주소를 지정하면 앱 시작 시 서버 데모 로그인이 표시됩니다. HTTPS 주소를 지정한 배포 빌드는 기기 기록을 먼저 열며, 설정에서 **서버 기록 사용하기**를 선택할 수 있습니다. 배포 빌드의 계정 생성에는 HTTPS 개인정보처리방침 주소인 `HOWMUCH_PRIVACY_URL`이 필요합니다.
+로그인한 계정의 기록은 Oracle의 FastAPI와 PostgreSQL을 사용합니다.
+이 옵션을 생략한 실행은 별도 로그인 없이 기존 SQLite 저장소를 사용합니다.
+
+~~~sh
+# 별도 터미널에서 LogMe 서버에 연결합니다.
+ssh -N -o ExitOnForwardFailure=yes -L 18010:127.0.0.1:8010 USER@ORACLE_HOST
+
+# iOS 시뮬레이터
+flutter run -d IOS_SIMULATOR_ID \
+  --dart-define=HOWMUCH_API_URL=http://127.0.0.1:18010 \
+  --dart-define=HOWMUCH_API_ORIGIN=http://127.0.0.1:8010
+~~~
+
+Android 에뮬레이터에서는 API URL의 호스트를 `10.0.2.2`로 바꾸고 Origin은 그대로 둡니다.
+로그인 정보는 서버 관리자가 생성한 데모 계정을 사용합니다.
+로컬 백업·복원 및 전체 삭제는 SQLite 모드에서 제공합니다.
